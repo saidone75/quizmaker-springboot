@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class QuizDto {
 
@@ -31,10 +32,12 @@ public class QuizDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Response {
-        private String id;
+        private UUID id;
         private String title;
         private String emoji;
         private String questions; // JSON string
+        private Integer questionsCount;
         private LocalDateTime createdAt;
     }
+
 }

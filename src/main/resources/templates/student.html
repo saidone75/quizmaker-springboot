@@ -25,7 +25,7 @@
                 <span class="quiz-pick-icon" th:text="${quiz.emoji}">🦕</span>
                 <span>
                     <span class="quiz-pick-name" th:text="${quiz.title}">Titolo</span>
-                    <span class="quiz-pick-count" th:text="${#strings.length(quiz.questions)} + ' domande'">domande</span>
+                    <span class="quiz-pick-count" th:text="${quiz.questionsCount} + ' domande'">domande</span>
                 </span>
             </div>
         </div>

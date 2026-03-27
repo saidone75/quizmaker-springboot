@@ -1,6 +1,6 @@
 spring:
   datasource:
-    # Imposta queste variabili d'ambiente in produzione:
+    # Set these environment variables in production:
     # SUPABASE_DB_URL, SUPABASE_DB_USERNAME, SUPABASE_DB_PASSWORD
     url: ${SUPABASE_DB_URL:jdbc:postgresql://db.ktxzqabmnqenmnprgfds.supabase.co:5432/postgres}
     username: ${SUPABASE_DB_USERNAME:postgres}
@@ -23,7 +23,3 @@ spring:
   liquibase:
     enabled: true
 
-app:
-  admin:
-    username: ${ADMIN_USERNAME:admin}
-    password: ${ADMIN_PASSWORD:{bcrypt}$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lbu2}

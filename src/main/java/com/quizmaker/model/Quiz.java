@@ -21,8 +21,8 @@ import java.util.UUID;
 public class Quiz {
 
     @Id
-    @Column(length = 36)
-    private String id;
+    @Column(name = "id", nullable = false)
+    private UUID id;
 
     @NotBlank(message = "Il titolo è obbligatorio")
     @Column(nullable = false)
@@ -42,8 +42,9 @@ public class Quiz {
 
     @PrePersist
     public void prePersist() {
-        if (this.id == null || this.id.isBlank()) {
-            this.id = UUID.randomUUID().toString();
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
         }
     }
+
 }

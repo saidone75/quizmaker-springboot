@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,7 +33,7 @@ class QuizServiceTest {
     @BeforeEach
     void setUp() {
         sampleQuiz = Quiz.builder()
-                .id("test-id-123")
+                .id(UUID.randomUUID())
                 .title("Quiz di Test")
                 .emoji("🧪")
                 .questions("[{\"text\":\"Domanda?\",\"options\":[\"A\",\"B\"],\"answer\":0}]")
@@ -49,9 +50,9 @@ class QuizServiceTest {
 
     @Test
     void findById_returnsQuiz() {
-        when(quizRepository.findById("test-id-123")).thenReturn(Optional.of(sampleQuiz));
-        QuizDto.Response result = quizService.findById("test-id-123");
-        assertThat(result.getId()).isEqualTo("test-id-123");
+        when(quizRepository.findById(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
+        QuizDto.Response result = quizService.findById(sampleQuiz.getId());
+        assertThat(result.getId()).isEqualTo(sampleQuiz.getId());
         assertThat(result.getEmoji()).isEqualTo("🧪");
     }
 
@@ -70,8 +71,9 @@ class QuizServiceTest {
 
     @Test
     void delete_callsRepository() {
-        when(quizRepository.existsById("test-id-123")).thenReturn(true);
-        quizService.delete("test-id-123");
-        verify(quizRepository, times(1)).deleteById("test-id-123");
+        when(quizRepository.existsById(sampleQuiz.getId())).thenReturn(true);
+        quizService.delete(sampleQuiz.getId());
+        verify(quizRepository, times(1)).deleteById(sampleQuiz.getId());
     }
+
 }

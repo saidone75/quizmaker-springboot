@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="002" author="quizmaker">
+        <comment>Make emoji and created_at mandatory on quizzes table</comment>
+
+        <sql>
+            UPDATE quizzes
+            SET emoji = ''
+            WHERE emoji IS NULL;
+        </sql>
+
+        <sql>
+            UPDATE quizzes
+            SET created_at = CURRENT_TIMESTAMP
+            WHERE created_at IS NULL;
+        </sql>
+
+        <addDefaultValue
+                tableName="quizzes"
+                columnName="created_at"
+                defaultValueComputed="CURRENT_TIMESTAMP"/>
+
+        <addNotNullConstraint
+                tableName="quizzes"
+                columnName="emoji"
+                columnDataType="TEXT"/>
+
+        <addNotNullConstraint
+                tableName="quizzes"
+                columnName="created_at"
+                columnDataType="TIMESTAMP"/>
+
+        <rollback>
+            <dropNotNullConstraint
+                    tableName="quizzes"
+                    columnName="emoji"
+                    columnDataType="TEXT"/>
+
+            <dropNotNullConstraint
+                    tableName="quizzes"
+                    columnName="created_at"
+                    columnDataType="TIMESTAMP"/>
+
+            <dropDefaultValue
+                    tableName="quizzes"
+                    columnName="created_at"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
