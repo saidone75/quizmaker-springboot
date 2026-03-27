@@ -1,9 +1,0 @@
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/QuizMakerApplication.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/controller/WebController.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/repository/QuizRepository.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/dto/QuizDto.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/controller/GlobalExceptionHandler.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/service/QuizService.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/config/SecurityConfig.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/model/Quiz.java
-/home/saidone/workspace/quizmaker-springboot/src/main/java/com/quizmaker/controller/QuizApiController.java
