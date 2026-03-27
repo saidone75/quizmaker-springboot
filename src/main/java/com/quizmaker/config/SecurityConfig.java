@@ -74,7 +74,6 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        log.error("Admin username: {}", adminPassword);
         UserDetails admin = User.builder()
                 .username(adminUsername)
                 .password(adminPassword)

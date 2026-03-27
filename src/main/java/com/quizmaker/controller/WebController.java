@@ -12,36 +12,37 @@ public class WebController {
 
     private final QuizService quizService;
 
-    // Pagina alunni (default)
+    // Students page (default)
     @GetMapping("/")
     public String studentPage(Model model) {
         model.addAttribute("quizzes", quizService.findAll());
         return "student";
     }
 
-    // Pagina admin - login
+    // Admin page - login
     @GetMapping("/admin/login")
     public String loginPage() {
         return "admin/login";
     }
 
-    // Pagina admin - dashboard
+    // Admin page - dashboard
     @GetMapping("/admin")
     public String adminDashboard(Model model) {
         model.addAttribute("quizzes", quizService.findAll());
         return "admin/dashboard";
     }
 
-    // Pagina admin - crea quiz
+    // Admin page - create quiz
     @GetMapping("/admin/quiz/new")
     public String newQuiz() {
         return "admin/quiz-editor";
     }
 
-    // Pagina admin - modifica quiz
+    // Admin page - modify quiz
     @GetMapping("/admin/quiz/{id}/edit")
     public String editQuiz(@org.springframework.web.bind.annotation.PathVariable String id, Model model) {
         model.addAttribute("quiz", quizService.findById(id));
         return "admin/quiz-editor";
     }
+
 }

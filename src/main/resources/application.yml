@@ -1,6 +1,9 @@
 spring:
   application:
     name: quizmaker
+  output:
+    ansi:
+      enabled: always
   thymeleaf:
     cache: false
     encoding: UTF-8

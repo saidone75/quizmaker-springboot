@@ -46,4 +46,5 @@ public class Quiz {
             this.id = UUID.randomUUID().toString();
         }
     }
+
 }

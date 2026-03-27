@@ -6,7 +6,6 @@ import com.quizmaker.repository.QuizRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
@@ -21,6 +20,7 @@ public class QuizService {
     private final QuizRepository quizRepository;
 
     private static final JsonMapper JSON_MAPPER = new JsonMapper();
+    private static final String QUIZ_NOT_FOUND_MESSAGE = "Quiz non trovato con id: %s";
 
     @Transactional(readOnly = true)
     public List<QuizDto.Response> findAll() {
@@ -34,7 +34,7 @@ public class QuizService {
     public QuizDto.Response findById(String id) {
         return quizRepository.findById(id)
                 .map(this::toResponse)
-                .orElseThrow(() -> new EntityNotFoundException("Quiz non trovato con id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
     }
 
     @Transactional
@@ -52,7 +52,7 @@ public class QuizService {
     @Transactional
     public QuizDto.Response update(String id, QuizDto.Request request) {
         Quiz quiz = quizRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Quiz non trovato con id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
         quiz.setTitle(request.getTitle());
         quiz.setEmoji(request.getEmoji());
         quiz.setQuestions(request.getQuestions());
@@ -64,7 +64,7 @@ public class QuizService {
     @Transactional
     public void delete(String id) {
         if (!quizRepository.existsById(id)) {
-            throw new EntityNotFoundException("Quiz non trovato con id: " + id);
+            throw new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id));
         }
         quizRepository.deleteById(id);
         log.info("Quiz eliminato: {}", id);
@@ -80,4 +80,5 @@ public class QuizService {
                 .createdAt(quiz.getCreatedAt())
                 .build();
     }
+
 }
