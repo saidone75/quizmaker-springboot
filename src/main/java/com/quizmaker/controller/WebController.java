@@ -4,6 +4,7 @@ import com.quizmaker.service.QuizService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ public class WebController {
     // Students page (default)
     @GetMapping("/")
     public String studentPage(Model model) {
-        var quizzes = quizService.findAll();
+        val quizzes = quizService.findAll();
         model.addAttribute("quizzes", quizzes);
         try {
             model.addAttribute("quizzesJson", objectMapper.writeValueAsString(quizzes));
