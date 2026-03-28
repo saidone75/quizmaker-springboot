@@ -191,7 +191,7 @@ async function saveQuiz() {
             body: JSON.stringify({
                 title,
                 emoji,
-                questions: JSON.stringify(finalQuestions)
+                questions: finalQuestions
             })
         });
 
