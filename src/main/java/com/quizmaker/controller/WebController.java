@@ -1,6 +1,8 @@
 package com.quizmaker.controller;
 
 import com.quizmaker.service.QuizService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,11 +15,18 @@ import java.util.UUID;
 public class WebController {
 
     private final QuizService quizService;
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     // Students page (default)
     @GetMapping("/")
     public String studentPage(Model model) {
-        model.addAttribute("quizzes", quizService.findAll());
+        var quizzes = quizService.findAll();
+        model.addAttribute("quizzes", quizzes);
+        try {
+            model.addAttribute("quizzesJson", OBJECT_MAPPER.writeValueAsString(quizzes));
+        } catch (JsonProcessingException e) {
+            model.addAttribute("quizzesJson", "[]");
+        }
         return "student";
     }
 
