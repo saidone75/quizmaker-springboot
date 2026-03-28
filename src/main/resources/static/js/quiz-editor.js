@@ -7,7 +7,9 @@ function initEditor(id, questionsJson) {
     quizId = id;
     if (questionsJson) {
         try {
-            currentQuestions = JSON.parse(questionsJson);
+            currentQuestions = Array.isArray(questionsJson)
+                ? questionsJson
+                : JSON.parse(questionsJson);
         } catch(e) {
             console.error('Errore parsing domande:', e);
             currentQuestions = [emptyQuestion()];
@@ -191,7 +193,7 @@ async function saveQuiz() {
             body: JSON.stringify({
                 title,
                 emoji,
-                questions: JSON.stringify(finalQuestions)
+                questions: finalQuestions
             })
         });
 

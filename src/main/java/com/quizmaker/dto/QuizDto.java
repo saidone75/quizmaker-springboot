@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public class QuizDto {
@@ -24,7 +25,7 @@ public class QuizDto {
         private String emoji;
 
         @NotNull(message = "Le domande sono obbligatorie")
-        private String questions; // JSON string
+        private List<QuestionDto> questions;
     }
 
     @Data
@@ -35,7 +36,7 @@ public class QuizDto {
         private UUID id;
         private String title;
         private String emoji;
-        private String questions; // JSON string
+        private List<QuestionDto> questions;
         private Integer questionsCount;
         private LocalDateTime createdAt;
     }

@@ -7,6 +7,5 @@
 
     <include file="001-create-quizzes-table.xml" relativeToChangelogFile="true" />
     <include file="002-update-quizzes-constraints.xml" relativeToChangelogFile="true" />
-    <include file="003-create-sample-quiz.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
