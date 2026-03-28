@@ -1,4 +1,4 @@
-package com.quizmaker.model;
+package com.quizmaker.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,8 +8,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -33,8 +36,9 @@ public class Quiz {
     private String emoji;
 
     @NotNull(message = "Le domande sono obbligatorie")
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String questions; // stored as JSON string
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "questions", nullable = false, columnDefinition = "jsonb")
+    private List<Question> questions;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -1,6 +1,6 @@
 package com.quizmaker.repository;
 
-import com.quizmaker.model.Quiz;
+import com.quizmaker.entity.Quiz;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

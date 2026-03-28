@@ -1,14 +1,16 @@
 package com.quizmaker.service;
 
 import com.quizmaker.dto.QuizDto;
-import com.quizmaker.model.Quiz;
+import com.quizmaker.entity.Quiz;
+import com.quizmaker.mapper.QuestionMapper;
+import com.quizmaker.mapper.QuizMapper;
 import com.quizmaker.repository.QuizRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,8 +21,9 @@ import java.util.UUID;
 public class QuizService {
 
     private final QuizRepository quizRepository;
+    private final QuizMapper quizMapper;
+    private final QuestionMapper questionMapper;
 
-    private static final JsonMapper JSON_MAPPER = new JsonMapper();
     private static final String QUIZ_NOT_FOUND_MESSAGE = "Quiz non trovato con id: %s";
 
     @Transactional(readOnly = true)
@@ -43,7 +46,7 @@ public class QuizService {
         Quiz quiz = Quiz.builder()
                 .title(request.getTitle())
                 .emoji(request.getEmoji())
-                .questions(request.getQuestions())
+                .questions(request.getQuestions().stream().map(questionMapper::toEntity).toList())
                 .build();
         Quiz saved = quizRepository.save(quiz);
         log.info("Quiz creato: {} ({})", saved.getTitle(), saved.getId());
@@ -56,7 +59,7 @@ public class QuizService {
                 .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
         quiz.setTitle(request.getTitle());
         quiz.setEmoji(request.getEmoji());
-        quiz.setQuestions(request.getQuestions());
+        quiz.setQuestions(request.getQuestions().stream().map(questionMapper::toEntity).toList());
         Quiz saved = quizRepository.save(quiz);
         log.info("Quiz aggiornato: {} ({})", saved.getTitle(), saved.getId());
         return toResponse(saved);
@@ -72,14 +75,7 @@ public class QuizService {
     }
 
     private QuizDto.Response toResponse(Quiz quiz) {
-        return QuizDto.Response.builder()
-                .id(quiz.getId())
-                .title(quiz.getTitle())
-                .emoji(quiz.getEmoji())
-                .questions(quiz.getQuestions())
-                .questionsCount(JSON_MAPPER.readValue(quiz.getQuestions(), List.class).size())
-                .createdAt(quiz.getCreatedAt())
-                .build();
+        return quizMapper.toResponse(quiz);
     }
 
 }

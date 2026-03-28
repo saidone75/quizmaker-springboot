@@ -1,9 +1,12 @@
 package com.quizmaker;
 
+import com.quizmaker.dto.QuestionDto;
+import com.quizmaker.entity.Question;
 import com.quizmaker.repository.QuizRepository;
 import com.quizmaker.service.QuizService;
 import com.quizmaker.dto.QuizDto;
-import com.quizmaker.model.Quiz;
+import com.quizmaker.entity.Quiz;
+import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,11 +35,15 @@ class QuizServiceTest {
 
     @BeforeEach
     void setUp() {
+        val question = new Question();
+        question.setText("question");
+        question.setOptions(List.of("A", "B"));
+        question.setAnswer(0);
         sampleQuiz = Quiz.builder()
                 .id(UUID.randomUUID())
                 .title("Quiz di Test")
                 .emoji("🧪")
-                .questions("[{\"text\":\"Domanda?\",\"options\":[\"A\",\"B\"],\"answer\":0}]")
+                .questions(List.of(question))
                 .build();
     }
 
@@ -59,10 +66,14 @@ class QuizServiceTest {
     @Test
     void create_savesAndReturnsQuiz() {
         when(quizRepository.save(any(Quiz.class))).thenReturn(sampleQuiz);
+        val questionDto = new QuestionDto();
+        questionDto.setText("question");
+        questionDto.setOptions(List.of("A", "B"));
+        questionDto.setAnswer(0);
         QuizDto.Request request = QuizDto.Request.builder()
                 .title("Quiz di Test")
                 .emoji("🧪")
-                .questions("[{\"text\":\"Domanda?\",\"options\":[\"A\",\"B\"],\"answer\":0}]")
+                .questions(List.of(questionDto))
                 .build();
         QuizDto.Response result = quizService.create(request);
         assertThat(result.getTitle()).isEqualTo("Quiz di Test");
