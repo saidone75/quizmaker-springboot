@@ -20,6 +20,7 @@
             <div class="quiz-pick-item"
                  th:each="quiz : ${quizzes}"
                  th:data-id="${quiz.id}"
+                 th:data-questions="${quiz.questions}"
                  onclick="startQuizFromCard(this)">
                 <span class="quiz-pick-icon" th:text="${quiz.emoji}">🦕</span>
                 <span>
@@ -73,11 +74,5 @@
 
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/quiz-player.js}"></script>
-<script th:inline="javascript">
-    const QUIZ_DATA = /*[[${quizzes}]]*/ [];
-    window.QUIZ_DATA_BY_ID = Object.fromEntries(
-        QUIZ_DATA.map(quiz => [String(quiz.id), quiz])
-    );
-</script>
 </body>
 </html>

@@ -2,25 +2,22 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 let playState = { quiz: null, current: 0, score: 0, wrong: 0, answered: false };
 
 // Called from Thymeleaf student.html via onclick on card
-window.startQuizFromCard = function startQuizFromCard(el) {
+function startQuizFromCard(el) {
     const id = el.dataset.id;
+    const questionsJson = el.dataset.questions;
     const title = el.querySelector('.quiz-pick-name').textContent;
     const emoji = el.querySelector('.quiz-pick-icon').textContent;
 
-    const questionsFromPage = window.QUIZ_DATA_BY_ID?.[id]?.questions;
-    if (Array.isArray(questionsFromPage)) {
-        startQuiz({ id, title, emoji, questions: questionsFromPage });
+    let questions;
+    try {
+        questions = JSON.parse(questionsJson);
+    } catch(e) {
+        alert('Errore nel caricamento del quiz');
         return;
     }
 
-    const questionsJson = el.dataset.questions;
-    try {
-        const questions = Array.isArray(questionsJson) ? questionsJson : JSON.parse(questionsJson);
-        startQuiz({ id, title, emoji, questions });
-    } catch(e) {
-        alert('Errore nel caricamento del quiz');
-    }
-};
+    startQuiz({ id, title, emoji, questions });
+}
 
 function startQuiz(quiz) {
     playState = { quiz, current: 0, score: 0, wrong: 0, answered: false };
@@ -28,9 +25,9 @@ function startQuiz(quiz) {
     renderPlay();
 }
 
-window.replayQuiz = function replayQuiz() {
+function replayQuiz() {
     startQuiz(playState.quiz);
-};
+}
 
 function renderPlay() {
     const { quiz, current, score } = playState;
@@ -68,7 +65,7 @@ function renderPlay() {
     `;
 }
 
-window.pickAnswer = function pickAnswer(idx) {
+function pickAnswer(idx) {
     if (playState.answered) return;
     playState.answered = true;
 
@@ -89,13 +86,13 @@ window.pickAnswer = function pickAnswer(idx) {
         fb.innerHTML = `<div class="quiz-feedback wrong">❌ Risposta sbagliata! La risposta corretta era: <strong>${escHtml(correctText)}</strong>${q.feedback ? '. ' + escHtml(q.feedback) : '.'}</div>`;
     }
     document.getElementById('play-next').style.display = 'block';
-};
+}
 
-window.nextQuestion = function nextQuestion() {
+function nextQuestion() {
     playState.current++;
     if (playState.current >= playState.quiz.questions.length) showResult();
     else renderPlay();
-};
+}
 
 function showResult() {
     const { score, wrong, quiz } = playState;
