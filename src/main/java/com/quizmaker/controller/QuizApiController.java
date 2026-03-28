@@ -21,13 +21,13 @@ public class QuizApiController {
     // PUBLIC: students can read all quizzes
     @GetMapping
     public ResponseEntity<List<QuizDto.Response>> getAll() {
-        return ResponseEntity.ok(quizService.findAll());
+        return ResponseEntity.ok(quizService.findPublished());
     }
 
     // PUBLIC: students can read a single quiz
     @GetMapping("/{id}")
     public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(quizService.findById(id));
+        return ResponseEntity.ok(quizService.findPublishedById(id));
     }
 
     // PROTECTED: only teacher can create
@@ -49,6 +49,14 @@ public class QuizApiController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         quizService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // PROTECTED: only teacher can publish/unpublish
+    @PutMapping("/{id}/publication")
+    public ResponseEntity<QuizDto.Response> updatePublicationStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody QuizDto.PublicationUpdateRequest request) {
+        return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished()));
     }
 
 }

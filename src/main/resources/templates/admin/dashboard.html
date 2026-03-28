@@ -55,6 +55,13 @@
                     <div class="manage-card-meta">
                         Creato il <span th:text="${#temporals.format(quiz.createdAt, 'dd/MM/yyyy')}">01/01/2024</span>
                     </div>
+                    <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.95rem;">
+                        <input type="checkbox"
+                               th:checked="${quiz.published}"
+                               th:data-id="${quiz.id}"
+                               onchange="togglePublication(this)">
+                        Pubblicato
+                    </label>
                 </div>
                 <div class="manage-card-actions">
                     <a th:href="@{/admin/quiz/{id}/edit(id=${quiz.id})}"
@@ -119,6 +126,29 @@
         } catch(e) {
             hideLoading();
             alert('Errore: ' + e.message);
+        }
+    }
+
+    async function togglePublication(checkbox) {
+        const id = checkbox.dataset.id;
+        const published = checkbox.checked;
+        checkbox.disabled = true;
+        try {
+            const res = await fetch('/api/quizzes/' + id + '/publication', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [CSRF_HEADER]: CSRF_TOKEN
+                },
+                body: JSON.stringify({ published })
+            });
+            if (!res.ok) throw new Error('Errore server');
+            showToast(published ? 'Quiz pubblicato!' : 'Quiz nascosto agli studenti');
+        } catch (e) {
+            checkbox.checked = !published;
+            alert('Errore: ' + e.message);
+        } finally {
+            checkbox.disabled = false;
         }
     }
 </script>

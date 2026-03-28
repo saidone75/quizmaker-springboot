@@ -33,6 +33,7 @@ public class DevQuizBootstrap implements CommandLineRunner {
                 Quiz.builder()
                         .title(DEMO_QUIZ_TITLE)
                         .emoji("🌌")
+                        .published(true)
                         .questions(List.of(
                                 question(
                                         "Qual è il pianeta più grande del Sistema Solare?",

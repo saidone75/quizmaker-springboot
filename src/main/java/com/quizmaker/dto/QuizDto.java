@@ -36,9 +36,18 @@ public class QuizDto {
         private UUID id;
         private String title;
         private String emoji;
+        private Boolean published;
         private List<QuestionDto> questions;
         private Integer questionsCount;
         private LocalDateTime createdAt;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PublicationUpdateRequest {
+        @NotNull(message = "Il campo published è obbligatorio")
+        private Boolean published;
     }
 
 }

@@ -40,6 +40,10 @@ public class Quiz {
     @Column(name = "questions", nullable = false, columnDefinition = "jsonb")
     private List<Question> questions;
 
+    @Builder.Default
+    @Column(name = "published", nullable = false)
+    private Boolean published = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -27,8 +27,16 @@ public class QuizService {
     private static final String QUIZ_NOT_FOUND_MESSAGE = "Quiz non found for id: %s";
 
     @Transactional(readOnly = true)
-    public List<QuizDto.Response> findAll() {
+    public List<QuizDto.Response> findAllForAdmin() {
         return quizRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<QuizDto.Response> findPublished() {
+        return quizRepository.findByPublishedTrueOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -41,12 +49,20 @@ public class QuizService {
                 .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
     }
 
+    @Transactional(readOnly = true)
+    public QuizDto.Response findPublishedById(UUID id) {
+        return quizRepository.findByIdAndPublishedTrue(id)
+                .map(this::toResponse)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
+    }
+
     @Transactional
     public QuizDto.Response create(QuizDto.Request request) {
         val quiz = Quiz.builder()
                 .title(request.getTitle())
                 .emoji(request.getEmoji())
                 .questions(request.getQuestions().stream().map(questionMapper::toEntity).toList())
+                .published(false)
                 .build();
         val saved = quizRepository.save(quiz);
         log.info("Quiz created: {} ({})", saved.getTitle(), saved.getId());
@@ -72,6 +88,16 @@ public class QuizService {
         }
         quizRepository.deleteById(id);
         log.info("Quiz deleted: {}", id);
+    }
+
+    @Transactional
+    public QuizDto.Response updatePublicationStatus(UUID id, boolean published) {
+        val quiz = quizRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
+        quiz.setPublished(published);
+        val saved = quizRepository.save(quiz);
+        log.info("Quiz publication status updated: {} ({}) => {}", saved.getTitle(), saved.getId(), saved.getPublished());
+        return toResponse(saved);
     }
 
     private QuizDto.Response toResponse(Quiz quiz) {
