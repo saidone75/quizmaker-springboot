@@ -13,7 +13,7 @@
 
     <groupId>com.quizmaker</groupId>
     <artifactId>quizmaker</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.4</version>
     <name>quizmaker</name>
     <description>QuizMaker - App per quiz scolastici</description>
 
@@ -101,6 +101,18 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- OpenAI integration helpers -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.4.1</version>
         </dependency>
 
         <!-- Test -->

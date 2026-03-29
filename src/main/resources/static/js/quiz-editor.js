@@ -219,3 +219,70 @@ function showValidation(text) {
         msg.style.display = 'block';
     }
 }
+
+
+function applyGeneratedQuiz(quiz) {
+    document.getElementById('quiz-title-input').value = quiz.title || 'Quiz generato con AI';
+    document.getElementById('quiz-emoji-input').value = quiz.emoji || '🤖';
+    currentQuestions = (quiz.questions || []).map((q, idx) => ({
+        text: q.text || '',
+        emoji: q.emoji || EDITOR_EMOJIS[idx % EDITOR_EMOJIS.length],
+        options: Array.isArray(q.options) ? q.options.slice(0, 4) : ['', '', '', ''],
+        answer: Number.isInteger(q.answer) ? q.answer : 0,
+        feedback: q.feedback || ''
+    }));
+    if (currentQuestions.length === 0) {
+        currentQuestions = [emptyQuestion()];
+    }
+    renderQuestions();
+}
+
+async function generateQuizWithAi() {
+    const msgEl = document.getElementById('ai-generation-msg');
+    const topic = document.getElementById('ai-topic-input').value.trim();
+    const fileInput = document.getElementById('ai-file-input');
+    const numberOfQuestions = document.getElementById('ai-number-input').value;
+    const difficulty = document.getElementById('ai-difficulty-input').value;
+    const tone = document.getElementById('ai-tone-input').value;
+
+    if (!topic && (!fileInput.files || fileInput.files.length === 0)) {
+        msgEl.textContent = 'Inserisci un argomento o carica un file.';
+        msgEl.style.display = 'block';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('topic', topic || 'Usa solo il documento allegato come fonte principale.');
+    formData.append('numberOfQuestions', numberOfQuestions);
+    formData.append('difficulty', difficulty);
+    formData.append('tone', tone);
+    if (fileInput.files && fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+    }
+
+    msgEl.style.display = 'none';
+    showLoading('Generazione quiz con AI in corso...');
+
+    try {
+        const res = await fetch('/api/quizzes/generate', {
+            method: 'POST',
+            headers: {
+                [CSRF_HEADER]: CSRF_TOKEN
+            },
+            body: formData
+        });
+
+        const payload = await res.json();
+        if (!res.ok) {
+            throw new Error(payload.message || 'Errore durante la generazione AI');
+        }
+
+        applyGeneratedQuiz(payload);
+        hideLoading();
+        showToast('Quiz generato! Controlla e salva.');
+    } catch (e) {
+        hideLoading();
+        msgEl.textContent = 'Errore AI: ' + e.message;
+        msgEl.style.display = 'block';
+    }
+}

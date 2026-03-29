@@ -76,6 +76,97 @@ body { font-family: 'Nunito', sans-serif; background: var(--gray-bg); min-height
 }
 .input-field:focus { border-color: var(--green); }
 
+
+.ai-generator-card {
+    background: var(--white);
+    border: 1.5px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+.ai-grid { display: grid; gap: 10px; }
+.ai-textarea { min-height: 100px; resize: vertical; }
+
+.editor-mode-card {
+    background: var(--white);
+    border: 1.5px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+.editor-mode-card + .editor-mode-card { margin-top: 1rem; }
+.editor-mode-card-ai { margin-bottom: 0.75rem; border-color: #B8D8C8; background: linear-gradient(180deg, #F8FDFB 0%, #FFFFFF 100%); }
+.editor-mode-card-manual { border-color: #C8D5E3; background: linear-gradient(180deg, #F9FCFF 0%, #FFFFFF 100%); }
+.editor-mode-header { margin-bottom: 10px; }
+.editor-mode-subtitle { font-size: 13px; color: var(--text-light); font-weight: 600; line-height: 1.4; }
+.editor-mode-divider {
+    position: relative;
+    text-align: center;
+    margin: 0.25rem 0 0.9rem;
+}
+.editor-mode-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    border-top: 1.5px dashed var(--gray-border);
+    transform: translateY(-50%);
+}
+.editor-mode-divider span {
+    position: relative;
+    display: inline-block;
+    padding: 0 10px;
+    border-radius: 99px;
+    background: var(--gray-bg);
+    color: var(--gray-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+input[type="file"].input-field {
+    padding: 8px;
+}
+input[type="file"].input-field::file-selector-button {
+    border: 1.5px solid var(--gray-border);
+    background: var(--gray-bg);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+input[type="file"].input-field::file-selector-button:hover {
+    background: var(--green-light);
+    border-color: var(--green);
+    color: var(--green-text);
+}
+input[type="file"].input-field::-webkit-file-upload-button {
+    border: 1.5px solid var(--gray-border);
+    background: var(--gray-bg);
+    color: var(--text);
+    border-radius: 9px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+input[type="file"].input-field::-webkit-file-upload-button:hover {
+    background: var(--green-light);
+    border-color: var(--green);
+    color: var(--green-text);
+}
+
 /* ===== QUESTION CARDS ===== */
 .questions-list { display: grid; gap: 10px; margin-bottom: 1rem; }
 
