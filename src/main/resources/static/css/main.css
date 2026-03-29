@@ -76,6 +76,18 @@ body { font-family: 'Nunito', sans-serif; background: var(--gray-bg); min-height
 }
 .input-field:focus { border-color: var(--green); }
 
+
+.ai-generator-card {
+    background: var(--white);
+    border: 1.5px solid var(--gray-border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+.ai-grid { display: grid; gap: 10px; }
+.ai-textarea { min-height: 100px; resize: vertical; }
+
 /* ===== QUESTION CARDS ===== */
 .questions-list { display: grid; gap: 10px; margin-bottom: 1rem; }
 

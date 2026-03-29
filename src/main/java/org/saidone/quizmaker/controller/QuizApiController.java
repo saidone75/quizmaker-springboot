@@ -1,12 +1,16 @@
 package org.saidone.quizmaker.controller;
 
 import org.saidone.quizmaker.dto.QuizDto;
+import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.saidone.quizmaker.service.DocumentTextExtractorService;
+import org.saidone.quizmaker.service.OpenAiQuizGeneratorService;
 import org.saidone.quizmaker.service.QuizService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,6 +21,8 @@ import java.util.UUID;
 public class QuizApiController {
 
     private final QuizService quizService;
+    private final OpenAiQuizGeneratorService openAiQuizGeneratorService;
+    private final DocumentTextExtractorService documentTextExtractorService;
 
     // PUBLIC: students can read all quizzes
     @GetMapping
@@ -57,6 +63,15 @@ public class QuizApiController {
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.PublicationUpdateRequest request) {
         return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished()));
+    }
+
+    // PROTECTED: only teacher can generate using AI
+    @PostMapping(value = "/generate", consumes = {"multipart/form-data"})
+    public ResponseEntity<QuizDto.Request> generateWithAi(
+            @Valid @ModelAttribute QuizGenerationRequestDto request,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        String attachmentText = documentTextExtractorService.extractText(file);
+        return ResponseEntity.ok(openAiQuizGeneratorService.generateQuiz(request, attachmentText));
     }
 
 }

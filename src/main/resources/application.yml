@@ -15,6 +15,9 @@ app:
     username: ${ADMIN_USERNAME:alice}
     # Change this password before going to production!
     password: '${ADMIN_PASSWORD:{bcrypt}$2a$12$QMyzlOhi1dYIbX3JxQPox.OE/BK0yFs66XoqCOYe8gbIZt7j3entS}'
+  openai:
+    api-key: ${OPENAI_API_KEY:}
+    model: ${OPENAI_MODEL:gpt-5.4-mini}
 
 logging:
   level:
