@@ -22,4 +22,6 @@ spring:
       enabled: false
   liquibase:
     enabled: true
-
+logging:
+  level:
+    root: INFO

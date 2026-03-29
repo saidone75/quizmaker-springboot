@@ -380,3 +380,83 @@ body { font-family: 'Nunito', sans-serif; background: var(--gray-bg); min-height
     .quiz-question { font-size: 17px; }
     .result-score { font-size: 42px; }
 }
+
+@media (max-width: 768px) {
+    .topbar {
+        flex-wrap: wrap;
+        padding: 10px 14px;
+        gap: 10px;
+    }
+
+    .topbar-title {
+        width: 100%;
+        font-size: 17px;
+    }
+
+    .teacher-body {
+        padding: 1rem 0.75rem 1.25rem;
+    }
+
+    .manage-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 0.9rem 1rem;
+    }
+
+    .manage-card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .quiz-card,
+    .result-card,
+    .login-card {
+        padding: 1.5rem 1.1rem;
+        border-radius: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .topbar-back {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .topbar-badge {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+
+    .student-inner h2,
+    .login-title {
+        font-size: 24px;
+    }
+
+    .quiz-opt {
+        font-size: 15px;
+        padding: 12px;
+        gap: 10px;
+    }
+
+    .quiz-opt .ql {
+        width: 28px;
+        height: 28px;
+    }
+
+    .manage-card {
+        gap: 10px;
+    }
+
+    .manage-card-title {
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .home-buttons .btn-hero {
+        padding: 14px 16px;
+    }
+
+    .btn-hero .btn-label {
+        font-size: 17px;
+    }
+}

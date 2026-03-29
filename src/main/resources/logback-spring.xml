@@ -1,7 +1,9 @@
 <configuration>
 
     <property name="CONSOLE_LOG_PATTERN"
-              value="%d{HH:mm:ss.SSS} %clr(${LOG_LEVEL_PATTERN:-%5p}) %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+              value="%d{HH:mm:ss.SSS} %clr(${LOG_LEVEL_PATTERN:-%5p}) [%thread] %logger{40} - %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{40} - %msg%n"/>
     <property name="LOGS" value="./log"/>
 
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
@@ -15,18 +17,12 @@
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOGS}/quiz.log</file>
         <append>true</append>
-        <!-- set immediateFlush to false for much higher logging throughput -->
         <immediateFlush>true</immediateFlush>
-        <!-- encoders are assigned the type
-             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
         <encoder>
-            <pattern>%d %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>${LOGS}/archived/quiz-%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+            <fileNamePattern>${LOGS}/archived/quiz-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>60</maxHistory>
             <totalSizeCap>20GB</totalSizeCap>
@@ -34,17 +30,13 @@
     </appender>
 
     <springProfile name="dev">
-        <logger name="org.saidone.quizmaker" additivity="false" level="debug">
-            <appender-ref ref="CONSOLE"/>
-        </logger>
-
-        <root level="debug">
+        <root level="${LOGGING_LEVEL_ROOT:-INFO}">
             <appender-ref ref="CONSOLE"/>
         </root>
     </springProfile>
 
     <springProfile name="prod">
-        <root level="info">
+        <root level="${LOGGING_LEVEL_ROOT:-INFO}">
             <appender-ref ref="FILE"/>
         </root>
     </springProfile>

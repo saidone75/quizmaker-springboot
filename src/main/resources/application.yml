@@ -18,5 +18,6 @@ app:
 
 logging:
   level:
-    com.quizmaker: DEBUG
+    root: INFO
+    org.saidone.quizmaker: DEBUG
     org.springframework.security: DEBUG
