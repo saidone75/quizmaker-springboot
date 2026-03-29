@@ -23,7 +23,7 @@ public class DocumentTextExtractorService {
             return "";
         }
 
-        String filename = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
+        val filename = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase(Locale.ROOT);
         try {
             if (filename.endsWith(".pdf")) {
                 return extractFromPdf(file.getBytes());
@@ -33,8 +33,8 @@ public class DocumentTextExtractorService {
             }
             return new String(file.getBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("Errore durante l'estrazione del testo dal file: {}", filename, e);
-            throw new IllegalArgumentException("Impossibile leggere il file caricato. Usa un PDF, DOCX o testo semplice.");
+            log.error("Error during text extraction from: {}", filename, e);
+            throw new IllegalArgumentException("Unable to read file. Please use a PDF, DOCX or plain text.");
         }
     }
 
