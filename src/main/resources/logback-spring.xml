@@ -38,16 +38,12 @@
             <appender-ref ref="CONSOLE"/>
         </logger>
 
-        <root level="info">
+        <root level="debug">
             <appender-ref ref="CONSOLE"/>
         </root>
     </springProfile>
 
     <springProfile name="prod">
-        <logger name="org.saidone.quizmaker" additivity="false" level="debug">
-            <appender-ref ref="FILE"/>
-        </logger>
-
         <root level="info">
             <appender-ref ref="FILE"/>
         </root>
