@@ -1,10 +1,37 @@
 const LETTERS = ['A', 'B', 'C', 'D'];
 let playState = { quiz: null, current: 0, score: 0, wrong: 0, answered: false, answers: [] };
+let studentAlertTimer = null;
+
+function showStudentAlert(title, message) {
+    const alertBox = document.getElementById('student-alert');
+    if (!alertBox) {
+        alert((title ? title + ': ' : '') + (message || ''));
+        return;
+    }
+
+    const titleEl = alertBox.querySelector('.student-alert-title');
+    const messageEl = alertBox.querySelector('.student-alert-text');
+    titleEl.textContent = title || 'Quiz già completato';
+    messageEl.textContent = message || 'Hai già finito questo quiz. Chiedi alla maestra di sbloccarlo.';
+
+    alertBox.hidden = false;
+    alertBox.classList.add('show');
+
+    if (studentAlertTimer) {
+        clearTimeout(studentAlertTimer);
+    }
+    studentAlertTimer = setTimeout(function() {
+        alertBox.classList.remove('show');
+        studentAlertTimer = setTimeout(function() {
+            alertBox.hidden = true;
+        }, 220);
+    }, 3200);
+}
 
 function startQuizFromCard(el) {
     const id = el.dataset.id;
     if ((window.LOCKED_QUIZ_IDS && window.LOCKED_QUIZ_IDS.has(String(id))) || el.dataset.locked === 'true') {
-        alert('Hai già completato questo quiz. Chiedi alla maestra di sbloccarlo.');
+        showStudentAlert();
         return;
     }
 
@@ -39,7 +66,7 @@ function startQuizFromCard(el) {
             });
         })
         .catch(function() {
-            alert('Errore nel caricamento del quiz');
+            showStudentAlert('Errore nel caricamento del quiz', 'Riprova tra poco o avvisa la maestra.');
         });
 }
 
@@ -53,19 +80,6 @@ function markQuizCardAsLocked(quizId) {
     quizCard.dataset.locked = 'true';
     quizCard.classList.add('is-locked');
 
-    let statusLabel = quizCard.querySelector('.quiz-pick-status');
-    if (!statusLabel) {
-        statusLabel = document.createElement('span');
-        statusLabel.className = 'quiz-pick-status';
-        const details = quizCard.querySelector('span');
-        const questionCount = details ? details.querySelector('.quiz-pick-count') : null;
-        if (questionCount) {
-            questionCount.insertAdjacentElement('afterend', statusLabel);
-        } else if (details) {
-            details.appendChild(statusLabel);
-        }
-    }
-    statusLabel.textContent = '🔒 Hai già completato questo quiz';
 }
 
 function refreshLockedQuizCards() {
@@ -193,7 +207,7 @@ async function showResult() {
         }
         markQuizCardAsLocked(quiz.id);
     } catch (e) {
-        alert('Errore: ' + e.message);
+        showStudentAlert('Errore nel salvataggio', e.message);
         goTo('student');
         return;
     }

@@ -36,7 +36,6 @@
                 <span>
                     <span class="quiz-pick-name" th:text="${quiz.title}">Titolo</span>
                     <span class="quiz-pick-count" th:text="${quiz.questionsCount} + ' domande'">domande</span>
-                    <span class="quiz-pick-status" th:if="${lockedQuizIds.contains(quiz.id)}">🔒 Hai già completato questo quiz</span>
                 </span>
             </div>
         </div>
@@ -77,6 +76,14 @@
         <div class="result-btns">
             <button class="btn-retry btn-retry-home" onclick="goTo('student')">🎒 Torna ai quiz</button>
         </div>
+    </div>
+</div>
+
+
+<div id="student-alert" class="student-alert" role="alert" aria-live="polite" hidden>
+    <div>
+        <p class="student-alert-title">Quiz già completato</p>
+        <p class="student-alert-text">Hai già finito questo quiz. Chiedi alla maestra di sbloccarlo.</p>
     </div>
 </div>
 

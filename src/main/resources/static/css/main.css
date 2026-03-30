@@ -270,7 +270,29 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .quiz-pick-name { font-size: 16px; font-weight: 800; color: var(--text); display: block; }
 .quiz-pick-item.is-locked .quiz-pick-name { color: #66645F; }
 .quiz-pick-count { font-size: 13px; color: var(--gray-muted); font-weight: 600; display: block; }
-.quiz-pick-status { font-size: 13px; color: #6E6A63; font-weight: 800; display: block; margin-top: 4px; }
+.student-alert {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 120;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 360px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1.5px solid #DCC8A3;
+    background: linear-gradient(180deg, #FFF7E8 0%, #FFFDF8 100%);
+    box-shadow: var(--shadow-lg);
+    color: var(--amber-text);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.student-alert.show { opacity: 1; transform: translateY(0); }
+.student-alert-title { font-size: 14px; font-weight: 900; line-height: 1.2; margin-bottom: 2px; }
+.student-alert-text { font-size: 13px; font-weight: 700; line-height: 1.35; }
 .no-quizzes { font-size: 15px; color: var(--gray-muted); padding: 2rem; }
 
 /* ===== QUIZ PLAY ===== */
