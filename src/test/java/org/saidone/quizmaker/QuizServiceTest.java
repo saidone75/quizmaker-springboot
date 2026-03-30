@@ -5,6 +5,7 @@ import org.saidone.quizmaker.mapper.QuestionMapper;
 import org.saidone.quizmaker.mapper.QuizMapper;
 import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.repository.QuizRepository;
+import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.entity.Quiz;
@@ -29,6 +30,9 @@ class QuizServiceTest {
 
     @Mock
     private QuizRepository quizRepository;
+
+    @Mock
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Mock
     private QuizMapper quizMapper;
@@ -154,6 +158,7 @@ class QuizServiceTest {
     void delete_callsRepository() {
         when(quizRepository.existsById(sampleQuiz.getId())).thenReturn(true);
         quizService.delete(sampleQuiz.getId());
+        verify(quizSubmissionRepository, times(1)).deleteAllByQuizId(sampleQuiz.getId());
         verify(quizRepository, times(1)).deleteById(sampleQuiz.getId());
     }
 

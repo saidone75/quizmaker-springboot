@@ -5,6 +5,7 @@ import org.saidone.quizmaker.entity.Quiz;
 import org.saidone.quizmaker.mapper.QuestionMapper;
 import org.saidone.quizmaker.mapper.QuizMapper;
 import org.saidone.quizmaker.repository.QuizRepository;
+import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class QuizService {
 
     private final QuizRepository quizRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizMapper quizMapper;
     private final QuestionMapper questionMapper;
 
@@ -86,6 +88,7 @@ public class QuizService {
         if (!quizRepository.existsById(id)) {
             throw new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id));
         }
+        quizSubmissionRepository.deleteAllByQuizId(id);
         quizRepository.deleteById(id);
         log.info("Quiz deleted: {}", id);
     }
