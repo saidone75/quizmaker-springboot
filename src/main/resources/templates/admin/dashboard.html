@@ -94,16 +94,17 @@
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${student.fullName}">Mario Rossi</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABC123</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7">
+                        <div class="student-actions">
                         <button class="btn-icon-action btn-edit-quiz"
                                 title="Rigenera parola chiave"
                                 th:data-id="${student.id}"
-                                th:data-name="${student.fullName}"
-                                onclick="regenerateStudentPassword(this.dataset.id, this.dataset.name)">🔐</button>
+                                onclick="regenerateStudentPassword(this.dataset.id)">🔐</button>
                         <button class="btn-icon-action btn-delete-quiz"
                                 title="Elimina studente"
                                 th:data-id="${student.id}"
                                 th:data-name="${student.fullName}"
                                 onclick="deleteStudent(this.dataset.id, this.dataset.name)">🗑</button>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
@@ -262,8 +263,7 @@
         }
     }
 
-    async function regenerateStudentPassword(studentId, studentName) {
-        if (!confirm('Rigenerare la parola chiave per "' + studentName + '"?')) return;
+    async function regenerateStudentPassword(studentId) {
         showLoading('Rigenerazione password...');
         try {
             const res = await fetch('/api/students/' + studentId + '/regenerate-password', {

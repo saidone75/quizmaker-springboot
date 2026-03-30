@@ -404,6 +404,11 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .btn-edit-quiz:hover { background: #B5D4F4; }
 .btn-delete-quiz { background: var(--red-light); color: var(--red); }
 .btn-delete-quiz:hover { background: #F7C1C1; }
+.student-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
 .btn-publish-toggle {
     background: var(--green-light);
     color: var(--green-text);
