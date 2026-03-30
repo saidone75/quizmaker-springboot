@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class StudentService {
 
-    private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final StudentRepository studentRepository;

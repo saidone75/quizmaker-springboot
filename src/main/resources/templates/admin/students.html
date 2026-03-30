@@ -28,7 +28,7 @@
                 <input id="new-student-name" class="input-field" style="max-width:320px" placeholder="Nome e cognome studente" required>
                 <button class="quiz-next" style="display:block;padding:10px 18px;">Aggiungi studente</button>
             </form>
-            <p style="margin-top:8px;color:#64748b">Verrà generata automaticamente una parola chiave univoca di 6 caratteri.</p>
+            <p style="margin-top:8px;color:#64748b">Verrà generata automaticamente una parola chiave univoca di 4 caratteri.</p>
         </div>
 
         <div style="overflow:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;" th:if="${!students.isEmpty()}">
@@ -43,7 +43,7 @@
                 <tbody>
                 <tr th:each="student : ${students}">
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${student.fullName}">Mario Rossi</td>
-                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABC123</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABCD</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7">
                         <div class="student-actions">
                             <button class="btn-regenerate-password"

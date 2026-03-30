@@ -12,7 +12,7 @@
     <div class="quiz-card" style="max-width:420px;width:92%;text-align:center;">
         <div style="font-size:52px;margin-bottom:12px">🔐</div>
         <h2>Accesso studenti</h2>
-        <p>Inserisci la parola chiave di 6 caratteri assegnata dalla maestra.</p>
+        <p>Inserisci la parola chiave di 4 caratteri assegnata dalla maestra.</p>
         <form th:action="@{/student/login}" method="post" style="display:grid;gap:12px;margin-top:14px;">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input class="input-field" type="text" name="keyword" maxlength="4" minlength="4" required
