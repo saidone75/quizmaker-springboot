@@ -15,4 +15,6 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     List<QuizSubmission> findByStudent(Student student);
 
     List<QuizSubmission> findAllByOrderBySubmittedAtDesc();
+
+    void deleteAllByStudentId(UUID studentId);
 }

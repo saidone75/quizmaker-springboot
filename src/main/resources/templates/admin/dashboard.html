@@ -86,12 +86,20 @@
                 <tr style="background:#f8fafc">
                     <th style="text-align:left;padding:10px 12px;">Studente</th>
                     <th style="text-align:left;padding:10px 12px;">Parola chiave</th>
+                    <th style="text-align:left;padding:10px 12px;">Azione</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="student : ${students}">
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${student.fullName}">Mario Rossi</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABC123</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7">
+                        <button class="btn-icon-action btn-delete-quiz"
+                                title="Elimina studente"
+                                th:data-id="${student.id}"
+                                th:data-name="${student.fullName}"
+                                onclick="deleteStudent(this.dataset.id, this.dataset.name)">🗑</button>
+                    </td>
                 </tr>
                 </tbody>
             </table>
@@ -110,7 +118,6 @@
                     <th style="text-align:left;padding:10px 12px;">Studente</th>
                     <th style="text-align:left;padding:10px 12px;">Quiz</th>
                     <th style="text-align:left;padding:10px 12px;">Punteggio</th>
-                    <th style="text-align:left;padding:10px 12px;">Stato</th>
                     <th style="text-align:left;padding:10px 12px;">Azione</th>
                 </tr>
                 </thead>
@@ -122,15 +129,11 @@
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${result.quizTitle}">Quiz dinosauri</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7"
                         th:text="${result.score + '/' + result.totalQuestions}">8/10</td>
-                    <td style="padding:10px 12px;border-top:1px solid #eef2f7"
-                        th:text="${result.unlocked} ? '🔓 Sbloccato' : '🔒 Bloccato'">🔒 Bloccato</td>
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7">
-                        <button th:if="${!result.unlocked}"
-                                class="btn-icon-action btn-edit-quiz"
+                        <button class="btn-icon-action btn-edit-quiz"
                                 th:data-student-id="${result.studentId}"
                                 th:data-quiz-id="${result.quizId}"
                                 onclick="unlockSubmission(this.dataset.studentId, this.dataset.quizId)">Sblocca</button>
-                        <span th:if="${result.unlocked}" style="color:#64748b">—</span>
                     </td>
                 </tr>
                 </tbody>
@@ -226,6 +229,27 @@
             if (!res.ok) throw new Error('Errore server');
             hideLoading();
             showToast('Quiz sbloccato per lo studente');
+            setTimeout(() => location.reload(), 700);
+        } catch (e) {
+            hideLoading();
+            alert('Errore: ' + e.message);
+        }
+    }
+
+    async function deleteStudent(studentId, studentName) {
+        if (!confirm('Vuoi eliminare lo studente "' + studentName + '"?')) return;
+        showLoading('Eliminazione studente...');
+        try {
+            const res = await fetch('/api/students/' + studentId, {
+                method: 'DELETE',
+                headers: { [CSRF_HEADER]: CSRF_TOKEN }
+            });
+            if (!res.ok) {
+                const payload = await res.json();
+                throw new Error(payload.message || 'Errore server');
+            }
+            hideLoading();
+            showToast('Studente eliminato');
             setTimeout(() => location.reload(), 700);
         } catch (e) {
             hideLoading();

@@ -3,6 +3,7 @@ package org.saidone.quizmaker.service;
 import lombok.RequiredArgsConstructor;
 import org.saidone.quizmaker.dto.StudentDto;
 import org.saidone.quizmaker.entity.Student;
+import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.repository.StudentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ public class StudentService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final StudentRepository studentRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
 
     @Transactional(readOnly = true)
     public List<StudentDto.Response> findAll() {
@@ -44,6 +46,15 @@ public class StudentService {
 
         Student saved = studentRepository.save(student);
         return new StudentDto.Response(saved.getId(), saved.getFullName(), saved.getLoginKeyword());
+    }
+
+    @Transactional
+    public void delete(UUID studentId) {
+        if (!studentRepository.existsById(studentId)) {
+            throw new IllegalArgumentException("Studente non trovato: " + studentId);
+        }
+        quizSubmissionRepository.deleteAllByStudentId(studentId);
+        studentRepository.deleteById(studentId);
     }
 
     private String generateUniqueKeyword() {

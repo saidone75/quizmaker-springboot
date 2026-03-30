@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/students")
@@ -25,5 +26,11 @@ public class StudentApiController {
     @PostMapping
     public ResponseEntity<StudentDto.Response> create(@Valid @RequestBody StudentDto.CreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(studentService.create(request.getFullName()));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+        studentService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
