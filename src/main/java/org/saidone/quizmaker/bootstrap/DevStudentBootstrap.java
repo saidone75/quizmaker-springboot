@@ -26,7 +26,7 @@ public class DevStudentBootstrap implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        for (var i = 0; i < 2; i++) {
+        for (var i = 0; i < 10; i++) {
             val student = Student.builder()
                     .id(UUID.randomUUID())
                     .fullName(String.format("%s %s", FAKER.name().firstName(), FAKER.name().lastName()))
