@@ -16,8 +16,7 @@
         <form th:action="@{/student/login}" method="post" style="display:grid;gap:12px;margin-top:14px;">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <input class="input-field" type="text" name="keyword" maxlength="4" minlength="4" required
-                   style="text-align:center;font-size:1.3rem;letter-spacing:0.18rem;text-transform:uppercase"
-                   placeholder="A1B2"/>
+                   style="text-align:center;font-size:1.3rem;letter-spacing:0.18rem;text-transform:uppercase"/>
             <button class="quiz-next" style="display:block">Entra</button>
         </form>
         <p th:if="${loginError}" th:text="${loginError}" style="margin-top:12px;color:#dc2626;font-weight:700"></p>

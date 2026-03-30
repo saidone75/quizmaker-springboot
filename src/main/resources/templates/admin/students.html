@@ -68,6 +68,18 @@
     </div>
 </div>
 
+<div id="delete-student-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+        <span class="modal-emoji">🗑️</span>
+        <p class="modal-title">Eliminare lo studente?</p>
+        <p class="modal-sub" id="delete-student-modal-sub"></p>
+        <div class="modal-btns">
+            <button class="btn-modal btn-modal-cancel" onclick="closeDeleteStudentModal()">Annulla</button>
+            <button class="btn-modal btn-modal-confirm" id="delete-student-confirm-btn">Elimina</button>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/js/main.js}"></script>
 <script th:inline="javascript">
     const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
@@ -100,8 +112,19 @@
         }
     }
 
-    async function deleteStudent(studentId, studentName) {
-        if (!confirm('Vuoi eliminare lo studente "' + studentName + '"?')) return;
+    function deleteStudent(studentId, studentName) {
+        document.getElementById('delete-student-modal-sub').textContent =
+            'Stai per eliminare "' + studentName + '". Questa azione non può essere annullata.';
+        document.getElementById('delete-student-confirm-btn').onclick = () => doDeleteStudent(studentId);
+        document.getElementById('delete-student-modal').style.display = 'flex';
+    }
+
+    function closeDeleteStudentModal() {
+        document.getElementById('delete-student-modal').style.display = 'none';
+    }
+
+    async function doDeleteStudent(studentId) {
+        closeDeleteStudentModal();
         showLoading('Eliminazione studente...');
         try {
             const res = await fetch('/api/students/' + studentId, {
