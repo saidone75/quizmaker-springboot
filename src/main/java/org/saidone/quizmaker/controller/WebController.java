@@ -81,9 +81,19 @@ public class WebController {
     @GetMapping("/admin")
     public String adminDashboard(Model model) {
         model.addAttribute("quizzes", quizService.findAllForAdmin());
-        model.addAttribute("results", quizSubmissionService.findAllResults());
-        model.addAttribute("students", studentService.findAll());
         return "admin/dashboard";
+    }
+
+    @GetMapping("/admin/students")
+    public String adminStudents(Model model) {
+        model.addAttribute("students", studentService.findAll());
+        return "admin/students";
+    }
+
+    @GetMapping("/admin/results")
+    public String adminResults(Model model) {
+        model.addAttribute("results", quizSubmissionService.findAllResults());
+        return "admin/results";
     }
 
     @GetMapping("/admin/quiz/new")

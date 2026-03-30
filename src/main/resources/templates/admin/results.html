@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risultati quiz — QuizMaker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+
+<div id="screen-admin" class="screen active" style="background:var(--gray-bg);min-height:100vh;">
+    <div class="topbar">
+        <span class="topbar-title">🧾 Risultati quiz</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+            <span class="topbar-badge" sec:authentication="name">admin</span>
+            <form th:action="@{/admin/logout}" method="post" style="margin:0">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="topbar-back">Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="teacher-body">
+        <div style="overflow:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;" th:if="${!results.isEmpty()}">
+            <table style="width:100%;border-collapse:collapse;min-width:860px;">
+                <thead>
+                <tr style="background:#f8fafc">
+                    <th style="text-align:left;padding:10px 12px;">Data</th>
+                    <th style="text-align:left;padding:10px 12px;">Studente</th>
+                    <th style="text-align:left;padding:10px 12px;">Quiz</th>
+                    <th style="text-align:left;padding:10px 12px;">Punteggio</th>
+                    <th style="text-align:left;padding:10px 12px;">Azione</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="result : ${results}">
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7"
+                        th:text="${#temporals.format(result.submittedAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${result.studentName}">Mario Rossi</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${result.quizTitle}">Quiz dinosauri</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7"
+                        th:text="${result.score + '/' + result.totalQuestions}">8/10</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7">
+                        <button class="btn-icon-action btn-edit-quiz"
+                                th:data-student-id="${result.studentId}"
+                                th:data-quiz-id="${result.quizId}"
+                                onclick="unlockSubmission(this.dataset.studentId, this.dataset.quizId)">Sblocca</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="manage-empty" th:if="${results.isEmpty()}">
+            <span>🧾</span>
+            Nessun risultato ancora salvato.
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+<script th:inline="javascript">
+    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
+
+    async function unlockSubmission(studentId, quizId) {
+        showLoading('Sblocco in corso...');
+        try {
+            const res = await fetch('/api/quizzes/' + quizId + '/unlock/' + studentId, {
+                method: 'POST',
+                headers: { [CSRF_HEADER]: CSRF_TOKEN }
+            });
+            if (!res.ok) throw new Error('Errore server');
+            hideLoading();
+            showToast('Quiz sbloccato per lo studente');
+            setTimeout(() => location.reload(), 700);
+        } catch (e) {
+            hideLoading();
+            alert('Errore: ' + e.message);
+        }
+    }
+</script>
+</body>
+</html>
