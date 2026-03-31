@@ -39,8 +39,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        log.error("Unhandled error", ex);
-        return errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error");
+        log.error("Errore non gestito", ex);
+        return errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Errore interno del server");
     }
 
     private ResponseEntity<Map<String, Object>> errorResponse(HttpStatus status, String message) {
