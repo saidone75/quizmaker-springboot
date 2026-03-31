@@ -45,6 +45,24 @@ mvn package -DskipTests
 java -jar target/quizmaker-0.0.5.jar --spring.profiles.active=prod
 ```
 
+### Backup schedulato database (solo SQLite/profilo prod)
+
+Il job usa Spring Scheduler e crea copie di backup nella cartella `./backups` (configurabile).
+
+```bash
+# Abilita/disabilita backup (in prod è true di default)
+export DB_BACKUP_ENABLED=true
+
+# Cron Spring (default: ogni giorno alle 02:00)
+export DB_BACKUP_CRON="0 0 2 * * *"
+
+# Directory backup
+export DB_BACKUP_DIRECTORY="./backups"
+
+# Quanti file mantenere
+export DB_BACKUP_RETENTION_COUNT=14
+```
+
 ## API REST
 
 | Metodo | URL                 | Auth | Descrizione         |
@@ -62,8 +80,6 @@ java -jar target/quizmaker-0.0.5.jar --spring.profiles.active=prod
 | `/`                     | Pubblico    | Pagina alunni    |
 | `/admin/login`          | Pubblico    | Login insegnante |
 | `/admin`                | Autenticato | Dashboard admin  |
-| `/admin/quiz/new`       | Autenticato | Crea nuovo quiz  |
-| `/admin/quiz/{id}/edit` | Autenticato | Modifica quiz    |
 
 ## Liquibase
 
