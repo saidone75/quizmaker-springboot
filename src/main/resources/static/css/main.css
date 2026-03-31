@@ -733,3 +733,46 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     background: var(--blue-light);
     color: var(--blue-dark);
 }
+
+.about-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.about-card {
+    background: var(--white);
+    border: 1.5px solid var(--gray-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px;
+}
+
+.about-card h2 {
+    margin-bottom: 10px;
+    font-size: 17px;
+    color: var(--green-dark);
+}
+
+.about-list {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.admin-about-footer {
+    margin-top: 18px;
+    text-align: center;
+}
+
+.admin-about-link {
+    font-size: 12px;
+    color: var(--gray-muted);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.admin-about-link:hover {
+    text-decoration: underline;
+}

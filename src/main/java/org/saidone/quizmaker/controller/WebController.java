@@ -9,6 +9,8 @@ import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
+import org.springframework.boot.SpringBootVersion;
+import org.springframework.core.SpringVersion;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -122,6 +124,33 @@ public class WebController {
     public String editQuiz(@PathVariable UUID id, Model model) {
         model.addAttribute("quiz", quizService.findById(id));
         return "admin/quiz-editor";
+    }
+
+    @GetMapping("/about")
+    public String aboutPage(Model model) {
+        Runtime runtime = Runtime.getRuntime();
+
+        model.addAttribute("appVersion", getAppVersion());
+        model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
+        model.addAttribute("springFrameworkVersion", SpringVersion.getVersion());
+        model.addAttribute("javaVersion", System.getProperty("java.version"));
+        model.addAttribute("javaVendor", System.getProperty("java.vendor"));
+        model.addAttribute("jvmName", System.getProperty("java.vm.name"));
+        model.addAttribute("jvmVersion", System.getProperty("java.vm.version"));
+        model.addAttribute("osName", System.getProperty("os.name"));
+        model.addAttribute("osVersion", System.getProperty("os.version"));
+        model.addAttribute("osArch", System.getProperty("os.arch"));
+        model.addAttribute("availableProcessors", runtime.availableProcessors());
+        model.addAttribute("heapMaxMb", runtime.maxMemory() / (1024 * 1024));
+        model.addAttribute("heapTotalMb", runtime.totalMemory() / (1024 * 1024));
+        model.addAttribute("heapFreeMb", runtime.freeMemory() / (1024 * 1024));
+        return "about";
+    }
+
+    private String getAppVersion() {
+        Package appPackage = getClass().getPackage();
+        String implementationVersion = appPackage != null ? appPackage.getImplementationVersion() : null;
+        return implementationVersion != null ? implementationVersion : "0.0.6 (dev)";
     }
 
     private record QuizResultGroup(UUID quizId, String quizTitle, List<QuizSubmissionService.ResultRow> results) {
