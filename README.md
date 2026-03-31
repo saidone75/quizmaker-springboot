@@ -32,19 +32,17 @@ Per generare un nuovo hash bcrypt:
 # Poi aggiorna app.admin.password in application.yml
 ```
 
-## Avvio in produzione (Supabase)
+## Avvio in produzione (SQLite)
 
 ```bash
-# Imposta le variabili d'ambiente
-export SUPABASE_DB_URL=jdbc:postgresql://db.XXXXX.supabase.co:5432/postgres
-export SUPABASE_DB_USERNAME=postgres
-export SUPABASE_DB_PASSWORD=la-tua-password
+# (Opzionale) personalizza il percorso del file SQLite
+export PROD_SQLITE_DB_URL=jdbc:sqlite:/opt/quizmaker/data/quizmaker-prod.db
 export ADMIN_USERNAME=admin
 export ADMIN_PASSWORD="{bcrypt}\$2a\$10\$..."
 
 # Build e avvio
 mvn package -DskipTests
-java -jar target/quizmaker-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+java -jar target/quizmaker-0.0.5.jar --spring.profiles.active=prod
 ```
 
 ## API REST
@@ -89,13 +87,6 @@ mvn test
 
 ## Login studenti
 
-Gli studenti sono salvati nella tabella `students` e accedono da `/` con una parola chiave di 6 caratteri (`login_keyword`).
+Gli studenti sono salvati nella tabella `students` e accedono da `/` con una parola chiave di 4 caratteri (`login_keyword`).
 Dopo la consegna, il quiz viene bloccato per quello studente; la maestra può sbloccarlo dalla dashboard admin nella tabella risultati.
-La dashboard admin include anche la gestione studenti (creazione nome + generazione automatica codice univoco da 6 caratteri).
-
-In sviluppo sono inseriti due studenti demo:
-
-| Nome | Parola chiave |
-|------|---------------|
-| Mario Rossi | `A1B2C3` |
-| Lucia Bianchi | `D4E5F6` |
+La dashboard admin include anche la gestione studenti (creazione nome + generazione automatica codice univoco da 4 caratteri).
