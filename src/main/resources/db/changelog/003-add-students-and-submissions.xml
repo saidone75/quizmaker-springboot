@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="004" author="quizmaker">
+    <changeSet id="003" author="quizmaker">
         <comment>Create students and quiz submissions tables</comment>
 
         <createTable tableName="students">

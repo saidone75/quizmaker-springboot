@@ -25,6 +25,7 @@ public class QuizSubmission {
 
     @Id
     @Column(name = "id", nullable = false)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

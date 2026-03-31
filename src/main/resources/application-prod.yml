@@ -15,9 +15,10 @@ spring:
     show-sql: false
   h2:
     console:
-      enabled: false
+      enabled: true
   liquibase:
     enabled: true
 logging:
   level:
     root: INFO
+    org.hibernate.SQL: DEBUG

@@ -25,6 +25,7 @@ public class Quiz {
 
     @Id
     @Column(name = "id", nullable = false)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
     private UUID id;
 
     @NotBlank(message = "Il titolo è obbligatorio")
