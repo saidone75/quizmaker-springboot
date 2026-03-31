@@ -13,7 +13,7 @@
 
     <groupId>com.quizmaker</groupId>
     <artifactId>quizmaker</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9</version>
     <name>quizmaker</name>
     <description>QuizMaker - App per quiz scolastici</description>
 
