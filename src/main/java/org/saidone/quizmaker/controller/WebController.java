@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
 import org.springframework.boot.SpringBootVersion;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,6 +34,7 @@ public class WebController {
     private final StudentSessionService studentSessionService;
     private final StudentService studentService;
     private final ObjectMapper objectMapper;
+    private final BuildProperties buildProperties;
 
     @GetMapping("/")
     public String studentPage(HttpSession session, Model model) {
@@ -128,8 +131,7 @@ public class WebController {
 
     @GetMapping("/about")
     public String aboutPage(Model model) {
-        Runtime runtime = Runtime.getRuntime();
-
+        val runtime = Runtime.getRuntime();
         model.addAttribute("appVersion", getAppVersion());
         model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
         model.addAttribute("springFrameworkVersion", SpringVersion.getVersion());
@@ -148,9 +150,7 @@ public class WebController {
     }
 
     private String getAppVersion() {
-        Package appPackage = getClass().getPackage();
-        String implementationVersion = appPackage != null ? appPackage.getImplementationVersion() : null;
-        return implementationVersion != null ? implementationVersion : "0.0.6 (dev)";
+        return buildProperties != null ? buildProperties.getVersion() : Strings.EMPTY;
     }
 
     private record QuizResultGroup(UUID quizId, String quizTitle, List<QuizSubmissionService.ResultRow> results) {

@@ -41,7 +41,7 @@ public class QuizSubmissionService {
 
         val existingSubmission = quizSubmissionRepository.findByStudentIdAndQuizId(student.getId(), quizId);
         if (existingSubmission.isPresent() && !Boolean.TRUE.equals(existingSubmission.get().getUnlocked())) {
-            throw new IllegalStateException("Quiz già completato. L'insegnante deve sbloccarlo.");
+            throw new IllegalStateException("Quiz già completato. La maestra deve sbloccarlo.");
         }
 
         int score = calculateScore(quiz, answers);
