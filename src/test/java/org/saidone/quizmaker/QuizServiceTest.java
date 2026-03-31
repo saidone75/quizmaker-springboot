@@ -70,7 +70,7 @@ class QuizServiceTest {
                 .build();
         when(quizRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        List<QuizDto.Response> result = quizService.findAllForAdmin();
+        val result = quizService.findAllForAdmin();
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTitle()).isEqualTo("Quiz di Test");
     }
@@ -87,7 +87,7 @@ class QuizServiceTest {
         when(quizRepository.findByPublishedTrueOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        List<QuizDto.Response> result = quizService.findPublished();
+        val result = quizService.findPublished();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getPublished()).isTrue();
@@ -103,7 +103,7 @@ class QuizServiceTest {
                 .build();
         when(quizRepository.findById(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        QuizDto.Response result = quizService.findById(sampleQuiz.getId());
+        val result = quizService.findById(sampleQuiz.getId());
         assertThat(result.getId()).isEqualTo(sampleQuiz.getId());
         assertThat(result.getEmoji()).isEqualTo("🧪");
     }
@@ -120,7 +120,7 @@ class QuizServiceTest {
         when(quizRepository.findByIdAndPublishedTrue(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        QuizDto.Response result = quizService.findPublishedById(sampleQuiz.getId());
+        val result = quizService.findPublishedById(sampleQuiz.getId());
 
         assertThat(result.getPublished()).isTrue();
     }
