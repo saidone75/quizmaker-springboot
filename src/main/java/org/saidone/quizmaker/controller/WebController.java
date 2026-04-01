@@ -99,6 +99,11 @@ public class WebController {
         return "admin/students";
     }
 
+    @GetMapping("/admin/logs")
+    public String adminLogs() {
+        return "admin/logs";
+    }
+
     @GetMapping("/admin/results")
     public String adminResults(Model model) {
         val results = quizSubmissionService.findAllResults();

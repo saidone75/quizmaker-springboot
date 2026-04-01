@@ -776,3 +776,47 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .admin-about-link:hover {
     text-decoration: underline;
 }
+
+/* ===== ABOUT / LOGS ===== */
+.about-footer-link {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.log-toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.log-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.log-status {
+    font-size: 13px;
+    color: var(--text-light);
+    font-weight: 700;
+}
+
+.log-console {
+    margin-top: 10px;
+    background: #121212;
+    color: #EDEDED;
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 420px;
+    max-height: 70vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    border: 1px solid #2A2A2A;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    line-height: 1.45;
+}

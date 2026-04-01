@@ -30,13 +30,14 @@
     </appender>
 
     <springProfile name="dev">
-        <root level="DEBUG">
+        <root>
             <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
         </root>
     </springProfile>
 
     <springProfile name="prod">
-        <root level="INFO">
+        <root>
             <appender-ref ref="FILE"/>
         </root>
     </springProfile>

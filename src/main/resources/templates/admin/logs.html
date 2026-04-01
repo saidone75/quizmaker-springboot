@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in tempo reale — QuizMaker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="screen active" style="display:block;">
+    <div class="topbar">
+        <span class="topbar-title">🧾 Log applicazione</span>
+        <a th:href="@{/about}" class="topbar-back" style="text-decoration:none">← About</a>
+        <span class="topbar-badge" sec:authentication="name">admin</span>
+        <form th:action="@{/admin/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="topbar-back">Logout</button>
+        </form>
+    </div>
+
+    <div class="teacher-body">
+        <div class="about-card">
+            <div class="log-toolbar">
+                <span id="log-status" class="log-status">Aggiornamento automatico ogni 2 secondi</span>
+                <div class="log-actions">
+                    <button id="toggle-refresh-btn" type="button" class="topbar-back">⏸️ Stop refresh</button>
+                    <button id="refresh-logs-btn" type="button" class="topbar-back">Aggiorna ora</button>
+                    <button id="copy-logs-btn" type="button" class="topbar-back">📋 Copia log</button>
+                </div>
+            </div>
+            <p id="log-path" class="section-label" style="margin-top: 12px;">Percorso log: -</p>
+            <pre id="live-logs" class="log-console">Caricamento log...</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logContainer = document.getElementById('live-logs');
+    const statusLabel = document.getElementById('log-status');
+    const pathLabel = document.getElementById('log-path');
+    const toggleRefreshBtn = document.getElementById('toggle-refresh-btn');
+    const copyLogsBtn = document.getElementById('copy-logs-btn');
+    let refreshPaused = false;
+    let refreshIntervalId = null;
+
+    async function loadLogs() {
+        try {
+            const response = await fetch('/api/admin/logs/tail?lines=220', {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+                statusLabel.textContent = 'Errore caricamento log (' + response.status + ')';
+                return;
+            }
+
+            const payload = await response.json();
+            pathLabel.textContent = 'Percorso log: ' + (payload.path || '-');
+
+            if (payload.warning) {
+                statusLabel.textContent = payload.warning;
+            } else if (refreshPaused) {
+                statusLabel.textContent = 'Refresh in pausa';
+            } else {
+                statusLabel.textContent = 'Aggiornato: ' + new Date().toLocaleTimeString('it-IT');
+            }
+
+            logContainer.textContent = (payload.lines || []).join('\n') || 'Nessuna riga disponibile.';
+            logContainer.scrollTop = logContainer.scrollHeight;
+        } catch (error) {
+            statusLabel.textContent = 'Errore rete durante il caricamento dei log';
+        }
+    }
+
+    function toggleRefresh() {
+        refreshPaused = !refreshPaused;
+        if (refreshPaused) {
+            if (refreshIntervalId !== null) {
+                clearInterval(refreshIntervalId);
+                refreshIntervalId = null;
+            }
+            toggleRefreshBtn.textContent = '▶️ Riprendi refresh';
+            statusLabel.textContent = 'Refresh in pausa';
+        } else {
+            toggleRefreshBtn.textContent = '⏸️ Stop refresh';
+            loadLogs();
+            refreshIntervalId = setInterval(loadLogs, 2000);
+        }
+    }
+
+    async function copyLogsToClipboard() {
+        try {
+            await navigator.clipboard.writeText(logContainer.textContent || '');
+            copyLogsBtn.textContent = '✅ Copiato!';
+            setTimeout(() => {
+                copyLogsBtn.textContent = '📋 Copia log';
+            }, 1400);
+        } catch (error) {
+            statusLabel.textContent = 'Clipboard non disponibile nel browser';
+        }
+    }
+
+    document.getElementById('refresh-logs-btn').addEventListener('click', loadLogs);
+    toggleRefreshBtn.addEventListener('click', toggleRefresh);
+    copyLogsBtn.addEventListener('click', copyLogsToClipboard);
+    loadLogs();
+    refreshIntervalId = setInterval(loadLogs, 2000);
+</script>
+</body>
+</html>
