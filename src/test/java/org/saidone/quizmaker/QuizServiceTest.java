@@ -72,7 +72,7 @@ class QuizServiceTest {
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
         val result = quizService.findAllForAdmin();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Quiz di Test");
+        assertThat(result.getFirst().getTitle()).isEqualTo("Quiz di Test");
     }
 
     @Test
@@ -90,7 +90,7 @@ class QuizServiceTest {
         val result = quizService.findPublished();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getPublished()).isTrue();
+        assertThat(result.getFirst().getPublished()).isTrue();
     }
 
     @Test
