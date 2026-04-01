@@ -23,7 +23,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="004" author="quizmaker">
+    <changeSet id="004" author="quizmaker" dbms="!sqlite">
         <comment>Add teachers table and tenant ownership on quizzes/students</comment>
 
         <createTable tableName="teachers">
@@ -83,6 +83,52 @@
         <rollback>
             <dropForeignKeyConstraint baseTableName="students" constraintName="fk_students_teacher"/>
             <dropForeignKeyConstraint baseTableName="quizzes" constraintName="fk_quizzes_teacher"/>
+            <dropColumn tableName="students" columnName="teacher_id"/>
+            <dropColumn tableName="quizzes" columnName="teacher_id"/>
+            <delete tableName="teachers">
+                <where>id = '00000000-0000-0000-0000-000000000001'</where>
+            </delete>
+            <dropTable tableName="teachers"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="004-sqlite" author="quizmaker" dbms="sqlite">
+        <comment>Add teachers table and tenant ownership on quizzes/students (sqlite-compatible)</comment>
+
+        <createTable tableName="teachers">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="username" type="VARCHAR(60)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_teachers_username"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="teachers">
+            <column name="id" value="00000000-0000-0000-0000-000000000001"/>
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$12$.DB0mk/H0KpfN27Uv43ZN.sdifPhExVAMvAKsMxsAvX8pziYUv6Lq"/>
+        </insert>
+
+        <addColumn tableName="students">
+            <column name="teacher_id" type="${uuid.type}" defaultValue="00000000-0000-0000-0000-000000000001">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="quizzes">
+            <column name="teacher_id" type="${uuid.type}" defaultValue="00000000-0000-0000-0000-000000000001">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
             <dropColumn tableName="students" columnName="teacher_id"/>
             <dropColumn tableName="quizzes" columnName="teacher_id"/>
             <delete tableName="teachers">

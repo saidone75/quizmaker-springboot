@@ -23,7 +23,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="005" author="quizmaker">
+    <changeSet id="005" author="quizmaker" dbms="!sqlite">
         <comment>Increase student login keyword length and add teacher admin flag</comment>
 
         <modifyDataType tableName="students" columnName="login_keyword" newDataType="VARCHAR(5)"/>
@@ -42,6 +42,25 @@
         <rollback>
             <dropColumn tableName="teachers" columnName="is_admin"/>
             <modifyDataType tableName="students" columnName="login_keyword" newDataType="VARCHAR(4)"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="005-sqlite" author="quizmaker" dbms="sqlite">
+        <comment>Add teacher admin flag (sqlite-compatible)</comment>
+
+        <addColumn tableName="teachers">
+            <column name="is_admin" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <update tableName="teachers">
+            <column name="is_admin" valueBoolean="true"/>
+            <where>id = '00000000-0000-0000-0000-000000000001'</where>
+        </update>
+
+        <rollback>
+            <dropColumn tableName="teachers" columnName="is_admin"/>
         </rollback>
     </changeSet>
 
