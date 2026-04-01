@@ -33,7 +33,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "docker"})
 @RequiredArgsConstructor
 @Slf4j
 public class DevStudentBootstrap implements CommandLineRunner {

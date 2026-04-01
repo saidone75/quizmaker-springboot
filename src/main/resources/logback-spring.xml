@@ -54,6 +54,12 @@
         </root>
     </springProfile>
 
+    <springProfile name="docker">
+        <root>
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
     <springProfile name="prod">
         <root>
             <appender-ref ref="FILE"/>

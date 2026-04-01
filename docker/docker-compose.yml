@@ -8,5 +8,4 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: dev
-    restart: unless-stopped
+      SPRING_PROFILES_ACTIVE: docker

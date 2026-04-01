@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("dev")
+@Profile({"dev", "docker"})
 @RequiredArgsConstructor
 @Slf4j
 public class DevQuizBootstrap implements CommandLineRunner {
