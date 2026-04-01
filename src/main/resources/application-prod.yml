@@ -1,8 +1,8 @@
 spring:
   datasource:
     # Set this environment variable in production if you want a custom DB path.
-    # Example: PROD_SQLITE_DB_URL=jdbc:sqlite:/opt/quizmaker/data/quizmaker-prod.db
-    url: ${PROD_SQLITE_DB_URL:jdbc:sqlite:./data/quizmaker-prod.db}
+    # Example: PROD_SQLITE_DB_URL=jdbc:sqlite:/opt/quizmaker/data/quizmaker.db
+    url: ${PROD_SQLITE_DB_URL:jdbc:sqlite:./data/quizmaker.db}
     driver-class-name: org.sqlite.JDBC
     hikari:
       maximum-pool-size: 1

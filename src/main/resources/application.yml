@@ -17,7 +17,7 @@ spring:
 
 app:
   admin:
-    username: ${ADMIN_USERNAME:alice}
+    username: ${ADMIN_USERNAME:admin}
     # Change this password before going to production!
     password: '${ADMIN_PASSWORD:{bcrypt}$2a$12$.DB0mk/H0KpfN27Uv43ZN.sdifPhExVAMvAKsMxsAvX8pziYUv6Lq}'
   openai:
@@ -28,7 +28,7 @@ app:
     enabled: ${DB_BACKUP_ENABLED:false}
     cron: ${DB_BACKUP_CRON:0 0 2 * * *}
     directory: ${DB_BACKUP_DIRECTORY:./backups}
-    retention-count: ${DB_BACKUP_RETENTION_COUNT:14}
+    retention-count: ${DB_BACKUP_RETENTION_COUNT:30}
 
 logging:
   level:
