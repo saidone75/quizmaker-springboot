@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
@@ -129,10 +131,11 @@ public class WebController {
         return "admin/quiz-editor";
     }
 
-    @GetMapping("/about")
+    @GetMapping({"/about", "/admin/about"})
     public String aboutPage(Model model) {
         val runtime = Runtime.getRuntime();
         model.addAttribute("appVersion", getAppVersion());
+        model.addAttribute("buildTime", getBuildTime());
         model.addAttribute("springBootVersion", SpringBootVersion.getVersion());
         model.addAttribute("springFrameworkVersion", SpringVersion.getVersion());
         model.addAttribute("javaVersion", System.getProperty("java.version"));
@@ -151,6 +154,16 @@ public class WebController {
 
     private String getAppVersion() {
         return buildProperties != null ? buildProperties.getVersion() : Strings.EMPTY;
+    }
+
+    private String getBuildTime() {
+        if (buildProperties == null || buildProperties.getTime() == null) {
+            return Strings.EMPTY;
+        }
+
+        return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault())
+                .format(buildProperties.getTime());
     }
 
     private record QuizResultGroup(UUID quizId, String quizTitle, List<QuizSubmissionService.ResultRow> results) {
