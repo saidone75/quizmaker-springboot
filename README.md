@@ -1,6 +1,6 @@
 # QuizMaker 🦕
 
-App Spring Boot per creare e giocare quiz scolastici, con pannello insegnante protetto e pagina alunni pubblica.
+App Spring Boot per creare e giocare quiz scolastici, con pannello insegnante protetto e pagina alunni con login tramite parola chiave.
 
 ## Avvio in sviluppo (H2)
 
@@ -32,19 +32,35 @@ Per generare un nuovo hash bcrypt:
 # Poi aggiorna app.admin.password in application.yml
 ```
 
-## Avvio in produzione (Supabase)
+## Avvio in produzione (SQLite)
 
 ```bash
-# Imposta le variabili d'ambiente
-export SUPABASE_DB_URL=jdbc:postgresql://db.XXXXX.supabase.co:5432/postgres
-export SUPABASE_DB_USERNAME=postgres
-export SUPABASE_DB_PASSWORD=la-tua-password
+# (Opzionale) personalizza il percorso del file SQLite
+export PROD_SQLITE_DB_URL=jdbc:sqlite:/opt/quizmaker/data/quizmaker-prod.db
 export ADMIN_USERNAME=admin
 export ADMIN_PASSWORD="{bcrypt}\$2a\$10\$..."
 
 # Build e avvio
 mvn package -DskipTests
-java -jar target/quizmaker-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
+java -jar target/quizmaker-0.0.5.jar --spring.profiles.active=prod
+```
+
+### Backup schedulato database (solo SQLite/profilo prod)
+
+Il job usa Spring Scheduler e crea copie di backup nella cartella `./backups` (configurabile).
+
+```bash
+# Abilita/disabilita backup (in prod è true di default)
+export DB_BACKUP_ENABLED=true
+
+# Cron Spring (default: ogni giorno alle 02:00)
+export DB_BACKUP_CRON="0 0 2 * * *"
+
+# Directory backup
+export DB_BACKUP_DIRECTORY="./backups"
+
+# Quanti file mantenere
+export DB_BACKUP_RETENTION_COUNT=14
 ```
 
 ## API REST
@@ -64,8 +80,6 @@ java -jar target/quizmaker-0.0.1-SNAPSHOT.jar --spring.profiles.active=prod
 | `/`                     | Pubblico    | Pagina alunni    |
 | `/admin/login`          | Pubblico    | Login insegnante |
 | `/admin`                | Autenticato | Dashboard admin  |
-| `/admin/quiz/new`       | Autenticato | Crea nuovo quiz  |
-| `/admin/quiz/{id}/edit` | Autenticato | Modifica quiz    |
 
 ## Liquibase
 
@@ -85,3 +99,10 @@ Ogni nuovo changeset va aggiunto in un file separato e incluso nel `db.changelog
 ```bash
 mvn test
 ```
+
+
+## Login studenti
+
+Gli studenti sono salvati nella tabella `students` e accedono da `/` con una parola chiave di 4 caratteri (`login_keyword`).
+Dopo la consegna, il quiz viene bloccato per quello studente; la maestra può sbloccarlo dalla dashboard admin nella tabella risultati.
+La dashboard admin include anche la gestione studenti (creazione nome + generazione automatica codice univoco da 4 caratteri).

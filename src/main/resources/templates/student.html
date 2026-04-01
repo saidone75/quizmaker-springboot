@@ -9,17 +9,29 @@
 </head>
 <body>
 
-<!-- STUDENT PICKER -->
+<div class="topbar" style="position:sticky;top:0;z-index:10;">
+    <span class="topbar-title">🎒 Area Studente</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <span class="topbar-badge" th:text="${studentName}">Studente</span>
+        <form th:action="@{/student/logout}" method="post" style="margin:0;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="topbar-back">Esci</button>
+        </form>
+    </div>
+</div>
+
 <div id="screen-student" class="screen active">
     <div class="student-inner">
         <div style="font-size:52px;margin-bottom:12px">🎒</div>
+        <p style="font-size:24px;font-weight:800;margin:0 0 8px 0;" th:text="'Ciao ' + ${studentName} + '!'">Ciao Studente!</p>
         <h2>Scegli un quiz!</h2>
-        <p>Seleziona il quiz che vuoi fare</p>
+        <p>Puoi fare ogni quiz una sola volta, finché la maestra non lo sblocca.</p>
 
         <div class="quiz-picker" th:if="${!quizzes.isEmpty()}">
             <div class="quiz-pick-item"
                  th:each="quiz : ${quizzes}"
                  th:data-id="${quiz.id}"
+                 th:data-locked="${lockedQuizIds.contains(quiz.id)}"
                  onclick="startQuizFromCard(this)">
                 <span class="quiz-pick-icon" th:text="${quiz.emoji}">🦕</span>
                 <span>
@@ -30,12 +42,11 @@
         </div>
 
         <div class="no-quizzes" th:if="${quizzes.isEmpty()}">
-            Nessun quiz disponibile.<br>Chiedi all'insegnante di crearne uno!
+            Nessun quiz disponibile.<br>Chiedi alla maestra di crearne uno!
         </div>
     </div>
 </div>
 
-<!-- QUIZ PLAY -->
 <div id="screen-quiz" class="screen">
     <div class="quiz-container">
         <div class="quiz-topbar">
@@ -55,7 +66,6 @@
     </div>
 </div>
 
-<!-- RESULT -->
 <div id="screen-result" class="screen">
     <div class="result-card">
         <span class="result-emoji" id="res-emoji">🏆</span>
@@ -65,22 +75,35 @@
         <span class="result-stars" id="res-stars">⭐⭐⭐⭐⭐</span>
         <div class="result-pills" id="res-pills"></div>
         <div class="result-btns">
-            <button class="btn-retry btn-retry-play" onclick="replayQuiz()">🔄 Riprova</button>
-            <button class="btn-retry btn-retry-home" onclick="goTo('student')">🎒 Scegli un altro quiz</button>
+            <button class="btn-retry btn-retry-home" onclick="goTo('student')">🎒 Torna ai quiz</button>
         </div>
+    </div>
+</div>
+
+
+<div id="student-alert" class="student-alert" role="alert" aria-live="polite" hidden>
+    <div>
+        <p class="student-alert-title">Quiz già completato</p>
+        <p class="student-alert-text">Hai già finito questo quiz. Chiedi alla maestra di sbloccarlo.</p>
     </div>
 </div>
 
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/quiz-player.js}"></script>
 <script th:inline="javascript">
+    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
+    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
     const QUIZ_DATA = JSON.parse(/*[[${quizzesJson}]]*/ '[]');
+    const LOCKED_QUIZ_IDS = new Set(JSON.parse(/*[[${lockedQuizIdsJson}]]*/ '[]').map(String));
     const quizById = {};
     for (let i = 0; i < QUIZ_DATA.length; i++) {
         const quiz = QUIZ_DATA[i];
         quizById[String(quiz.id)] = quiz;
     }
     window.QUIZ_DATA_BY_ID = quizById;
+    window.LOCKED_QUIZ_IDS = LOCKED_QUIZ_IDS;
+    window.CSRF_TOKEN = CSRF_TOKEN;
+    window.CSRF_HEADER = CSRF_HEADER;
 </script>
 </body>
 </html>

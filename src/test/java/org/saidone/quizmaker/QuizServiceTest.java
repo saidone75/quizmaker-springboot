@@ -5,6 +5,7 @@ import org.saidone.quizmaker.mapper.QuestionMapper;
 import org.saidone.quizmaker.mapper.QuizMapper;
 import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.repository.QuizRepository;
+import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.entity.Quiz;
@@ -29,6 +30,9 @@ class QuizServiceTest {
 
     @Mock
     private QuizRepository quizRepository;
+
+    @Mock
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     @Mock
     private QuizMapper quizMapper;
@@ -66,9 +70,9 @@ class QuizServiceTest {
                 .build();
         when(quizRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        List<QuizDto.Response> result = quizService.findAllForAdmin();
+        val result = quizService.findAllForAdmin();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Quiz di Test");
+        assertThat(result.getFirst().getTitle()).isEqualTo("Quiz di Test");
     }
 
     @Test
@@ -83,10 +87,10 @@ class QuizServiceTest {
         when(quizRepository.findByPublishedTrueOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        List<QuizDto.Response> result = quizService.findPublished();
+        val result = quizService.findPublished();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getPublished()).isTrue();
+        assertThat(result.getFirst().getPublished()).isTrue();
     }
 
     @Test
@@ -99,7 +103,7 @@ class QuizServiceTest {
                 .build();
         when(quizRepository.findById(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        QuizDto.Response result = quizService.findById(sampleQuiz.getId());
+        val result = quizService.findById(sampleQuiz.getId());
         assertThat(result.getId()).isEqualTo(sampleQuiz.getId());
         assertThat(result.getEmoji()).isEqualTo("🧪");
     }
@@ -116,7 +120,7 @@ class QuizServiceTest {
         when(quizRepository.findByIdAndPublishedTrue(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        QuizDto.Response result = quizService.findPublishedById(sampleQuiz.getId());
+        val result = quizService.findPublishedById(sampleQuiz.getId());
 
         assertThat(result.getPublished()).isTrue();
     }
@@ -140,12 +144,12 @@ class QuizServiceTest {
         mappedQuestion.setOptions(List.of("A", "B"));
         mappedQuestion.setAnswer(0);
         when(questionMapper.toEntity(questionDto)).thenReturn(mappedQuestion);
-        QuizDto.Request request = QuizDto.Request.builder()
+        val request = QuizDto.Request.builder()
                 .title("Quiz di Test")
                 .emoji("🧪")
                 .questions(List.of(questionDto))
                 .build();
-        QuizDto.Response result = quizService.create(request);
+        val result = quizService.create(request);
         assertThat(result.getTitle()).isEqualTo("Quiz di Test");
         verify(quizRepository, times(1)).save(any(Quiz.class));
     }
@@ -154,6 +158,7 @@ class QuizServiceTest {
     void delete_callsRepository() {
         when(quizRepository.existsById(sampleQuiz.getId())).thenReturn(true);
         quizService.delete(sampleQuiz.getId());
+        verify(quizSubmissionRepository, times(1)).deleteAllByQuizId(sampleQuiz.getId());
         verify(quizRepository, times(1)).deleteById(sampleQuiz.getId());
     }
 
@@ -171,7 +176,7 @@ class QuizServiceTest {
         when(quizRepository.save(any(Quiz.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(quizMapper.toResponse(any(Quiz.class))).thenReturn(response);
 
-        QuizDto.Response result = quizService.updatePublicationStatus(sampleQuiz.getId(), false);
+        val result = quizService.updatePublicationStatus(sampleQuiz.getId(), false);
 
         assertThat(result.getPublished()).isFalse();
         assertThat(sampleQuiz.getPublished()).isFalse();

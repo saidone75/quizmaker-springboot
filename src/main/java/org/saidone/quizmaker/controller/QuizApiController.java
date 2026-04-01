@@ -1,12 +1,17 @@
 package org.saidone.quizmaker.controller;
 
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.service.DocumentTextExtractorService;
 import org.saidone.quizmaker.service.OpenAiQuizGeneratorService;
 import org.saidone.quizmaker.service.QuizService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import org.saidone.quizmaker.service.QuizSubmissionService;
+import org.saidone.quizmaker.service.StudentSessionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,28 +26,49 @@ import java.util.UUID;
 public class QuizApiController {
 
     private final QuizService quizService;
+    private final QuizSubmissionService quizSubmissionService;
+    private final StudentSessionService studentSessionService;
     private final OpenAiQuizGeneratorService openAiQuizGeneratorService;
     private final DocumentTextExtractorService documentTextExtractorService;
 
-    // PUBLIC: students can read all quizzes
     @GetMapping
     public ResponseEntity<List<QuizDto.Response>> getAll() {
         return ResponseEntity.ok(quizService.findPublished());
     }
 
-    // PUBLIC: students can read a single quiz
     @GetMapping("/{id}")
     public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(quizService.findPublishedById(id));
     }
 
-    // PROTECTED: only teacher can create
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<QuizSubmissionDto.Response> submit(
+            @PathVariable UUID id,
+            @Valid @RequestBody QuizSubmissionDto.Request request,
+            HttpSession session) {
+        val student = studentSessionService.getLoggedStudent(session)
+                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+        return ResponseEntity.ok(quizSubmissionService.submit(id, student, request.getAnswers()));
+    }
+
+    @PostMapping("/{quizId}/unlock/{studentId}")
+    public ResponseEntity<Void> unlockQuiz(
+            @PathVariable UUID quizId,
+            @PathVariable UUID studentId) {
+        quizSubmissionService.unlockQuizForStudent(studentId, quizId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{quizId}/unlock-all")
+    public ResponseEntity<Integer> unlockAllForQuiz(@PathVariable UUID quizId) {
+        return ResponseEntity.ok(quizSubmissionService.unlockAllForQuiz(quizId));
+    }
+
     @PostMapping
     public ResponseEntity<QuizDto.Response> create(@Valid @RequestBody QuizDto.Request request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(quizService.create(request));
     }
 
-    // PROTECTED: only teacher can modify
     @PutMapping("/{id}")
     public ResponseEntity<QuizDto.Response> update(
             @PathVariable UUID id,
@@ -50,14 +76,12 @@ public class QuizApiController {
         return ResponseEntity.ok(quizService.update(id, request));
     }
 
-    // PROTECTED: only teacher can delete
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         quizService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    // PROTECTED: only teacher can publish/unpublish
     @PutMapping("/{id}/publication")
     public ResponseEntity<QuizDto.Response> updatePublicationStatus(
             @PathVariable UUID id,
@@ -65,12 +89,11 @@ public class QuizApiController {
         return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished()));
     }
 
-    // PROTECTED: only teacher can generate using AI
     @PostMapping(value = "/generate", consumes = {"multipart/form-data"})
     public ResponseEntity<QuizDto.Request> generateWithAi(
             @Valid @ModelAttribute QuizGenerationRequestDto request,
             @RequestParam(value = "file", required = false) MultipartFile file) {
-        String attachmentText = documentTextExtractorService.extractText(file);
+        val attachmentText = documentTextExtractorService.extractText(file);
         return ResponseEntity.ok(openAiQuizGeneratorService.generateQuiz(request, attachmentText));
     }
 

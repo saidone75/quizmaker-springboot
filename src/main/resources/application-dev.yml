@@ -16,10 +16,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  liquibase:
-    enabled: true
-    change-log: classpath:/db/changelog/db.changelog-master.xml
+
 logging:
   level:
     root: DEBUG
-    org.hibernate.SQL: DEBUG

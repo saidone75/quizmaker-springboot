@@ -33,8 +33,8 @@ public class DocumentTextExtractorService {
             }
             return new String(file.getBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("Error during text extraction from: {}", filename, e);
-            throw new IllegalArgumentException("Unable to read file. Please use a PDF, DOCX or plain text.");
+            log.error("Errore durante l'estrazione del testo da: {}", filename, e);
+            throw new IllegalArgumentException("Impossibile leggere il file. Usa un PDF, DOCX o testo semplice.");
         }
     }
 

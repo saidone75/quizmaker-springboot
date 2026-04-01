@@ -1,27 +1,22 @@
 spring:
   datasource:
-    # Set these environment variables in production:
-    # SUPABASE_DB_URL, SUPABASE_DB_USERNAME, SUPABASE_DB_PASSWORD
-    url: ${SUPABASE_DB_URL:jdbc:postgresql://db.ktxzqabmnqenmnprgfds.supabase.co:5432/postgres}
-    username: ${SUPABASE_DB_USERNAME:postgres}
-    password: ${SUPABASE_DB_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
+    # Set this environment variable in production if you want a custom DB path.
+    # Example: PROD_SQLITE_DB_URL=jdbc:sqlite:/opt/quizmaker/data/quizmaker-prod.db
+    url: ${PROD_SQLITE_DB_URL:jdbc:sqlite:./data/quizmaker-prod.db}
+    driver-class-name: org.sqlite.JDBC
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: 1
       minimum-idle: 1
       connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
     hibernate:
       ddl-auto: none
     show-sql: false
   h2:
     console:
       enabled: false
-  liquibase:
-    enabled: true
-logging:
-  level:
-    root: INFO
+
+app:
+  db-backup:
+    enabled: ${DB_BACKUP_ENABLED:true}

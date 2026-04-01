@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Studente — QuizMaker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="screen active" style="display:flex;align-items:center;justify-content:center;">
+    <div class="quiz-card" style="max-width:420px;width:92%;text-align:center;">
+        <div style="font-size:52px;margin-bottom:12px">🔐</div>
+        <h2>Accesso studenti</h2>
+        <p>Inserisci la parola chiave di 4 caratteri assegnata dalla maestra.</p>
+        <form id="student-login-form" th:action="@{/student/login}" method="post" style="display:grid;gap:12px;margin-top:14px;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input id="keyword-hidden" type="hidden" name="keyword" maxlength="4" minlength="4" required/>
+            <div class="otp-group" aria-label="Parola chiave di 4 caratteri">
+                <input class="otp-input" type="text" inputmode="text" maxlength="1" autocomplete="one-time-code" aria-label="Carattere 1">
+                <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 2">
+                <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 3">
+                <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 4">
+            </div>
+            <button class="quiz-next" style="display:block">Entra</button>
+        </form>
+        <p th:if="${loginError}" th:text="${loginError}" style="margin-top:12px;color:#dc2626;font-weight:700"></p>
+    </div>
+</div>
+<script>
+    (() => {
+        const form = document.getElementById('student-login-form');
+        const hiddenKeyword = document.getElementById('keyword-hidden');
+        const otpInputs = Array.from(document.querySelectorAll('.otp-input'));
+
+        const syncKeyword = () => {
+            hiddenKeyword.value = otpInputs.map((input) => input.value).join('');
+        };
+
+        const maybeAutoSubmit = () => {
+            syncKeyword();
+            if (hiddenKeyword.value.length === 4) {
+                form.requestSubmit();
+            }
+        };
+
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', (event) => {
+                const normalized = event.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                event.target.value = normalized.slice(-1);
+                syncKeyword();
+
+                if (event.target.value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+
+                if (index === otpInputs.length - 1) {
+                    maybeAutoSubmit();
+                }
+            });
+
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Backspace' && !input.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', (event) => {
+                event.preventDefault();
+                const chars = (event.clipboardData?.getData('text') || '')
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .toUpperCase()
+                    .slice(0, otpInputs.length)
+                    .split('');
+
+                otpInputs.forEach((otpInput, otpIndex) => {
+                    otpInput.value = chars[otpIndex] || '';
+                });
+
+                syncKeyword();
+
+                const nextIndex = Math.min(chars.length, otpInputs.length - 1);
+                otpInputs[nextIndex].focus();
+                if (chars.length === otpInputs.length) {
+                    form.requestSubmit();
+                }
+            });
+        });
+
+        form.addEventListener('submit', () => {
+            hiddenKeyword.value = otpInputs.map((input) => input.value).join('');
+        });
+
+        otpInputs[0]?.focus();
+    })();
+</script>
+</body>
+</html>

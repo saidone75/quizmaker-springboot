@@ -1,9 +1,40 @@
 const LETTERS = ['A', 'B', 'C', 'D'];
-let playState = { quiz: null, current: 0, score: 0, wrong: 0, answered: false };
+let playState = { quiz: null, current: 0, score: 0, wrong: 0, answered: false, answers: [] };
+let studentAlertTimer = null;
 
-// Called from Thymeleaf student.html via onclick on card
+function showStudentAlert(title, message) {
+    const alertBox = document.getElementById('student-alert');
+    if (!alertBox) {
+        alert((title ? title + ': ' : '') + (message || ''));
+        return;
+    }
+
+    const titleEl = alertBox.querySelector('.student-alert-title');
+    const messageEl = alertBox.querySelector('.student-alert-text');
+    titleEl.textContent = title || 'Quiz già completato';
+    messageEl.textContent = message || 'Hai già finito questo quiz. Chiedi alla maestra di sbloccarlo.';
+
+    alertBox.hidden = false;
+    alertBox.classList.add('show');
+
+    if (studentAlertTimer) {
+        clearTimeout(studentAlertTimer);
+    }
+    studentAlertTimer = setTimeout(function() {
+        alertBox.classList.remove('show');
+        studentAlertTimer = setTimeout(function() {
+            alertBox.hidden = true;
+        }, 220);
+    }, 3200);
+}
+
 function startQuizFromCard(el) {
     const id = el.dataset.id;
+    if ((window.LOCKED_QUIZ_IDS && window.LOCKED_QUIZ_IDS.has(String(id))) || el.dataset.locked === 'true') {
+        showStudentAlert();
+        return;
+    }
+
     const title = el.querySelector('.quiz-pick-name').textContent;
     const emoji = el.querySelector('.quiz-pick-icon').textContent;
 
@@ -16,23 +47,10 @@ function startQuizFromCard(el) {
         return;
     }
 
-    const questionsJson = el.dataset.questions;
-    if (questionsJson) {
-        try {
-            const questions = JSON.parse(questionsJson);
-            if (Array.isArray(questions)) {
-                startQuiz({ id, title, emoji, questions });
-                return;
-            }
-        } catch (e) {
-            // fallback to API request below
-        }
-    }
-
     fetch('/api/quizzes/' + id)
         .then(function(response) {
             if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
+                throw new Error('Errore HTTP ' + response.status);
             }
             return response.json();
         })
@@ -48,13 +66,33 @@ function startQuizFromCard(el) {
             });
         })
         .catch(function() {
-            alert('Errore nel caricamento del quiz');
+            showStudentAlert('Errore nel caricamento del quiz', 'Riprova tra poco o avvisa la maestra.');
         });
 }
 
 window.startQuizFromCard = startQuizFromCard;
 
+
+function markQuizCardAsLocked(quizId) {
+    const quizCard = document.querySelector('.quiz-picker .quiz-pick-item[data-id="' + String(quizId) + '"]');
+    if (!quizCard) return;
+
+    quizCard.dataset.locked = 'true';
+    quizCard.classList.add('is-locked');
+
+}
+
+function refreshLockedQuizCards() {
+    const cards = document.querySelectorAll('.quiz-picker .quiz-pick-item');
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if ((window.LOCKED_QUIZ_IDS && window.LOCKED_QUIZ_IDS.has(String(card.dataset.id))) || card.dataset.locked === 'true') {
+            markQuizCardAsLocked(card.dataset.id);
+        }
+    }
+}
 function bindQuizPickerCards() {
+    refreshLockedQuizCards();
     const cards = document.querySelectorAll('.quiz-picker .quiz-pick-item');
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
@@ -71,14 +109,10 @@ if (document.readyState === 'loading') {
 }
 
 function startQuiz(quiz) {
-    playState = { quiz, current: 0, score: 0, wrong: 0, answered: false };
+    playState = { quiz, current: 0, score: 0, wrong: 0, answered: false, answers: [] };
     goTo('quiz');
     renderPlay();
 }
-
-window.replayQuiz = function replayQuiz() {
-    startQuiz(playState.quiz);
-};
 
 function renderPlay() {
     const { quiz, current, score } = playState;
@@ -91,7 +125,10 @@ function renderPlay() {
     document.getElementById('play-pct').textContent = pct + '%';
     document.getElementById('play-progress-fill').style.width = pct + '%';
 
-    if (current >= total) { showResult(); return; }
+    if (current >= total) {
+        showResult();
+        return;
+    }
 
     const q = quiz.questions[current];
     playState.answered = false;
@@ -111,7 +148,7 @@ function renderPlay() {
             <div id="play-feedback"></div>
         </div>
         <button class="quiz-next" id="play-next" style="display:none" onclick="nextQuestion()">
-            ${current < total - 1 ? 'Prossima domanda →' : 'Vedi il risultato! 🎉'}
+            ${current < total - 1 ? 'Prossima domanda →' : 'Conferma risultato 🎉'}
         </button>
     `;
 }
@@ -124,6 +161,7 @@ window.pickAnswer = function pickAnswer(idx) {
     const btns = document.querySelectorAll('.quiz-opt');
     btns.forEach(b => b.disabled = true);
     btns[q.answer].classList.add('correct');
+    playState.answers[playState.current] = idx;
 
     const fb = document.getElementById('play-feedback');
     if (idx === q.answer) {
@@ -145,17 +183,42 @@ window.nextQuestion = function nextQuestion() {
     else renderPlay();
 };
 
-function showResult() {
-    const { score, wrong, quiz } = playState;
+async function showResult() {
+    const { score, wrong, quiz, answers } = playState;
     const total = quiz.questions.length;
-    const pct = score / total;
 
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (window.CSRF_HEADER && window.CSRF_TOKEN) {
+            headers[window.CSRF_HEADER] = window.CSRF_TOKEN;
+        }
+
+        const res = await fetch('/api/quizzes/' + quiz.id + '/submit', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ answers })
+        });
+        const payload = await res.json();
+        if (!res.ok) {
+            throw new Error(payload.message || 'Errore nel salvataggio');
+        }
+        if (window.LOCKED_QUIZ_IDS) {
+            window.LOCKED_QUIZ_IDS.add(String(quiz.id));
+        }
+        markQuizCardAsLocked(quiz.id);
+    } catch (e) {
+        showStudentAlert('Errore nel salvataggio', e.message);
+        goTo('student');
+        return;
+    }
+
+    const pct = score / total;
     let emoji, title, stars;
-    if (pct === 1)       { emoji = '🏆'; title = 'Perfetto! Sei un campione!';         stars = '⭐⭐⭐⭐⭐'; }
-    else if (pct >= 0.8) { emoji = '🎉'; title = 'Fantastico! Ottimo lavoro!';         stars = '⭐⭐⭐⭐'; }
-    else if (pct >= 0.6) { emoji = '😊'; title = 'Bravo! Hai fatto bene!';             stars = '⭐⭐⭐'; }
-    else if (pct >= 0.4) { emoji = '👍'; title = 'Bene! Puoi migliorare!';             stars = '⭐⭐'; }
-    else                 { emoji = '📚'; title = 'Studia ancora un po\'!';              stars = '⭐'; }
+    if (pct === 1)       { emoji = '🏆'; title = 'Perfetto! Sei un campione!'; stars = '⭐⭐⭐⭐⭐'; }
+    else if (pct >= 0.8) { emoji = '🎉'; title = 'Fantastico! Ottimo lavoro!'; stars = '⭐⭐⭐⭐'; }
+    else if (pct >= 0.6) { emoji = '😊'; title = 'Bravo! Hai fatto bene!'; stars = '⭐⭐⭐'; }
+    else if (pct >= 0.4) { emoji = '👍'; title = 'Bene! Puoi migliorare!'; stars = '⭐⭐'; }
+    else                 { emoji = '📚'; title = 'Studia ancora un po\'!'; stars = '⭐'; }
 
     document.getElementById('res-emoji').textContent = emoji;
     document.getElementById('res-title').textContent = title;

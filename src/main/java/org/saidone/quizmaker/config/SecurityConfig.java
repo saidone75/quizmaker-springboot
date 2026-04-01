@@ -1,5 +1,6 @@
 package org.saidone.quizmaker.config;
 
+import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,7 +9,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -28,17 +28,18 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests(auth -> auth
-                        // Public static resources
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-                        // H2 console (dev only)
                         .requestMatchers("/h2-console/**").permitAll()
-                        // Login page
-                        .requestMatchers("/admin/login").permitAll()
-                        // Public API
+                        .requestMatchers("/admin/login", "/", "/student/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
-                        // Students page
-                        .requestMatchers("/").permitAll()
-                        // Everything else requires authentication
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole("ADMIN")
+                        .requestMatchers("/api/students/**").hasRole("ADMIN")
+                        .requestMatchers("/about").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -57,12 +58,10 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                // CSRF: enable for Thymeleaf forms, but disable for REST API calls from JS
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers("/api/**", "/h2-console/**")
+                        .ignoringRequestMatchers("/h2-console/**")
                 )
-                // Allow frames for H2 console in dev
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 );
@@ -72,7 +71,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        UserDetails admin = User.builder()
+        val admin = User.builder()
                 .username(adminUsername)
                 .password(adminPassword)
                 .roles("ADMIN")

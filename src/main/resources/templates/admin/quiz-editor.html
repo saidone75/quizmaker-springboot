@@ -13,8 +13,8 @@
 
     <!-- TOPBAR -->
     <div class="topbar">
-        <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Indietro</a>
         <span class="topbar-title" th:text="${quiz != null ? '✏️ Modifica Quiz' : '✏️ Nuovo Quiz'}">✏️ Quiz</span>
+        <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
         <span class="topbar-badge" id="q-count-badge">0 domande</span>
     </div>
 

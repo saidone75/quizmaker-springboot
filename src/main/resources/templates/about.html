@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About — QuizMaker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="screen active" style="display:block;">
+    <div class="topbar">
+        <span class="topbar-title">ℹ️ About QuizMaker</span>
+        <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+        <span class="topbar-badge" sec:authentication="name">admin</span>
+        <form th:action="@{/admin/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="topbar-back">Logout</button>
+        </form>
+    </div>
+
+    <div class="teacher-body">
+        <div class="about-grid">
+            <section class="about-card">
+                <h2>Versione applicazione</h2>
+                <ul class="about-list">
+                    <li><strong>Versione:</strong> <span th:text="${appVersion}">0.0.0</span></li>
+                    <li><strong>Spring Boot:</strong> <span th:text="${springBootVersion}">-</span></li>
+                    <li><strong>Spring Framework:</strong> <span th:text="${springFrameworkVersion}">-</span></li>
+                </ul>
+            </section>
+
+            <section class="about-card">
+                <h2>Java & JVM</h2>
+                <ul class="about-list">
+                    <li><strong>Java:</strong> <span th:text="${javaVersion}">-</span> (<span
+                            th:text="${javaVendor}">-</span>)
+                    </li>
+                    <li><strong>JVM:</strong> <span th:text="${jvmName}">-</span></li>
+                    <li><strong>JVM versione:</strong> <span th:text="${jvmVersion}">-</span></li>
+                </ul>
+            </section>
+
+            <section class="about-card">
+                <h2>Macchina host</h2>
+                <ul class="about-list">
+                    <li><strong>Sistema operativo:</strong> <span th:text="${osName}">-</span> <span
+                            th:text="${osVersion}">-</span></li>
+                    <li><strong>Architettura:</strong> <span th:text="${osArch}">-</span></li>
+                    <li><strong>CPU disponibili:</strong> <span th:text="${availableProcessors}">0</span></li>
+                </ul>
+            </section>
+
+            <section class="about-card">
+                <h2>Memoria JVM</h2>
+                <ul class="about-list">
+                    <li><strong>Heap max:</strong> <span th:text="${heapMaxMb}">0</span> MB</li>
+                    <li><strong>Heap allocata:</strong> <span th:text="${heapTotalMb}">0</span> MB</li>
+                    <li><strong>Heap libera:</strong> <span th:text="${heapFreeMb}">0</span> MB</li>
+                </ul>
+            </section>
+        </div>
+    </div>
+</div>
+</body>
+</html>

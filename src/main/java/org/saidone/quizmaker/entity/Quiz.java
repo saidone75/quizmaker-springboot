@@ -25,6 +25,7 @@ public class Quiz {
 
     @Id
     @Column(name = "id", nullable = false)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
     private UUID id;
 
     @NotBlank(message = "Il titolo è obbligatorio")
@@ -41,6 +42,7 @@ public class Quiz {
     private List<Question> questions;
 
     @CreationTimestamp
+    @Convert(converter = LocalDateTimeColumnConverter.class)
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

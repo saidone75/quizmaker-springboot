@@ -9,14 +9,14 @@
         <comment>Create quizzes table</comment>
 
         <createTable tableName="quizzes">
-            <column name="id" type="UUID">
+            <column name="id" type="${uuid.type}">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="title" type="TEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="emoji" type="TEXT"/>
-            <column name="questions" type="JSONB">
+            <column name="questions" type="${json.type}">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="TIMESTAMP"/>

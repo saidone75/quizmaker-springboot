@@ -12,20 +12,24 @@ spring:
     cache: false
     encoding: UTF-8
   liquibase:
+    enabled: true
     change-log: classpath:db/changelog/db.changelog-master.xml
 
 app:
   admin:
     username: ${ADMIN_USERNAME:alice}
     # Change this password before going to production!
-    password: '${ADMIN_PASSWORD:{bcrypt}$2a$12$QMyzlOhi1dYIbX3JxQPox.OE/BK0yFs66XoqCOYe8gbIZt7j3entS}'
+    password: '${ADMIN_PASSWORD:{bcrypt}$2a$12$.DB0mk/H0KpfN27Uv43ZN.sdifPhExVAMvAKsMxsAvX8pziYUv6Lq}'
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-5.4-mini}
     max-attachment-chars: ${OPENAI_MAX_ATTACHMENT_CHARS:60000}
+  db-backup:
+    enabled: ${DB_BACKUP_ENABLED:false}
+    cron: ${DB_BACKUP_CRON:0 0 2 * * *}
+    directory: ${DB_BACKUP_DIRECTORY:./backups}
+    retention-count: ${DB_BACKUP_RETENTION_COUNT:14}
 
 logging:
   level:
     root: INFO
-    org.saidone.quizmaker: DEBUG
-    org.springframework.security: DEBUG
