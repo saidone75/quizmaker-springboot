@@ -30,15 +30,16 @@
     <div class="quiz-card" style="max-width:420px;width:92%;text-align:center;">
         <div style="font-size:52px;margin-bottom:12px">🔐</div>
         <h2>Accesso studenti</h2>
-        <p>Inserisci la parola chiave di 4 caratteri assegnata dalla maestra.</p>
+        <p>Inserisci la parola chiave di 5 caratteri assegnata dalla maestra.</p>
         <form id="student-login-form" th:action="@{/student/login}" method="post" style="display:grid;gap:12px;margin-top:14px;">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-            <input id="keyword-hidden" type="hidden" name="keyword" maxlength="4" minlength="4" required/>
-            <div class="otp-group" aria-label="Parola chiave di 4 caratteri">
+            <input id="keyword-hidden" type="hidden" name="keyword" maxlength="5" minlength="5" required/>
+            <div class="otp-group" aria-label="Parola chiave di 5 caratteri">
                 <input class="otp-input" type="text" inputmode="text" maxlength="1" autocomplete="one-time-code" aria-label="Carattere 1">
                 <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 2">
                 <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 3">
                 <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 4">
+                <input class="otp-input" type="text" inputmode="text" maxlength="1" aria-label="Carattere 5">
             </div>
             <button class="quiz-next" style="display:block">Entra</button>
         </form>
@@ -57,7 +58,7 @@
 
         const maybeAutoSubmit = () => {
             syncKeyword();
-            if (hiddenKeyword.value.length === 4) {
+            if (hiddenKeyword.value.length === 5) {
                 form.requestSubmit();
             }
         };

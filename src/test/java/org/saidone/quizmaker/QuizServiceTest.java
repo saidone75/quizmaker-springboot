@@ -22,6 +22,7 @@ import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.mapper.QuestionMapper;
 import org.saidone.quizmaker.mapper.QuizMapper;
 import org.saidone.quizmaker.entity.Question;
+import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.service.QuizService;
@@ -62,6 +63,7 @@ class QuizServiceTest {
     private QuizService quizService;
 
     private Quiz sampleQuiz;
+    private Teacher teacher;
 
     @BeforeEach
     void setUp() {
@@ -69,12 +71,15 @@ class QuizServiceTest {
         question.setText("question");
         question.setOptions(List.of("A", "B"));
         question.setAnswer(0);
+        teacher = Teacher.builder().id(UUID.randomUUID()).username("teacher").password("pwd").build();
+
         sampleQuiz = Quiz.builder()
                 .id(UUID.randomUUID())
                 .title("Quiz di Test")
                 .emoji("🧪")
                 .published(true)
                 .questions(List.of(question))
+                .teacher(teacher)
                 .build();
     }
 
@@ -86,9 +91,9 @@ class QuizServiceTest {
                 .emoji(sampleQuiz.getEmoji())
                 .questionsCount(sampleQuiz.getQuestions().size())
                 .build();
-        when(quizRepository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
+        when(quizRepository.findAllByTeacherOrderByCreatedAtDesc(teacher)).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        val result = quizService.findAllForAdmin();
+        val result = quizService.findAllForAdmin(teacher);
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getTitle()).isEqualTo("Quiz di Test");
     }
@@ -102,10 +107,10 @@ class QuizServiceTest {
                 .published(sampleQuiz.getPublished())
                 .questionsCount(sampleQuiz.getQuestions().size())
                 .build();
-        when(quizRepository.findByPublishedTrueOrderByCreatedAtDesc()).thenReturn(List.of(sampleQuiz));
+        when(quizRepository.findByTeacherAndPublishedTrueOrderByCreatedAtDesc(teacher)).thenReturn(List.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        val result = quizService.findPublished();
+        val result = quizService.findPublishedForTeacher(teacher);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getPublished()).isTrue();
@@ -119,9 +124,9 @@ class QuizServiceTest {
                 .emoji(sampleQuiz.getEmoji())
                 .questionsCount(sampleQuiz.getQuestions().size())
                 .build();
-        when(quizRepository.findById(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
+        when(quizRepository.findByIdAndTeacher(sampleQuiz.getId(), teacher)).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
-        val result = quizService.findById(sampleQuiz.getId());
+        val result = quizService.findByIdForTeacher(sampleQuiz.getId(), teacher);
         assertThat(result.getId()).isEqualTo(sampleQuiz.getId());
         assertThat(result.getEmoji()).isEqualTo("🧪");
     }
@@ -135,10 +140,10 @@ class QuizServiceTest {
                 .published(sampleQuiz.getPublished())
                 .questionsCount(sampleQuiz.getQuestions().size())
                 .build();
-        when(quizRepository.findByIdAndPublishedTrue(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
+        when(quizRepository.findByIdAndTeacherAndPublishedTrue(sampleQuiz.getId(), teacher)).thenReturn(Optional.of(sampleQuiz));
         when(quizMapper.toResponse(sampleQuiz)).thenReturn(response);
 
-        val result = quizService.findPublishedById(sampleQuiz.getId());
+        val result = quizService.findPublishedByIdForTeacher(sampleQuiz.getId(), teacher);
 
         assertThat(result.getPublished()).isTrue();
     }
@@ -167,17 +172,17 @@ class QuizServiceTest {
                 .emoji("🧪")
                 .questions(List.of(questionDto))
                 .build();
-        val result = quizService.create(request);
+        val result = quizService.create(request, teacher);
         assertThat(result.getTitle()).isEqualTo("Quiz di Test");
         verify(quizRepository, times(1)).save(any(Quiz.class));
     }
 
     @Test
     void delete_callsRepository() {
-        when(quizRepository.existsById(sampleQuiz.getId())).thenReturn(true);
-        quizService.delete(sampleQuiz.getId());
-        verify(quizSubmissionRepository, times(1)).deleteAllByQuizId(sampleQuiz.getId());
-        verify(quizRepository, times(1)).deleteById(sampleQuiz.getId());
+        when(quizRepository.findByIdAndTeacher(sampleQuiz.getId(), teacher)).thenReturn(Optional.of(sampleQuiz));
+        quizService.delete(sampleQuiz.getId(), teacher);
+        verify(quizSubmissionRepository, times(1)).deleteAllByQuizIdAndQuizTeacher(sampleQuiz.getId(), teacher);
+        verify(quizRepository, times(1)).delete(sampleQuiz);
     }
 
     @Test
@@ -190,11 +195,11 @@ class QuizServiceTest {
                 .questionsCount(sampleQuiz.getQuestions().size())
                 .build();
 
-        when(quizRepository.findById(sampleQuiz.getId())).thenReturn(Optional.of(sampleQuiz));
+        when(quizRepository.findByIdAndTeacher(sampleQuiz.getId(), teacher)).thenReturn(Optional.of(sampleQuiz));
         when(quizRepository.save(any(Quiz.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(quizMapper.toResponse(any(Quiz.class))).thenReturn(response);
 
-        val result = quizService.updatePublicationStatus(sampleQuiz.getId(), false);
+        val result = quizService.updatePublicationStatus(sampleQuiz.getId(), false, teacher);
 
         assertThat(result.getPublished()).isFalse();
         assertThat(sampleQuiz.getPublished()).isFalse();

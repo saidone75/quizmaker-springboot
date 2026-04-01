@@ -18,65 +18,53 @@
 
 package org.saidone.quizmaker.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "quizzes")
+@Table(name = "teachers")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Quiz {
+public class Teacher {
 
     @Id
     @Column(name = "id", nullable = false)
     @JdbcTypeCode(java.sql.Types.VARCHAR)
     private UUID id;
 
-    @NotBlank(message = "Il titolo è obbligatorio")
-    @Column(nullable = false)
-    private String title;
+    @Column(name = "username", nullable = false, unique = true, length = 60)
+    private String username;
 
-    @NotBlank(message = "L'emoji è obbligatoria")
-    @Column(nullable = false, length = 10)
-    private String emoji;
+    @Column(name = "password", nullable = false, length = 255)
+    private String password;
 
-    @NotNull(message = "Le domande sono obbligatorie")
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "questions", nullable = false, columnDefinition = "jsonb")
-    private List<Question> questions;
+    @Column(name = "is_admin", nullable = false)
+    private boolean admin;
 
     @CreationTimestamp
     @Convert(converter = LocalDateTimeColumnConverter.class)
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Builder.Default
-    @Column(name = "published", nullable = false)
-    private Boolean published = false;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "teacher_id", nullable = false)
-    private Teacher teacher;
-
     @PrePersist
     public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
+        if (id == null) {
+            id = UUID.randomUUID();
         }
     }
-
 }

@@ -32,8 +32,12 @@
     <!-- TOPBAR -->
     <div class="topbar">
         <span class="topbar-title" th:text="${quiz != null ? '✏️ Modifica Quiz' : '✏️ Nuovo Quiz'}">✏️ Quiz</span>
-        <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+        <a th:href="@{/teacher}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
         <span class="topbar-badge" id="q-count-badge">0 domande</span>
+        <form th:action="@{/teacher/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="topbar-back">Logout</button>
+        </form>
     </div>
 
     <!-- BODY -->

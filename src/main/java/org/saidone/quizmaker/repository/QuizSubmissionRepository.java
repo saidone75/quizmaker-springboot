@@ -20,6 +20,7 @@ package org.saidone.quizmaker.repository;
 
 import org.saidone.quizmaker.entity.QuizSubmission;
 import org.saidone.quizmaker.entity.Student;
+import org.saidone.quizmaker.entity.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -32,11 +33,13 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
 
     List<QuizSubmission> findByStudent(Student student);
 
-    List<QuizSubmission> findAllByOrderBySubmittedAtDesc();
+    List<QuizSubmission> findAllByStudentTeacherOrderBySubmittedAtDesc(Teacher teacher);
 
-    List<QuizSubmission> findByQuizIdAndUnlockedFalse(UUID quizId);
+    List<QuizSubmission> findByQuizIdAndUnlockedFalseAndQuizTeacher(UUID quizId, Teacher teacher);
 
-    void deleteAllByQuizId(UUID quizId);
+    Optional<QuizSubmission> findByStudentIdAndQuizIdAndStudentTeacherAndQuizTeacher(UUID studentId, UUID quizId, Teacher studentTeacher, Teacher quizTeacher);
 
-    void deleteAllByStudentId(UUID studentId);
+    void deleteAllByQuizIdAndQuizTeacher(UUID quizId, Teacher teacher);
+
+    void deleteAllByStudentIdAndStudentTeacher(UUID studentId, Teacher teacher);
 }

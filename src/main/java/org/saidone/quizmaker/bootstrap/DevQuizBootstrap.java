@@ -21,6 +21,7 @@ package org.saidone.quizmaker.bootstrap;
 import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.entity.Quiz;
 import org.saidone.quizmaker.repository.QuizRepository;
+import org.saidone.quizmaker.repository.TeacherRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -40,18 +41,21 @@ public class DevQuizBootstrap implements CommandLineRunner {
     private static final String DINO_QUIZ_TITLE = "Dinosauri: i giganti del Mesozoico";
 
     private final QuizRepository quizRepository;
+    private final TeacherRepository teacherRepository;
 
     @Override
     public void run(String... args) {
         var createdAstronomyQuiz = false;
         var createdDinoQuiz = false;
+        val teacher = teacherRepository.findAll().stream().findFirst().orElseThrow();
 
-        if (!quizRepository.existsByTitle(DEMO_QUIZ_TITLE)) {
+        if (!quizRepository.existsByTitleAndTeacher(DEMO_QUIZ_TITLE, teacher)) {
             quizRepository.save(
                     Quiz.builder()
                             .title(DEMO_QUIZ_TITLE)
                             .emoji("🌌")
                             .published(true)
+                            .teacher(teacher)
                             .questions(List.of(
                                     question(
                                             "Qual è il pianeta più grande del Sistema Solare?",
@@ -82,12 +86,13 @@ public class DevQuizBootstrap implements CommandLineRunner {
             createdAstronomyQuiz = true;
         }
 
-        if (!quizRepository.existsByTitle(DINO_QUIZ_TITLE)) {
+        if (!quizRepository.existsByTitleAndTeacher(DINO_QUIZ_TITLE, teacher)) {
             quizRepository.save(
                     Quiz.builder()
                             .title(DINO_QUIZ_TITLE)
                             .emoji("🦖")
                             .published(true)
+                            .teacher(teacher)
                             .questions(List.of(
                                     question(
                                             "Quale dinosauro è famoso per il collo molto lungo?",

@@ -1,0 +1,79 @@
+<!--
+  ~ QuizMaker - fun quizzes for curious minds
+  ~ Copyright (C) 2026 Saidone
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~  This program is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU General Public License for more details.
+  ~
+  ~  You should have received a copy of the GNU General Public License
+  ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilo Insegnante — QuizMaker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div id="screen-admin" class="screen active" style="background:var(--gray-bg);min-height:100vh;">
+    <div class="topbar">
+        <span class="topbar-title">👤 Il mio profilo</span>
+        <a th:href="@{/teacher}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+        <span class="topbar-badge" sec:authentication="name">teacher</span>
+        <form th:action="@{/teacher/logout}" method="post" style="margin:0">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="topbar-back">Logout</button>
+        </form>
+    </div>
+
+    <div class="teacher-body" style="max-width:520px;">
+        <div class="editor-mode-card">
+            <div class="section-label">Sicurezza account</div>
+            <h1 style="font-size:26px;font-weight:900;color:var(--green-dark);margin-bottom:6px;">Cambia password</h1>
+            <p style="color:var(--text-light);font-weight:600;margin-bottom:1rem;">Inserisci la password attuale e scegli una nuova password.</p>
+
+            <div class="alert alert-error" th:if="${profileError}">
+                <span th:text="${profileError}"></span>
+            </div>
+            <div class="alert alert-success" th:if="${profileSuccess}">
+                <span th:text="${profileSuccess}"></span>
+            </div>
+
+            <form th:action="@{/teacher/profile/password}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="form-group">
+                    <label class="form-label">Password attuale</label>
+                    <input type="password" name="currentPassword" class="input-field" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Nuova password</label>
+                    <input type="password" name="newPassword" class="input-field" placeholder="Almeno 6 caratteri" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Conferma nuova password</label>
+                    <input type="password" name="confirmPassword" class="input-field" required>
+                </div>
+
+                <button type="submit" class="btn-start-quiz" style="margin-top:1.25rem;">
+                    🔐 Aggiorna password
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

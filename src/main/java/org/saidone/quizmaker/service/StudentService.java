@@ -22,8 +22,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.saidone.quizmaker.dto.StudentDto;
 import org.saidone.quizmaker.entity.Student;
+import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.repository.StudentRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,21 +38,22 @@ import java.util.UUID;
 public class StudentService {
 
     private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final int LOGIN_KEYWORD_LENGTH = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final StudentRepository studentRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
 
     @Transactional(readOnly = true)
-    public List<StudentDto.Response> findAll() {
-        return studentRepository.findAllByOrderByFullNameAsc()
+    public List<StudentDto.Response> findAll(Teacher teacher) {
+        return studentRepository.findAllByTeacherOrderByFullNameAsc(teacher)
                 .stream()
                 .map(s -> new StudentDto.Response(s.getId(), s.getFullName(), s.getLoginKeyword()))
                 .toList();
     }
 
     @Transactional
-    public StudentDto.Response create(String fullName) {
+    public StudentDto.Response create(String fullName, Teacher teacher) {
         val cleanedName = fullName == null ? "" : fullName.trim();
         if (cleanedName.isBlank()) {
             throw new IllegalArgumentException("Il nome dello studente è obbligatorio");
@@ -59,41 +62,46 @@ public class StudentService {
         val student = Student.builder()
                 .id(UUID.randomUUID())
                 .fullName(cleanedName)
+                .teacher(teacher)
                 .build();
 
         return saveWithUniqueKeyword(student);
     }
 
     @Transactional
-    public void delete(UUID studentId) {
-        if (!studentRepository.existsById(studentId)) {
-            throw new IllegalArgumentException("Studente non trovato: " + studentId);
-        }
-        quizSubmissionRepository.deleteAllByStudentId(studentId);
-        studentRepository.deleteById(studentId);
+    public void delete(UUID studentId, Teacher teacher) {
+        val student = studentRepository.findByIdAndTeacher(studentId, teacher)
+                .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studentId));
+        quizSubmissionRepository.deleteAllByStudentIdAndStudentTeacher(studentId, teacher);
+        studentRepository.delete(student);
     }
 
     @Transactional
-    public StudentDto.Response regenerateLoginKeyword(UUID studentId) {
-        val student = studentRepository.findById(studentId)
+    public StudentDto.Response regenerateLoginKeyword(UUID studentId, Teacher teacher) {
+        val student = studentRepository.findByIdAndTeacher(studentId, teacher)
                 .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studentId));
         return saveWithUniqueKeyword(student);
     }
 
     @Transactional
-    public int regenerateAllLoginKeywords() {
-        val students = studentRepository.findAll();
+    public int regenerateAllLoginKeywords(Teacher teacher) {
+        val students = studentRepository.findAllByTeacherOrderByFullNameAsc(teacher);
         students.forEach(this::saveWithUniqueKeyword);
         return students.size();
     }
 
     private StudentDto.Response saveWithUniqueKeyword(Student student) {
         for (int attempt = 0; attempt < 100; attempt++) {
-            val newLoginKeyword = randomAlphanumeric(4);
-            if (!studentRepository.existsByLoginKeyword(newLoginKeyword)) {
-                student.setLoginKeyword(newLoginKeyword);
+            val newLoginKeyword = randomAlphanumeric(LOGIN_KEYWORD_LENGTH);
+            if (studentRepository.existsByLoginKeyword(newLoginKeyword)) {
+                continue;
+            }
+            student.setLoginKeyword(newLoginKeyword);
+            try {
                 val saved = studentRepository.saveAndFlush(student);
                 return new StudentDto.Response(saved.getId(), saved.getFullName(), saved.getLoginKeyword());
+            } catch (DataIntegrityViolationException ex) {
+                // collisione concorrente su vincolo unique a livello DB: riprova con una nuova keyword
             }
         }
         throw new IllegalStateException("Impossibile generare una keyword univoca. Riprova.");

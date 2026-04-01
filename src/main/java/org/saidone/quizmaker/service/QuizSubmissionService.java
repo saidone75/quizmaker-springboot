@@ -25,6 +25,7 @@ import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.entity.Quiz;
 import org.saidone.quizmaker.entity.QuizSubmission;
 import org.saidone.quizmaker.entity.Student;
+import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.springframework.stereotype.Service;
@@ -54,7 +55,7 @@ public class QuizSubmissionService {
 
     @Transactional
     public QuizSubmissionDto.Response submit(UUID quizId, Student student, List<Integer> answers) {
-        val quiz = quizRepository.findByIdAndPublishedTrue(quizId)
+        val quiz = quizRepository.findByIdAndTeacherAndPublishedTrue(quizId, student.getTeacher())
                 .orElseThrow(() -> new EntityNotFoundException("Quiz non trovato: " + quizId));
 
         val existingSubmission = quizSubmissionRepository.findByStudentIdAndQuizId(student.getId(), quizId);
@@ -79,8 +80,8 @@ public class QuizSubmissionService {
     }
 
     @Transactional(readOnly = true)
-    public List<ResultRow> findAllResults() {
-        return quizSubmissionRepository.findAllByOrderBySubmittedAtDesc()
+    public List<ResultRow> findAllResults(Teacher teacher) {
+        return quizSubmissionRepository.findAllByStudentTeacherOrderBySubmittedAtDesc(teacher)
                 .stream()
                 .map(s -> new ResultRow(
                         s.getStudent().getId(),
@@ -96,16 +97,16 @@ public class QuizSubmissionService {
     }
 
     @Transactional
-    public void unlockQuizForStudent(UUID studentId, UUID quizId) {
-        val submission = quizSubmissionRepository.findByStudentIdAndQuizId(studentId, quizId)
+    public void unlockQuizForStudent(UUID studentId, UUID quizId, Teacher teacher) {
+        val submission = quizSubmissionRepository.findByStudentIdAndQuizIdAndStudentTeacherAndQuizTeacher(studentId, quizId, teacher, teacher)
                 .orElseThrow(() -> new EntityNotFoundException("Consegna non trovata per studente/quiz"));
         submission.setUnlocked(true);
         quizSubmissionRepository.save(submission);
     }
 
     @Transactional
-    public int unlockAllForQuiz(UUID quizId) {
-        val submissions = quizSubmissionRepository.findByQuizIdAndUnlockedFalse(quizId);
+    public int unlockAllForQuiz(UUID quizId, Teacher teacher) {
+        val submissions = quizSubmissionRepository.findByQuizIdAndUnlockedFalseAndQuizTeacher(quizId, teacher);
         submissions.forEach(submission -> submission.setUnlocked(true));
         quizSubmissionRepository.saveAll(submissions);
         return submissions.size();

@@ -18,17 +18,14 @@
 
 package org.saidone.quizmaker.config;
 
-import lombok.val;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
@@ -36,43 +33,38 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.admin.username}")
-    private String adminUsername;
-
-    @Value("${app.admin.password}")
-    private String adminPassword;
-
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/admin/login", "/", "/student/login").permitAll()
+                        .requestMatchers("/teacher/login", "/teacher/register", "/", "/student/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole("ADMIN")
-                        .requestMatchers("/api/students/**").hasRole("ADMIN")
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole("TEACHER")
+                        .requestMatchers("/api/students/**").hasRole("TEACHER")
+                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
                         .requestMatchers("/about").hasRole("ADMIN")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/teacher/about").hasRole("ADMIN")
+                        .requestMatchers("/teacher/**").hasRole("TEACHER")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/admin/login")
-                        .loginProcessingUrl("/admin/login")
-                        .defaultSuccessUrl("/admin", true)
-                        .failureUrl("/admin/login?error=true")
+                        .loginPage("/teacher/login")
+                        .loginProcessingUrl("/teacher/login")
+                        .defaultSuccessUrl("/teacher", true)
+                        .failureUrl("/teacher/login?error=true")
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/admin/logout")
-                        .logoutSuccessUrl("/admin/login?logout=true")
+                        .logoutUrl("/teacher/logout")
+                        .logoutSuccessUrl("/teacher/login?logout=true")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
@@ -89,13 +81,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        val admin = User.builder()
-                .username(adminUsername)
-                .password(adminPassword)
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(admin);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
-
 }

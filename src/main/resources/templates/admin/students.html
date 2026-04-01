@@ -54,10 +54,10 @@
     <div class="topbar no-print">
         <span class="topbar-title">👨‍🎓 Studenti della classe</span>
         <div style="display:flex;gap:8px;align-items:center;">
-            <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+            <a th:href="@{/teacher}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
             <button type="button" class="topbar-back no-print" onclick="printStudentsTable()">🖨️ Stampa</button>
             <span class="topbar-badge" sec:authentication="name">admin</span>
-            <form th:action="@{/admin/logout}" method="post" style="margin:0">
+            <form th:action="@{/teacher/logout}" method="post" style="margin:0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="topbar-back">Logout</button>
             </form>
@@ -70,7 +70,7 @@
                 <input id="new-student-name" class="input-field" style="max-width:320px" placeholder="Nome studente" required>
                 <button class="quiz-next" style="display:block;padding:10px 18px;">Aggiungi studente</button>
             </form>
-            <p style="margin-top:8px;color:#64748b">Verrà generata automaticamente una parola chiave univoca di 4 caratteri.</p>
+            <p style="margin-top:8px;color:#64748b">Verrà generata automaticamente una parola chiave univoca di 5 caratteri.</p>
         </div>
 
         <div class="students-print-card" style="overflow:auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;" th:if="${!students.isEmpty()}">
@@ -94,7 +94,7 @@
                 <tbody>
                 <tr th:each="student : ${students}">
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${student.fullName}">Mario Rossi</td>
-                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABCD</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABCDE</td>
                     <td class="print-hide" style="padding:10px 12px;border-top:1px solid #eef2f7">
                         <div class="student-actions">
                             <button class="btn-regenerate-password"

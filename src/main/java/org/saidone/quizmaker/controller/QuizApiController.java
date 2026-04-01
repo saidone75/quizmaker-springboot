@@ -30,6 +30,7 @@ import org.saidone.quizmaker.service.OpenAiQuizGeneratorService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentSessionService;
+import org.saidone.quizmaker.service.TeacherAuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -48,15 +49,20 @@ public class QuizApiController {
     private final StudentSessionService studentSessionService;
     private final OpenAiQuizGeneratorService openAiQuizGeneratorService;
     private final DocumentTextExtractorService documentTextExtractorService;
+    private final TeacherAuthService teacherAuthService;
 
     @GetMapping
-    public ResponseEntity<List<QuizDto.Response>> getAll() {
-        return ResponseEntity.ok(quizService.findPublished());
+    public ResponseEntity<List<QuizDto.Response>> getAll(HttpSession session) {
+        val student = studentSessionService.getLoggedStudent(session)
+                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+        return ResponseEntity.ok(quizService.findPublishedForTeacher(student.getTeacher()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(quizService.findPublishedById(id));
+    public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id, HttpSession session) {
+        val student = studentSessionService.getLoggedStudent(session)
+                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+        return ResponseEntity.ok(quizService.findPublishedByIdForTeacher(id, student.getTeacher()));
     }
 
     @PostMapping("/{id}/submit")
@@ -73,30 +79,30 @@ public class QuizApiController {
     public ResponseEntity<Void> unlockQuiz(
             @PathVariable UUID quizId,
             @PathVariable UUID studentId) {
-        quizSubmissionService.unlockQuizForStudent(studentId, quizId);
+        quizSubmissionService.unlockQuizForStudent(studentId, quizId, teacherAuthService.getCurrentTeacher());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{quizId}/unlock-all")
     public ResponseEntity<Integer> unlockAllForQuiz(@PathVariable UUID quizId) {
-        return ResponseEntity.ok(quizSubmissionService.unlockAllForQuiz(quizId));
+        return ResponseEntity.ok(quizSubmissionService.unlockAllForQuiz(quizId, teacherAuthService.getCurrentTeacher()));
     }
 
     @PostMapping
     public ResponseEntity<QuizDto.Response> create(@Valid @RequestBody QuizDto.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(quizService.create(request));
+        return ResponseEntity.status(HttpStatus.CREATED).body(quizService.create(request, teacherAuthService.getCurrentTeacher()));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<QuizDto.Response> update(
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.Request request) {
-        return ResponseEntity.ok(quizService.update(id, request));
+        return ResponseEntity.ok(quizService.update(id, request, teacherAuthService.getCurrentTeacher()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        quizService.delete(id);
+        quizService.delete(id, teacherAuthService.getCurrentTeacher());
         return ResponseEntity.noContent().build();
     }
 
@@ -104,7 +110,7 @@ public class QuizApiController {
     public ResponseEntity<QuizDto.Response> updatePublicationStatus(
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.PublicationUpdateRequest request) {
-        return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished()));
+        return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished(), teacherAuthService.getCurrentTeacher()));
     }
 
     @PostMapping(value = "/generate", consumes = {"multipart/form-data"})

@@ -19,6 +19,7 @@
 package org.saidone.quizmaker.repository;
 
 import org.saidone.quizmaker.entity.Quiz;
+import org.saidone.quizmaker.entity.Teacher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -28,11 +29,13 @@ import java.util.UUID;
 
 @Repository
 public interface QuizRepository extends JpaRepository<Quiz, UUID> {
-    List<Quiz> findAllByOrderByCreatedAtDesc();
+    List<Quiz> findAllByTeacherOrderByCreatedAtDesc(Teacher teacher);
 
-    List<Quiz> findByPublishedTrueOrderByCreatedAtDesc();
+    List<Quiz> findByTeacherAndPublishedTrueOrderByCreatedAtDesc(Teacher teacher);
 
-    Optional<Quiz> findByIdAndPublishedTrue(UUID id);
+    Optional<Quiz> findByIdAndTeacher(UUID id, Teacher teacher);
 
-    boolean existsByTitle(String title);
+    Optional<Quiz> findByIdAndTeacherAndPublishedTrue(UUID id, Teacher teacher);
+
+    boolean existsByTitleAndTeacher(String title, Teacher teacher);
 }

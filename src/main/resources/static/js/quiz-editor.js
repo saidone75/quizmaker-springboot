@@ -222,7 +222,7 @@ async function saveQuiz() {
 
         hideLoading();
         showToast(quizId ? 'Quiz aggiornato!' : 'Quiz salvato!');
-        setTimeout(() => { window.location.href = '/admin'; }, 1000);
+        setTimeout(() => { window.location.href = '/teacher'; }, 1000);
 
     } catch(e) {
         hideLoading();

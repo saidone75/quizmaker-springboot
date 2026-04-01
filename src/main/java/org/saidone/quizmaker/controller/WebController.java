@@ -28,6 +28,7 @@ import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
+import org.saidone.quizmaker.service.TeacherAuthService;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
@@ -55,6 +56,7 @@ public class WebController {
     private final StudentService studentService;
     private final ObjectMapper objectMapper;
     private final BuildProperties buildProperties;
+    private final TeacherAuthService teacherAuthService;
 
     @GetMapping("/")
     public String studentPage(HttpSession session, Model model) {
@@ -63,7 +65,7 @@ public class WebController {
             return "student-login";
         }
 
-        val quizzes = quizService.findPublished();
+        val quizzes = quizService.findPublishedForTeacher(maybeStudent.get().getTeacher());
         val lockedQuizIds = quizSubmissionService.findLockedQuizIdsForStudent(maybeStudent.get());
 
         model.addAttribute("studentName", maybeStudent.get().getFullName());
@@ -81,8 +83,8 @@ public class WebController {
 
     @PostMapping("/student/login")
     public String studentLogin(@RequestParam("keyword") String keyword, HttpSession session, Model model) {
-        if (keyword == null || keyword.trim().length() != 4) {
-            model.addAttribute("loginError", "La parola chiave deve avere 4 caratteri.");
+        if (keyword == null || keyword.trim().length() != 5) {
+            model.addAttribute("loginError", "La parola chiave deve avere 5 caratteri.");
             return "student-login";
         }
 
@@ -100,31 +102,58 @@ public class WebController {
         return "redirect:/";
     }
 
-    @GetMapping("/admin/login")
+    @GetMapping("/teacher/login")
     public String loginPage() {
         return "admin/login";
     }
 
-    @GetMapping("/admin")
+
+    @GetMapping("/teacher/register")
+    public String registerPage() {
+        return "admin/register";
+    }
+
+    @PostMapping("/teacher/register")
+    public String registerTeacher(@RequestParam("username") String username,
+                                  @RequestParam("password") String password,
+                                  @RequestParam("confirmPassword") String confirmPassword,
+                                  Model model) {
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("registerError", "Le password non coincidono.");
+            model.addAttribute("username", username);
+            return "admin/register";
+        }
+
+        try {
+            teacherAuthService.register(username, password);
+            return "redirect:/teacher/login?registered=true";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("registerError", ex.getMessage());
+            model.addAttribute("username", username);
+            return "admin/register";
+        }
+    }
+
+    @GetMapping("/teacher")
     public String adminDashboard(Model model) {
-        model.addAttribute("quizzes", quizService.findAllForAdmin());
+        model.addAttribute("quizzes", quizService.findAllForAdmin(teacherAuthService.getCurrentTeacher()));
         return "admin/dashboard";
     }
 
-    @GetMapping("/admin/students")
+    @GetMapping("/teacher/students")
     public String adminStudents(Model model) {
-        model.addAttribute("students", studentService.findAll());
+        model.addAttribute("students", studentService.findAll(teacherAuthService.getCurrentTeacher()));
         return "admin/students";
     }
 
-    @GetMapping("/admin/logs")
+    @GetMapping("/teacher/logs")
     public String adminLogs() {
         return "admin/logs";
     }
 
-    @GetMapping("/admin/results")
+    @GetMapping("/teacher/results")
     public String adminResults(Model model) {
-        val results = quizSubmissionService.findAllResults();
+        val results = quizSubmissionService.findAllResults(teacherAuthService.getCurrentTeacher());
 
         val groupedResults = results.stream()
                 .collect(Collectors.groupingBy(
@@ -143,18 +172,43 @@ public class WebController {
         return "admin/results";
     }
 
-    @GetMapping("/admin/quiz/new")
+    @GetMapping("/teacher/profile")
+    public String teacherProfilePage() {
+        return "admin/profile";
+    }
+
+    @PostMapping("/teacher/profile/password")
+    public String changeTeacherPassword(@RequestParam("currentPassword") String currentPassword,
+                                        @RequestParam("newPassword") String newPassword,
+                                        @RequestParam("confirmPassword") String confirmPassword,
+                                        Model model) {
+        if (!newPassword.equals(confirmPassword)) {
+            model.addAttribute("profileError", "Le nuove password non coincidono.");
+            return "admin/profile";
+        }
+
+        try {
+            teacherAuthService.changePassword(teacherAuthService.getCurrentTeacher(), currentPassword, newPassword);
+            model.addAttribute("profileSuccess", "Password aggiornata con successo.");
+            return "admin/profile";
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("profileError", ex.getMessage());
+            return "admin/profile";
+        }
+    }
+
+    @GetMapping("/teacher/quiz/new")
     public String newQuiz() {
         return "admin/quiz-editor";
     }
 
-    @GetMapping("/admin/quiz/{id}/edit")
+    @GetMapping("/teacher/quiz/{id}/edit")
     public String editQuiz(@PathVariable UUID id, Model model) {
-        model.addAttribute("quiz", quizService.findById(id));
+        model.addAttribute("quiz", quizService.findByIdForTeacher(id, teacherAuthService.getCurrentTeacher()));
         return "admin/quiz-editor";
     }
 
-    @GetMapping({"/about", "/admin/about"})
+    @GetMapping({"/about", "/teacher/about"})
     public String aboutPage(Model model) {
         val runtime = Runtime.getRuntime();
         model.addAttribute("appVersion", getAppVersion());

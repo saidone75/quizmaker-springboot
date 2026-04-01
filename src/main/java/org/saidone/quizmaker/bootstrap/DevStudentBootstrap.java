@@ -24,6 +24,7 @@ import lombok.val;
 import net.datafaker.Faker;
 import org.saidone.quizmaker.entity.Student;
 import org.saidone.quizmaker.repository.StudentRepository;
+import org.saidone.quizmaker.repository.TeacherRepository;
 import org.saidone.quizmaker.service.StudentService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -39,16 +40,20 @@ import java.util.UUID;
 public class DevStudentBootstrap implements CommandLineRunner {
 
     private final StudentRepository studentRepository;
+    private final TeacherRepository teacherRepository;
 
     private static final Faker FAKER = new Faker(Locale.ITALIAN);
 
     @Override
     public void run(String... args) {
+        val teacher = teacherRepository.findAll().stream().findFirst().orElseThrow();
+
         for (var i = 0; i < 6; i++) {
             val student = Student.builder()
                     .id(UUID.randomUUID())
                     .fullName(String.format("%s %s", FAKER.name().firstName(), FAKER.name().lastName()))
-                    .loginKeyword(StudentService.randomAlphanumeric(4))
+                    .loginKeyword(StudentService.randomAlphanumeric(5))
+                    .teacher(teacher)
                     .build();
             studentRepository.save(student);
         }

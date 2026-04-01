@@ -29,9 +29,9 @@
 <div class="screen active" style="display:block;">
     <div class="topbar">
         <span class="topbar-title">ℹ️ About QuizMaker</span>
-        <a th:href="@{/admin}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
+        <a th:href="@{/teacher}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
         <span class="topbar-badge" sec:authentication="name">admin</span>
-        <form th:action="@{/admin/logout}" method="post" style="margin:0">
+        <form th:action="@{/teacher/logout}" method="post" style="margin:0">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <button type="submit" class="topbar-back">Logout</button>
         </form>
@@ -81,7 +81,7 @@
         </div>
 
         <div class="about-footer-link">
-            <a th:href="@{/admin/logs}" class="topbar-back">🧾 Visualizza log in tempo reale</a>
+            <a th:href="@{/teacher/logs}" class="topbar-back">🧾 Visualizza log in tempo reale</a>
         </div>
     </div>
 </div>

@@ -32,7 +32,7 @@
         <span class="topbar-title">🎓 QuizMaker Dashboard</span>
         <div style="display:flex;gap:8px;align-items:center;">
             <span class="topbar-badge" sec:authentication="name">admin</span>
-            <form th:action="@{/admin/logout}" method="post" style="margin:0">
+            <form th:action="@{/teacher/logout}" method="post" style="margin:0">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <button type="submit" class="topbar-back">Logout</button>
             </form>
@@ -41,25 +41,32 @@
 
     <div class="teacher-body">
         <div class="home-buttons" style="margin-bottom:1.5rem">
-            <a th:href="@{/admin/quiz/new}" class="btn-hero btn-teacher" style="text-decoration:none">
+            <a th:href="@{/teacher/quiz/new}" class="btn-hero btn-teacher" style="text-decoration:none">
                 <span class="btn-icon">✏️</span>
                 <span>
                     <span class="btn-label">Crea nuovo quiz</span>
                     <span class="btn-desc">Aggiungi un nuovo quiz per la classe</span>
                 </span>
             </a>
-            <a th:href="@{/admin/students}" class="btn-hero btn-student" style="text-decoration:none">
+            <a th:href="@{/teacher/students}" class="btn-hero btn-student" style="text-decoration:none">
                 <span class="btn-icon">👨‍🎓</span>
                 <span>
                     <span class="btn-label">Studenti della classe</span>
                     <span class="btn-desc">Gestisci elenco e password degli studenti</span>
                 </span>
             </a>
-            <a th:href="@{/admin/results}" class="btn-hero btn-teacher" style="text-decoration:none">
+            <a th:href="@{/teacher/results}" class="btn-hero btn-teacher" style="text-decoration:none">
                 <span class="btn-icon">🧾</span>
                 <span>
                     <span class="btn-label">Risultati quiz</span>
                     <span class="btn-desc">Visualizza punteggi e sblocca tentativi</span>
+                </span>
+            </a>
+            <a th:href="@{/teacher/profile}" class="btn-hero btn-student" style="text-decoration:none">
+                <span class="btn-icon">👤</span>
+                <span>
+                    <span class="btn-label">Profilo insegnante</span>
+                    <span class="btn-desc">Aggiorna password e sicurezza account</span>
                 </span>
             </a>
             <a th:href="@{/}" target="_blank" class="btn-hero btn-student" style="text-decoration:none">
@@ -89,7 +96,7 @@
                                th:data-id="${quiz.id}"
                                onchange="togglePublication(this)">
                     </label>
-                    <a th:href="@{/admin/quiz/{id}/edit(id=${quiz.id})}" class="btn-icon-action btn-edit-quiz" title="Modifica">✏️</a>
+                    <a th:href="@{/teacher/quiz/{id}/edit(id=${quiz.id})}" class="btn-icon-action btn-edit-quiz" title="Modifica">✏️</a>
                     <button class="btn-icon-action btn-delete-quiz" title="Elimina"
                             th:data-id="${quiz.id}"
                             th:data-title="${quiz.title}"
@@ -103,8 +110,8 @@
             Nessun quiz ancora. Creane uno!
         </div>
 
-        <div class="admin-about-footer">
-            <a th:href="@{/admin/about}" class="admin-about-link">Informazioni di sistema</a>
+        <div class="admin-about-footer" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/teacher/about}" class="admin-about-link">Informazioni di sistema</a>
         </div>
     </div>
 </div>
