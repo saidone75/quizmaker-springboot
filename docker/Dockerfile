@@ -28,18 +28,10 @@ FROM azul/zulu-openjdk-alpine:${JAVA_VERSION}
 ARG UID=1010
 ARG GID=1010
 
-RUN apk add curl jq
-
 RUN addgroup --gid ${GID} -S spring && adduser --uid ${UID} -S spring -G spring
 
 USER spring:spring
 ARG JAR_FILE=/application/target/quizmaker*.jar
 COPY --from=builder ${JAR_FILE} quizmaker.jar
-
-ENV SPRING_PROFILES_ACTIVE docker
-ENV APPLICATION_BASE_URL http://127.0.0.1:10501
-ENV SHARED_FILES_PATH /tmp/anv
-ENV CONNECTION_TIMEOUT 10000
-ENV READ_TIMEOUT 10000
 
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MinRAMPercentage=35", "-XX:MaxRAMPercentage=70", "-jar","/quizmaker.jar"]

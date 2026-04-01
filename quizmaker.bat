@@ -1,17 +1,11 @@
 @ECHO OFF
 SETLOCAL
 
-SET APP_NAME=quizmaker
-SET IMAGE_NAME=quizmaker:latest
-SET CONTAINER_NAME=quizmaker
-SET DOCKERFILE=docker\Dockerfile
-
-REM Optional: expose port 8080
-SET PORTS=-p 8080:8080
+SET COMPOSE_CMD=docker compose -f docker\docker-compose.yml
 
 REM Check parameter
 IF "%~1"=="" (
-    echo Usage: %~nx0 {build^|build_start^|start^|stop^|purge^|tail}
+    echo Usage: %~nx0 {build^|build_start^|start^|stop^|restart^|purge^|tail}
     GOTO END
 )
 
@@ -21,7 +15,6 @@ IF /I "%~1"=="build" (
 )
 
 IF /I "%~1"=="build_start" (
-    CALL :down
     CALL :build
     CALL :start
     CALL :tail
@@ -39,6 +32,13 @@ IF /I "%~1"=="stop" (
     GOTO END
 )
 
+IF /I "%~1"=="restart" (
+    CALL :down
+    CALL :start
+    CALL :tail
+    GOTO END
+)
+
 IF /I "%~1"=="purge" (
     CALL :down
     CALL :purge
@@ -50,37 +50,28 @@ IF /I "%~1"=="tail" (
     GOTO END
 )
 
-echo Usage: %~nx0 {build^|build_start^|start^|stop^|purge^|tail}
+echo Usage: %~nx0 {build^|build_start^|start^|stop^|restart^|purge^|tail}
 
 :END
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 
 :build
-docker build -t %IMAGE_NAME% . -f %DOCKERFILE%
+%COMPOSE_CMD% build --no-cache
 EXIT /B %ERRORLEVEL%
 
 :start
-docker ps -a --format "{{.Names}}" | findstr /I /X "%CONTAINER_NAME%" >NUL
-IF %ERRORLEVEL%==0 (
-    docker start %CONTAINER_NAME%
-) ELSE (
-    docker run -d %PORTS% --name %CONTAINER_NAME% %IMAGE_NAME%
-)
+%COMPOSE_CMD% up -d
 EXIT /B %ERRORLEVEL%
 
 :down
-docker ps -a --format "{{.Names}}" | findstr /I /X "%CONTAINER_NAME%" >NUL
-IF %ERRORLEVEL%==0 (
-    docker stop %CONTAINER_NAME% >NUL 2>&1
-    docker rm %CONTAINER_NAME% >NUL 2>&1
-)
-EXIT /B 0
+%COMPOSE_CMD% down
+EXIT /B %ERRORLEVEL%
 
 :tail
-docker logs -f %CONTAINER_NAME%
+%COMPOSE_CMD% logs -f
 EXIT /B %ERRORLEVEL%
 
 :purge
-docker image rm -f %IMAGE_NAME%
-EXIT /B 0
+%COMPOSE_CMD% down --rmi local --remove-orphans
+EXIT /B %ERRORLEVEL%
