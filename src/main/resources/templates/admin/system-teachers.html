@@ -41,9 +41,10 @@
                         <form th:action="@{/teacher/system/teachers/{id}/enabled(id=${teacher.id})}" method="post" class="teacher-enabled-toggle-form">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <input type="hidden" name="enabled" th:value="${teacher.enabled}"/>
-                            <label class="teacher-enabled-toggle-label" th:title="${teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante'}">
+                            <label class="teacher-enabled-toggle-label"
+                                   th:title="${teacher.id == currentTeacherId ? 'Non puoi disabilitare il tuo account' : (teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante')}">
                                 <input type="checkbox" th:checked="${teacher.enabled}" onchange="submitEnabledToggle(this)"
-                                       th:disabled="${teacher.id == currentTeacherId && !teacher.enabled}">
+                                       th:disabled="${teacher.id == currentTeacherId}">
                             </label>
                         </form>
                         <span th:text="${teacher.username}">username</span>
