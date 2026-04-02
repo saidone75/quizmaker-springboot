@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -78,6 +79,11 @@ public class TeacherAuthService implements UserDetailsService {
                 .password(passwordEncoder.encode(rawPassword))
                 .admin(false)
                 .build());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Teacher> findAllTeachers() {
+        return teacherRepository.findAllByOrderByCreatedAtAsc();
     }
 
     private List<GrantedAuthority> buildAuthorities(Teacher teacher) {
@@ -133,5 +139,23 @@ public class TeacherAuthService implements UserDetailsService {
 
         teacher.setPassword(passwordEncoder.encode(newPassword));
         teacherRepository.save(teacher);
+    }
+
+    @Transactional
+    public void updateTeacherAdminFlag(UUID targetTeacherId, boolean admin, Teacher actingTeacher) {
+        if (actingTeacher == null || !actingTeacher.isAdmin()) {
+            throw new IllegalArgumentException("Operazione non consentita");
+        }
+        if (targetTeacherId == null) {
+            throw new IllegalArgumentException("Insegnante non valido");
+        }
+        if (actingTeacher.getId().equals(targetTeacherId)) {
+            throw new IllegalArgumentException("Non puoi modificare il tuo ruolo amministratore");
+        }
+
+        val targetTeacher = teacherRepository.findById(targetTeacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Insegnante non trovato"));
+        targetTeacher.setAdmin(admin);
+        teacherRepository.save(targetTeacher);
     }
 }

@@ -34,10 +34,12 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +47,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Controller
 @RequiredArgsConstructor
@@ -208,8 +212,34 @@ public class WebController {
         return "admin/quiz-editor";
     }
 
-    @GetMapping({"/about", "/teacher/about"})
+    @GetMapping("/teacher/system")
+    public String systemPage() {
+        ensureAdmin();
+        return "admin/system";
+    }
+
+    @GetMapping("/teacher/system/teachers")
+    public String teacherManagementPage(Model model) {
+        ensureAdmin();
+        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        val teachers = teacherAuthService.findAllTeachers().stream()
+                .filter(teacher -> !teacher.getId().equals(currentTeacher.getId()))
+                .toList();
+        model.addAttribute("teachers", teachers);
+        return "admin/system-teachers";
+    }
+
+    @PostMapping("/teacher/system/teachers/{id}/admin")
+    public String updateTeacherAdminFlag(@PathVariable UUID id,
+                                         @RequestParam("admin") boolean admin) {
+        ensureAdmin();
+        teacherAuthService.updateTeacherAdminFlag(id, admin, teacherAuthService.getCurrentTeacher());
+        return "redirect:/teacher/system/teachers";
+    }
+
+    @GetMapping({"/about", "/teacher/about", "/teacher/system/about"})
     public String aboutPage(Model model) {
+        ensureAdmin();
         val runtime = Runtime.getRuntime();
         model.addAttribute("appVersion", getAppVersion());
         model.addAttribute("buildTime", getBuildTime());
@@ -227,6 +257,20 @@ public class WebController {
         model.addAttribute("heapTotalMb", runtime.totalMemory() / (1024 * 1024));
         model.addAttribute("heapFreeMb", runtime.freeMemory() / (1024 * 1024));
         return "about";
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public String handleResponseStatusException(ResponseStatusException ex) {
+        if (ex.getStatusCode() == FORBIDDEN) {
+            return "redirect:/teacher";
+        }
+        throw ex;
+    }
+
+    private void ensureAdmin() {
+        if (!teacherAuthService.getCurrentTeacher().isAdmin()) {
+            throw new ResponseStatusException(FORBIDDEN);
+        }
     }
 
     private String getAppVersion() {
