@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ QuizMaker - fun quizzes for curious minds
+  ~ Copyright (C) 2026 Saidone
+  -->
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="009-backfill" author="quizmaker">
+        <comment>Backfill teacher flags when NULL values exist</comment>
+
+        <update tableName="teachers">
+            <column name="ai_enabled" valueBoolean="false"/>
+            <where>ai_enabled IS NULL</where>
+        </update>
+
+        <update tableName="teachers">
+            <column name="enabled" valueBoolean="true"/>
+            <where>enabled IS NULL</where>
+        </update>
+
+        <rollback>
+            <update tableName="teachers">
+                <column name="ai_enabled" valueComputed="NULL"/>
+                <where>ai_enabled = false</where>
+            </update>
+            <update tableName="teachers">
+                <column name="enabled" valueComputed="NULL"/>
+                <where>enabled = true</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="009-not-null-h2" author="quizmaker" dbms="h2">
+        <comment>Enforce teacher flags as NOT NULL where supported</comment>
+
+        <addNotNullConstraint tableName="teachers"
+                              columnName="ai_enabled"
+                              columnDataType="BOOLEAN"/>
+
+        <addNotNullConstraint tableName="teachers"
+                              columnName="enabled"
+                              columnDataType="BOOLEAN"/>
+
+        <rollback>
+            <dropNotNullConstraint tableName="teachers"
+                                   columnName="ai_enabled"
+                                   columnDataType="BOOLEAN"/>
+            <dropNotNullConstraint tableName="teachers"
+                                   columnName="enabled"
+                                   columnDataType="BOOLEAN"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
