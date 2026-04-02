@@ -85,8 +85,16 @@
                 <span class="manage-card-icon" th:text="${quiz.emoji}">🦕</span>
                 <div class="manage-card-info">
                     <div class="manage-card-title" th:text="${quiz.title}">Titolo</div>
-                    <div class="manage-card-meta">
+                    <div class="manage-card-meta" th:if="${quiz.createdByUsername == #authentication.name}">
                         Creato il <span th:text="${#temporals.format(quiz.createdAt, 'dd/MM/yyyy')}">01/01/2024</span>
+                    </div>
+                    <div class="manage-card-meta" th:if="${quiz.createdByUsername != #authentication.name}">
+                        Creato da <span th:text="${quiz.createdByUsername}">admin</span>
+                        il <span th:text="${#temporals.format(quiz.createdAt, 'dd/MM/yyyy')}">01/01/2024</span>
+                    </div>
+                    <div class="manage-card-meta" th:if="${quiz.modifiedByUsername != null and !#strings.isEmpty(quiz.modifiedByUsername)}">
+                        Modificato da <span th:text="${quiz.modifiedByUsername}">admin</span>
+                        il <span th:text="${#temporals.format(quiz.modifiedAt, 'dd/MM/yyyy')}">01/01/2024</span>
                     </div>
                 </div>
                 <div class="manage-card-actions">

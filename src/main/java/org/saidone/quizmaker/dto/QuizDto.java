@@ -58,6 +58,9 @@ public class QuizDto {
         private List<QuestionDto> questions;
         private Integer questionsCount;
         private LocalDateTime createdAt;
+        private String createdByUsername;
+        private LocalDateTime modifiedAt;
+        private String modifiedByUsername;
         private Boolean published;
     }
 

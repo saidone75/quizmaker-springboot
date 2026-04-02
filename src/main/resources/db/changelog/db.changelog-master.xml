@@ -38,5 +38,6 @@
     <include file="007-teacher-ai-default-disabled.xml" relativeToChangelogFile="true" />
     <include file="008-teacher-enabled-flag.xml" relativeToChangelogFile="true" />
     <include file="009-backfill-teacher-flags.xml" relativeToChangelogFile="true" />
+    <include file="010-quiz-audit-fields.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>

@@ -34,6 +34,7 @@ import org.saidone.quizmaker.repository.TeacherRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -88,6 +89,7 @@ public class QuizService {
                 .emoji(request.getEmoji())
                 .questions(request.getQuestions().stream().map(questionMapper::toEntity).toList())
                 .published(false)
+                .createdByUsername(teacher.getUsername())
                 .teacher(teacher)
                 .build();
         val saved = quizRepository.save(quiz);
@@ -102,6 +104,8 @@ public class QuizService {
         quiz.setTitle(request.getTitle());
         quiz.setEmoji(request.getEmoji());
         quiz.setQuestions(request.getQuestions().stream().map(questionMapper::toEntity).toList());
+        quiz.setModifiedByUsername(teacher.getUsername());
+        quiz.setModifiedAt(LocalDateTime.now());
         val saved = quizRepository.save(quiz);
         log.info("Quiz updated: {} ({})", saved.getTitle(), saved.getId());
         return toResponse(saved);
@@ -144,6 +148,9 @@ public class QuizService {
                     .emoji(sourceQuiz.getEmoji())
                     .questions(cloneQuestions(sourceQuiz.getQuestions()))
                     .published(false)
+                    .createdByUsername(sourceQuiz.getCreatedByUsername() != null ? sourceQuiz.getCreatedByUsername() : actingTeacher.getUsername())
+                    .modifiedByUsername(actingTeacher.getUsername())
+                    .modifiedAt(LocalDateTime.now())
                     .teacher(recipient)
                     .build();
             quizRepository.save(clonedQuiz);
@@ -154,7 +161,11 @@ public class QuizService {
     }
 
     private QuizDto.Response toResponse(Quiz quiz) {
-        return quizMapper.toResponse(quiz);
+        val response = quizMapper.toResponse(quiz);
+        if (response.getCreatedByUsername() == null || response.getCreatedByUsername().isBlank()) {
+            response.setCreatedByUsername(quiz.getTeacher().getUsername());
+        }
+        return response;
     }
 
     private List<Question> cloneQuestions(List<Question> sourceQuestions) {
