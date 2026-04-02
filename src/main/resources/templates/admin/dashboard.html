@@ -63,9 +63,9 @@
                 </span>
             </a>
             <a th:href="@{/teacher/profile}" class="btn-hero btn-student" style="text-decoration:none">
-                <span class="btn-icon">👤</span>
+                <span class="btn-icon">👩‍🏫</span>
                 <span>
-                    <span class="btn-label">Profilo insegnante</span>
+                    <span class="btn-label">Il mio profilo</span>
                     <span class="btn-desc">Aggiorna password e sicurezza account</span>
                 </span>
             </a>
@@ -111,7 +111,7 @@
         </div>
 
         <div class="admin-about-footer" sec:authorize="hasRole('ADMIN')">
-            <a th:href="@{/teacher/system}" class="admin-about-link">Informazioni di sistema</a>
+            <a th:href="@{/teacher/system}" class="admin-about-link">Pagina di amministrazione</a>
         </div>
     </div>
 </div>
