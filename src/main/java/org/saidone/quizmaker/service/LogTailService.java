@@ -58,7 +58,7 @@ public class LogTailService {
                 int readByte = file.read();
 
                 if (readByte == '\n') {
-                    if (currentLine.length() > 0) {
+                    if (!currentLine.isEmpty()) {
                         collectedLines.add(currentLine.reverse().toString());
                         currentLine.setLength(0);
                     }
@@ -69,7 +69,7 @@ public class LogTailService {
                 filePointer--;
             }
 
-            if (currentLine.length() > 0 && collectedLines.size() < lines) {
+            if (!currentLine.isEmpty() && collectedLines.size() < lines) {
                 collectedLines.add(currentLine.reverse().toString());
             }
         }

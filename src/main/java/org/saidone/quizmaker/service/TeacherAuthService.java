@@ -21,12 +21,11 @@ package org.saidone.quizmaker.service;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.saidone.quizmaker.entity.Teacher;
-import org.saidone.quizmaker.repository.TeacherRepository;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
 import org.saidone.quizmaker.repository.StudentRepository;
+import org.saidone.quizmaker.repository.TeacherRepository;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -120,7 +119,7 @@ public class TeacherAuthService implements UserDetailsService {
 
     @Transactional(readOnly = true)
     public Teacher getCurrentTeacher() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
             throw new IllegalStateException("Insegnante non autenticato");
         }

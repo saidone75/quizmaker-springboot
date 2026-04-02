@@ -159,7 +159,7 @@ public class QuizService {
 
     private List<Question> cloneQuestions(List<Question> sourceQuestions) {
         val clonedQuestions = new ArrayList<Question>();
-        for (Question sourceQuestion : sourceQuestions) {
+        for (val sourceQuestion : sourceQuestions) {
             val clonedQuestion = new Question();
             clonedQuestion.setText(sourceQuestion.getText());
             clonedQuestion.setEmoji(sourceQuestion.getEmoji());
