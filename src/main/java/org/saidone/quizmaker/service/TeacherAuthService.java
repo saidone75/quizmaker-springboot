@@ -20,6 +20,7 @@ package org.saidone.quizmaker.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.jspecify.annotations.NullMarked;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
@@ -51,10 +52,11 @@ public class TeacherAuthService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     @Override
+    @NullMarked
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         val teacher = teacherRepository.findByUsernameIgnoreCase(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Insegnante non trovato: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException(String.format("Insegnante non trovato: %s", username)));
 
         return new User(
                 teacher.getUsername(),
@@ -68,7 +70,7 @@ public class TeacherAuthService implements UserDetailsService {
     }
 
     @Transactional
-    public Teacher register(String username, String rawPassword) {
+    public void register(String username, String rawPassword) {
         val normalizedUsername = username == null ? "" : username.trim().toLowerCase();
         if (normalizedUsername.isBlank()) {
             throw new IllegalArgumentException("Lo username è obbligatorio");
@@ -83,7 +85,7 @@ public class TeacherAuthService implements UserDetailsService {
             throw new IllegalArgumentException("Username già in uso");
         }
 
-        return teacherRepository.save(Teacher.builder()
+        teacherRepository.save(Teacher.builder()
                 .username(normalizedUsername)
                 .password(passwordEncoder.encode(rawPassword))
                 .admin(false)
@@ -125,7 +127,7 @@ public class TeacherAuthService implements UserDetailsService {
         }
 
         return teacherRepository.findByUsernameIgnoreCase(authentication.getName())
-                .orElseThrow(() -> new IllegalStateException("Insegnante non trovato: " + authentication.getName()));
+                .orElseThrow(() -> new IllegalStateException(String.format("Insegnante non trovato: %s", authentication.getName())));
     }
 
     @Transactional
