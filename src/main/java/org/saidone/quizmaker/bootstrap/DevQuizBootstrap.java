@@ -56,6 +56,7 @@ public class DevQuizBootstrap implements CommandLineRunner {
                             .emoji("🌌")
                             .published(true)
                             .teacher(teacher)
+                            .createdByUsername(teacher.getUsername())
                             .questions(List.of(
                                     question(
                                             "Qual è il pianeta più grande del Sistema Solare?",
@@ -93,6 +94,7 @@ public class DevQuizBootstrap implements CommandLineRunner {
                             .emoji("🦖")
                             .published(true)
                             .teacher(teacher)
+                            .createdByUsername(teacher.getUsername())
                             .questions(List.of(
                                     question(
                                             "Quale dinosauro è famoso per il collo molto lungo?",
