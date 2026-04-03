@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ QuizMaker - fun quizzes for curious minds
+  ~ Copyright (C) 2026 Saidone
+  -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-initial-schema-h2-postgres" author="quizmaker" dbms="h2,postgresql">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <tableExists tableName="quizzes"/>
+            </not>
+        </preConditions>
+        
+        <comment>Create consolidated initial schema with seed admin teacher (H2/PostgreSQL)</comment>
+
+        <createTable tableName="teachers">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="username" type="VARCHAR(60)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_teachers_username"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_admin" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ai_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="teachers">
+            <column name="id" value="00000000-0000-0000-0000-000000000001"/>
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$12$.DB0mk/H0KpfN27Uv43ZN.sdifPhExVAMvAKsMxsAvX8pziYUv6Lq"/>
+            <column name="is_admin" valueBoolean="true"/>
+            <column name="ai_enabled" valueBoolean="false"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+
+        <createTable tableName="students">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="full_name" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="login_keyword" type="VARCHAR(5)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_students_login_keyword"/>
+            </column>
+            <column name="teacher_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="students"
+                                 baseColumnNames="teacher_id"
+                                 referencedTableName="teachers"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_students_teacher"/>
+
+        <createTable tableName="quizzes">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="title" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emoji" type="TEXT"/>
+            <column name="questions" type="${json.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="teacher_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="created_by_username" type="VARCHAR(60)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by_username" type="VARCHAR(60)"/>
+            <column name="modified_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="quizzes"
+                                 baseColumnNames="teacher_id"
+                                 referencedTableName="teachers"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_quizzes_teacher"/>
+
+        <createTable tableName="quiz_submissions">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="student_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quiz_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answers" type="${json.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_questions" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unlocked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submitted_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="quiz_submissions"
+                                 baseColumnNames="student_id"
+                                 referencedTableName="students"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_quiz_submissions_student"/>
+
+        <addForeignKeyConstraint baseTableName="quiz_submissions"
+                                 baseColumnNames="quiz_id"
+                                 referencedTableName="quizzes"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_quiz_submissions_quiz"/>
+
+        <createIndex tableName="quiz_submissions" indexName="uk_submission_student_quiz" unique="true">
+            <column name="student_id"/>
+            <column name="quiz_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="quiz_submissions"/>
+            <dropTable tableName="quizzes"/>
+            <dropTable tableName="students"/>
+            <delete tableName="teachers">
+                <where>id = '00000000-0000-0000-0000-000000000001'</where>
+            </delete>
+            <dropTable tableName="teachers"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="001-initial-schema-sqlite" author="quizmaker" dbms="sqlite">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <tableExists tableName="quizzes"/>
+            </not>
+        </preConditions>
+        
+        <comment>Create consolidated initial schema with seed admin teacher (SQLite)</comment>
+
+        <createTable tableName="teachers">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="username" type="VARCHAR(60)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_teachers_username"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_admin" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ai_enabled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="teachers">
+            <column name="id" value="00000000-0000-0000-0000-000000000001"/>
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$12$.DB0mk/H0KpfN27Uv43ZN.sdifPhExVAMvAKsMxsAvX8pziYUv6Lq"/>
+            <column name="is_admin" valueBoolean="true"/>
+            <column name="ai_enabled" valueBoolean="false"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+
+        <createTable tableName="students">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="full_name" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="login_keyword" type="VARCHAR(5)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uk_students_login_keyword"/>
+            </column>
+            <column name="teacher_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="quizzes">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="title" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="emoji" type="TEXT"/>
+            <column name="questions" type="${json.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="published" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="teacher_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP"/>
+            <column name="created_by_username" type="VARCHAR(60)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by_username" type="VARCHAR(60)"/>
+            <column name="modified_at" type="TIMESTAMP"/>
+        </createTable>
+
+        <createTable tableName="quiz_submissions">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="student_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quiz_id" type="${uuid.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answers" type="${json.type}">
+                <constraints nullable="false"/>
+            </column>
+            <column name="score" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_questions" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unlocked" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="submitted_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createIndex tableName="quiz_submissions" indexName="uk_submission_student_quiz" unique="true">
+            <column name="student_id"/>
+            <column name="quiz_id"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="quiz_submissions"/>
+            <dropTable tableName="quizzes"/>
+            <dropTable tableName="students"/>
+            <delete tableName="teachers">
+                <where>id = '00000000-0000-0000-0000-000000000001'</where>
+            </delete>
+            <dropTable tableName="teachers"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
