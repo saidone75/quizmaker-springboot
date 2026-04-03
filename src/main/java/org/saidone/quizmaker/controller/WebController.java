@@ -32,6 +32,7 @@ import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
 import org.saidone.quizmaker.service.TeacherAuthService;
+import org.saidone.quizmaker.service.TurnstileCaptchaService;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
@@ -66,6 +67,7 @@ public class WebController {
     private final BuildProperties buildProperties;
     private final TeacherAuthService teacherAuthService;
     private final BruteForceProtectionService bruteForceProtectionService;
+    private final TurnstileCaptchaService turnstileCaptchaService;
 
     @GetMapping("/")
     public String studentPage(HttpSession session, Model model) {
@@ -117,7 +119,8 @@ public class WebController {
     }
 
     @GetMapping("/teacher/register")
-    public String registerPage() {
+    public String registerPage(Model model) {
+        populateTurnstileModel(model);
         return "admin/register";
     }
 
@@ -125,17 +128,27 @@ public class WebController {
     public String registerTeacher(@RequestParam("username") String username,
                                   @RequestParam("password") String password,
                                   @RequestParam("confirmPassword") String confirmPassword,
+                                  @RequestParam(name = "cf-turnstile-response", required = false) String turnstileToken,
                                   HttpServletRequest request,
                                   Model model) {
         if (!bruteForceProtectionService.consumeRegisterAttempt(RequestFingerprint.clientIp(request))) {
             model.addAttribute("registerError", "Troppi tentativi ravvicinati. Riprova tra qualche minuto.");
             model.addAttribute("username", username);
+            populateTurnstileModel(model);
+            return "admin/register";
+        }
+
+        if (!turnstileCaptchaService.verifyToken(turnstileToken, RequestFingerprint.clientIp(request))) {
+            model.addAttribute("registerError", "Verifica CAPTCHA non riuscita. Riprova.");
+            model.addAttribute("username", username);
+            populateTurnstileModel(model);
             return "admin/register";
         }
 
         if (!password.equals(confirmPassword)) {
             model.addAttribute("registerError", "Le password non coincidono.");
             model.addAttribute("username", username);
+            populateTurnstileModel(model);
             return "admin/register";
         }
 
@@ -145,8 +158,15 @@ public class WebController {
         } catch (IllegalArgumentException ex) {
             model.addAttribute("registerError", ex.getMessage());
             model.addAttribute("username", username);
+            populateTurnstileModel(model);
             return "admin/register";
         }
+    }
+
+
+    private void populateTurnstileModel(Model model) {
+        model.addAttribute("turnstileEnabled", turnstileCaptchaService.isEnabled());
+        model.addAttribute("turnstileSiteKey", turnstileCaptchaService.getSiteKey());
     }
 
     @GetMapping("/teacher")
