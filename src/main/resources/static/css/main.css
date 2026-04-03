@@ -441,8 +441,93 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .manage-card-icon { font-size: 32px; flex-shrink: 0; }
 .manage-card-info { flex: 1; min-width: 0; }
 .manage-card-title { font-size: 16px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.manage-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 .manage-card-meta { font-size: 13px; color: var(--gray-muted); font-weight: 600; margin-top: 2px; }
 .manage-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.teacher-enabled-toggle-form {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+}
+.teacher-enabled-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gray-border);
+    background: var(--gray-bg);
+    cursor: pointer;
+}
+.teacher-enabled-toggle-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--green);
+    cursor: pointer;
+}
+.teacher-manage-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+}
+.teacher-ai-toggle-form {
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+.teacher-ai-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--gray-border);
+    background: var(--gray-bg);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text);
+    cursor: pointer;
+}
+.teacher-ai-toggle-label input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--green);
+    cursor: pointer;
+}
+.btn-teacher-action {
+    height: 36px;
+    border-radius: 8px;
+    border: 1.5px solid #B5D4F4;
+    background: var(--blue-light);
+    padding: 0 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--blue-dark);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-teacher-action:hover {
+    background: #B5D4F4;
+}
+.btn-teacher-action:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.btn-teacher-action-danger {
+    background: #FFF0F0;
+    border-color: #EAA4A4;
+    color: #A22;
+}
+.btn-teacher-action-danger:hover {
+    background: #FFDCDC;
+}
 .btn-icon-action {
     width: 36px; height: 36px; border-radius: 8px; border: none;
     font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
@@ -450,6 +535,8 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 }
 .btn-edit-quiz { background: var(--blue-light); color: var(--blue-dark); }
 .btn-edit-quiz:hover { background: #B5D4F4; }
+.btn-share-quiz { background: #EFE8FF; color: #5A36A6; }
+.btn-share-quiz:hover { background: #DDD0FF; }
 .btn-delete-quiz { background: var(--red-light); color: var(--red); }
 .btn-delete-quiz:hover { background: #F7C1C1; }
 .student-actions {
@@ -550,6 +637,39 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .btn-modal:hover { transform: translateY(-1px); }
 .btn-modal-cancel { background: var(--gray-bg); color: var(--text); border: 1.5px solid var(--gray-border); }
 .btn-modal-confirm { background: var(--red); color: #fff; }
+.btn-modal-share { background: var(--green); color: #fff; }
+.modal-box-share { max-width: 460px; }
+.share-grid {
+    text-align: left;
+    margin-bottom: 1.25rem;
+}
+.share-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+}
+.share-option:hover { background: var(--gray-bg); }
+.share-option input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--green);
+}
+.share-option-all {
+    border: 1.5px dashed var(--gray-border);
+    margin-bottom: 8px;
+    font-weight: 800;
+    color: var(--text);
+}
+.share-list {
+    max-height: 230px;
+    overflow: auto;
+    border: 1.5px solid var(--gray-border);
+    border-radius: 10px;
+    background: var(--white);
+    padding: 4px;
+}
 
 /* ===== LOADING OVERLAY ===== */
 #loading-overlay {

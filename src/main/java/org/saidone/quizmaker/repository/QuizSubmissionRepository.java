@@ -42,4 +42,6 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     void deleteAllByQuizIdAndQuizTeacher(UUID quizId, Teacher teacher);
 
     void deleteAllByStudentIdAndStudentTeacher(UUID studentId, Teacher teacher);
+
+    void deleteAllByStudentTeacherOrQuizTeacher(Teacher studentTeacher, Teacher quizTeacher);
 }

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ QuizMaker - fun quizzes for curious minds
+  ~ Copyright (C) 2026 Saidone
+  -->
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="010" author="quizmaker">
+        <comment>Add creator/modifier audit fields on quizzes</comment>
+
+        <addColumn tableName="quizzes">
+            <column name="created_by_username" type="VARCHAR(60)"/>
+            <column name="modified_by_username" type="VARCHAR(60)"/>
+            <column name="modified_at" type="TIMESTAMP"/>
+        </addColumn>
+
+        <update tableName="quizzes">
+            <column name="created_by_username" valueComputed="(SELECT username FROM teachers WHERE teachers.id = quizzes.teacher_id)"/>
+            <where>created_by_username IS NULL</where>
+        </update>
+
+        <addNotNullConstraint tableName="quizzes" columnName="created_by_username" columnDataType="VARCHAR(60)"/>
+
+        <rollback>
+            <dropColumn tableName="quizzes" columnName="modified_at"/>
+            <dropColumn tableName="quizzes" columnName="modified_by_username"/>
+            <dropColumn tableName="quizzes" columnName="created_by_username"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

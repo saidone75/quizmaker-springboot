@@ -71,7 +71,7 @@ public class StudentService {
     @Transactional
     public void delete(UUID studentId, Teacher teacher) {
         val student = studentRepository.findByIdAndTeacher(studentId, teacher)
-                .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studentId));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Studente non trovato: %s", studentId)));
         quizSubmissionRepository.deleteAllByStudentIdAndStudentTeacher(studentId, teacher);
         studentRepository.delete(student);
     }
@@ -79,7 +79,7 @@ public class StudentService {
     @Transactional
     public StudentDto.Response regenerateLoginKeyword(UUID studentId, Teacher teacher) {
         val student = studentRepository.findByIdAndTeacher(studentId, teacher)
-                .orElseThrow(() -> new IllegalArgumentException("Studente non trovato: " + studentId));
+                .orElseThrow(() -> new IllegalArgumentException(String.format("Studente non trovato: %s", studentId)));
         return saveWithUniqueKeyword(student);
     }
 

@@ -32,4 +32,6 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
     boolean existsByUsernameIgnoreCase(String username);
 
     List<Teacher> findAllByOrderByCreatedAtAsc();
+
+    long countByIdNot(UUID id);
 }

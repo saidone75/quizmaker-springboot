@@ -36,5 +36,5 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     Optional<Student> findByIdAndTeacher(UUID id, Teacher teacher);
 
-    boolean existsByIdAndTeacher(UUID id, Teacher teacher);
+    void deleteAllByTeacher(Teacher teacher);
 }

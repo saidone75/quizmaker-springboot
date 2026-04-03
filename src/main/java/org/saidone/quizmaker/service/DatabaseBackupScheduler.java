@@ -72,7 +72,7 @@ public class DatabaseBackupScheduler {
                     : sourceFileName;
 
             val timestamp = LocalDateTime.now().format(TIMESTAMP_FORMATTER);
-            val backupFile = backupDirPath.resolve(baseName + "-" + timestamp + ".db");
+            val backupFile = backupDirPath.resolve(String.format("%s-%s.db", baseName, timestamp));
 
             Files.copy(sourceDbPath, backupFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
             log.info("Database backup completed: {}", backupFile);
@@ -108,7 +108,7 @@ public class DatabaseBackupScheduler {
                     .filter(Files::isRegularFile)
                     .filter(path -> {
                         val filename = path.getFileName().toString();
-                        return filename.startsWith(baseName + "-") && filename.endsWith(".db");
+                        return filename.startsWith(String.format("%s-", baseName)) && filename.endsWith(".db");
                     })
                     .sorted(Comparator.comparing(Path::getFileName).reversed())
                     .toList();

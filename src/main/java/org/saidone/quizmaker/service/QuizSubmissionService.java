@@ -56,7 +56,7 @@ public class QuizSubmissionService {
     @Transactional
     public QuizSubmissionDto.Response submit(UUID quizId, Student student, List<Integer> answers) {
         val quiz = quizRepository.findByIdAndTeacherAndPublishedTrue(quizId, student.getTeacher())
-                .orElseThrow(() -> new EntityNotFoundException("Quiz non trovato: " + quizId));
+                .orElseThrow(() -> new EntityNotFoundException(String.format("Quiz non trovato: %s", quizId)));
 
         val existingSubmission = quizSubmissionRepository.findByStudentIdAndQuizId(student.getId(), quizId);
         if (existingSubmission.isPresent() && !Boolean.TRUE.equals(existingSubmission.get().getUnlocked())) {

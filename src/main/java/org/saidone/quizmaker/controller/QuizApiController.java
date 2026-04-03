@@ -113,10 +113,21 @@ public class QuizApiController {
         return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished(), teacherAuthService.getCurrentTeacher()));
     }
 
+    @PostMapping("/{id}/share")
+    public ResponseEntity<Integer> shareQuiz(
+            @PathVariable UUID id,
+            @Valid @RequestBody QuizDto.ShareRequest request) {
+        return ResponseEntity.ok(quizService.shareQuizToTeachers(id, request.getTeacherIds(), teacherAuthService.getCurrentTeacher()));
+    }
+
     @PostMapping(value = "/generate", consumes = {"multipart/form-data"})
     public ResponseEntity<QuizDto.Request> generateWithAi(
             @Valid @ModelAttribute QuizGenerationRequestDto request,
             @RequestParam(value = "file", required = false) MultipartFile file) {
+        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        if (!currentTeacher.isAiEnabled()) {
+            throw new IllegalStateException("Generazione AI disabilitata per questo insegnante.");
+        }
         val attachmentText = documentTextExtractorService.extractText(file);
         return ResponseEntity.ok(openAiQuizGeneratorService.generateQuiz(request, attachmentText));
     }

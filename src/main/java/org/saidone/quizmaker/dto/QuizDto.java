@@ -20,6 +20,7 @@ package org.saidone.quizmaker.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -57,6 +58,9 @@ public class QuizDto {
         private List<QuestionDto> questions;
         private Integer questionsCount;
         private LocalDateTime createdAt;
+        private String createdByUsername;
+        private LocalDateTime modifiedAt;
+        private String modifiedByUsername;
         private Boolean published;
     }
 
@@ -66,6 +70,15 @@ public class QuizDto {
     public static class PublicationUpdateRequest {
         @NotNull(message = "Il campo published è obbligatorio")
         private Boolean published;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShareRequest {
+        @NotNull(message = "La lista insegnanti è obbligatoria")
+        @Size(min = 1, message = "Seleziona almeno un insegnante")
+        private List<UUID> teacherIds;
     }
 
 }

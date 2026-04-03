@@ -44,7 +44,7 @@
     <div class="teacher-body">
 
 
-        <div class="editor-mode-card editor-mode-card-ai">
+        <div class="editor-mode-card editor-mode-card-ai" th:if="${aiEnabled}">
             <div class="editor-mode-header">
                 <div class="section-label">Genera quiz con AI</div>
                 <div class="editor-mode-subtitle">Parti da un argomento o da un file e lascia creare all'AI la prima bozza.</div>
@@ -84,7 +84,7 @@
             <div id="ai-generation-msg" class="validation-msg" style="margin-top:8px"></div>
         </div>
 
-        <div class="editor-mode-divider" aria-hidden="true">
+        <div class="editor-mode-divider" aria-hidden="true" th:if="${aiEnabled}">
             <span>oppure</span>
         </div>
 

@@ -64,6 +64,16 @@ public class Quiz {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "created_by_username", nullable = false, updatable = false, length = 60)
+    private String createdByUsername;
+
+    @Column(name = "modified_by_username", length = 60)
+    private String modifiedByUsername;
+
+    @Convert(converter = LocalDateTimeColumnConverter.class)
+    @Column(name = "modified_at")
+    private LocalDateTime modifiedAt;
+
     @Builder.Default
     @Column(name = "published", nullable = false)
     private Boolean published = false;

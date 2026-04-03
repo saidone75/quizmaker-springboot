@@ -24,14 +24,18 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.entity.Quiz;
+import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.mapper.QuestionMapper;
 import org.saidone.quizmaker.mapper.QuizMapper;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
+import org.saidone.quizmaker.repository.TeacherRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,6 +46,7 @@ public class QuizService {
 
     private final QuizRepository quizRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final TeacherRepository teacherRepository;
     private final QuizMapper quizMapper;
     private final QuestionMapper questionMapper;
 
@@ -84,6 +89,7 @@ public class QuizService {
                 .emoji(request.getEmoji())
                 .questions(request.getQuestions().stream().map(questionMapper::toEntity).toList())
                 .published(false)
+                .createdByUsername(teacher.getUsername())
                 .teacher(teacher)
                 .build();
         val saved = quizRepository.save(quiz);
@@ -98,6 +104,8 @@ public class QuizService {
         quiz.setTitle(request.getTitle());
         quiz.setEmoji(request.getEmoji());
         quiz.setQuestions(request.getQuestions().stream().map(questionMapper::toEntity).toList());
+        quiz.setModifiedByUsername(teacher.getUsername());
+        quiz.setModifiedAt(LocalDateTime.now());
         val saved = quizRepository.save(quiz);
         log.info("Quiz updated: {} ({})", saved.getTitle(), saved.getId());
         return toResponse(saved);
@@ -122,8 +130,56 @@ public class QuizService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public int shareQuizToTeachers(UUID quizId, List<UUID> destinationTeacherIds, Teacher actingTeacher) {
+        if (actingTeacher == null || !actingTeacher.isAdmin()) {
+            throw new IllegalArgumentException("Operazione non consentita");
+        }
+        val sourceQuiz = quizRepository.findByIdAndTeacher(quizId, actingTeacher)
+                .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, quizId)));
+
+        val recipients = teacherRepository.findAllById(destinationTeacherIds).stream()
+                .filter(teacher -> !teacher.getId().equals(actingTeacher.getId()))
+                .toList();
+
+        for (val recipient : recipients) {
+            val clonedQuiz = Quiz.builder()
+                    .title(sourceQuiz.getTitle())
+                    .emoji(sourceQuiz.getEmoji())
+                    .questions(cloneQuestions(sourceQuiz.getQuestions()))
+                    .published(false)
+                    .createdByUsername(sourceQuiz.getCreatedByUsername() != null ? sourceQuiz.getCreatedByUsername() : actingTeacher.getUsername())
+                    .modifiedByUsername(actingTeacher.getUsername())
+                    .modifiedAt(LocalDateTime.now())
+                    .teacher(recipient)
+                    .build();
+            quizRepository.save(clonedQuiz);
+        }
+
+        log.info("Quiz shared: {} copied to {} teachers by {}", quizId, recipients.size(), actingTeacher.getUsername());
+        return recipients.size();
+    }
+
     private QuizDto.Response toResponse(Quiz quiz) {
-        return quizMapper.toResponse(quiz);
+        val response = quizMapper.toResponse(quiz);
+        if (response.getCreatedByUsername() == null || response.getCreatedByUsername().isBlank()) {
+            response.setCreatedByUsername(quiz.getTeacher().getUsername());
+        }
+        return response;
+    }
+
+    private List<Question> cloneQuestions(List<Question> sourceQuestions) {
+        val clonedQuestions = new ArrayList<Question>();
+        for (val sourceQuestion : sourceQuestions) {
+            val clonedQuestion = new Question();
+            clonedQuestion.setText(sourceQuestion.getText());
+            clonedQuestion.setEmoji(sourceQuestion.getEmoji());
+            clonedQuestion.setAnswer(sourceQuestion.getAnswer());
+            clonedQuestion.setFeedback(sourceQuestion.getFeedback());
+            clonedQuestion.setOptions(sourceQuestion.getOptions() == null ? List.of() : new ArrayList<>(sourceQuestion.getOptions()));
+            clonedQuestions.add(clonedQuestion);
+        }
+        return clonedQuestions;
     }
 
 }

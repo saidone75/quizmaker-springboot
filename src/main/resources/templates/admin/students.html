@@ -94,7 +94,7 @@
                 <tbody>
                 <tr th:each="student : ${students}">
                     <td style="padding:10px 12px;border-top:1px solid #eef2f7" th:text="${student.fullName}">Mario Rossi</td>
-                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem" th:text="${student.loginKeyword}">ABCDE</td>
+                    <td style="padding:10px 12px;border-top:1px solid #eef2f7;font-weight:800;letter-spacing:0.08rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;" th:text="${student.loginKeyword}">ABCDE</td>
                     <td class="print-hide" style="padding:10px 12px;border-top:1px solid #eef2f7">
                         <div class="student-actions">
                             <button class="btn-regenerate-password"

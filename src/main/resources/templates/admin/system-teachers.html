@@ -1,6 +1,19 @@
 <!--
   ~ QuizMaker - fun quizzes for curious minds
   ~ Copyright (C) 2026 Saidone
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~  This program is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU General Public License for more details.
+  ~
+  ~  You should have received a copy of the GNU General Public License
+  ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
   -->
 
 <!DOCTYPE html>
@@ -25,28 +38,71 @@
     </div>
 
     <div class="teacher-body" style="max-width:960px;">
-        <div class="section-label">Altri insegnanti registrati (<span th:text="${teachers.size()}">0</span>)</div>
+        <div class="alert alert-success" th:if="${teacherResetSuccess}" th:text="${teacherResetSuccess}">
+            Password resettata correttamente a changeme.
+        </div>
+
+        <div class="section-label">Insegnanti registrati (<span th:text="${teachers.size()}">0</span>)</div>
 
         <div class="manage-list" th:if="${!teachers.isEmpty()}">
-            <div class="manage-card" th:each="teacher : ${teachers}">
+            <div class="manage-card"
+                 th:each="teacher : ${teachers}"
+                 th:style="${teacher.id == currentTeacherId ? 'border:2px solid #5b8cff;background:#eef4ff;' : ''}">
                 <span class="manage-card-icon" th:text="${teacher.admin ? '🛡️' : '👤'}">👤</span>
                 <div class="manage-card-info">
-                    <div class="manage-card-title" th:text="${teacher.username}">username</div>
+                    <div class="manage-card-title">
+                        <form th:action="@{/teacher/system/teachers/{id}/enabled(id=${teacher.id})}" method="post" class="teacher-enabled-toggle-form">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <input type="hidden" name="enabled" th:value="${teacher.enabled}"/>
+                            <label class="teacher-enabled-toggle-label"
+                                   th:title="${teacher.id == currentTeacherId ? 'Non puoi disabilitare il tuo account' : (teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante')}">
+                                <input type="checkbox" th:checked="${teacher.enabled}" onchange="submitEnabledToggle(this)"
+                                       th:disabled="${teacher.id == currentTeacherId}">
+                            </label>
+                        </form>
+                        <span th:text="${teacher.username}">username</span>
+                        <span th:if="${teacher.id == currentTeacherId}" style="font-size:12px;color:#2f4f9d;margin-left:6px;">(tu)</span>
+                    </div>
                     <div class="manage-card-meta">
                         Ruolo: <strong th:text="${teacher.admin ? 'Admin' : 'Teacher'}">Teacher</strong> · Registrato il
-                        <span th:text="${#temporals.format(teacher.createdAt, 'dd/MM/yyyy')}">01/01/2026</span>
+                        <span th:text="${#temporals.format(teacher.createdAt, 'dd/MM/yyyy')}">01/01/2026</span> ·
+                        Login: <strong th:text="${teacher.enabled ? 'Abilitato' : 'Disabilitato'}">Abilitato</strong>
                     </div>
                 </div>
-                <div class="manage-card-actions">
+                <div class="manage-card-actions teacher-manage-actions">
+                    <form th:action="@{/teacher/system/teachers/{id}/ai(id=${teacher.id})}" method="post" class="teacher-ai-toggle-form">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="aiEnabled" th:value="${teacher.aiEnabled}"/>
+                        <label class="teacher-ai-toggle-label">
+                            <input type="checkbox" th:checked="${teacher.aiEnabled}" onchange="submitAiToggle(this)">
+                            AI attiva
+                        </label>
+                    </form>
+
                     <form th:action="@{/teacher/system/teachers/{id}/admin(id=${teacher.id})}" method="post" style="margin:0">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="admin" th:value="${teacher.admin ? 'false' : 'true'}"/>
                         <button type="submit"
-                                class="btn-icon-action"
+                                class="btn-teacher-action"
                                 th:title="${teacher.admin ? 'Rimuovi ruolo admin' : 'Assegna ruolo admin'}"
-                                th:text="${teacher.admin ? '⬇️ Admin' : '⬆️ Rendi admin'}">
+                                th:text="${teacher.admin ? '⬇️ Admin' : '⬆️ Rendi admin'}"
+                                th:disabled="${teacher.id == currentTeacherId}">
                             ⬆️ Rendi admin
                         </button>
+                    </form>
+
+                    <form th:action="@{/teacher/system/teachers/{id}/reset-password(id=${teacher.id})}" method="post" style="margin:0">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn-teacher-action" title="Resetta password a changeme">🔁 Reset password</button>
+                    </form>
+
+                    <form th:action="@{/teacher/system/teachers/{id}/delete(id=${teacher.id})}" method="post" style="margin:0"
+                          th:attr="data-username=${teacher.username}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="button" class="btn-teacher-action btn-teacher-action-danger"
+                                th:attr="onclick=|openDeleteTeacherModal(this)|"
+                                th:disabled="${teacher.id == currentTeacherId}"
+                                th:title="${teacher.id == currentTeacherId ? 'Non puoi cancellare utente corrente' : 'Elimina insegnante e tutti i dati associati'}">🗑️ Elimina</button>
                     </form>
                 </div>
             </div>
@@ -54,9 +110,48 @@
 
         <div class="manage-empty" th:if="${teachers.isEmpty()}">
             <span>📭</span>
-            Nessun altro insegnante registrato.
+            Nessun insegnante registrato.
         </div>
     </div>
 </div>
+<div id="delete-teacher-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+        <span class="modal-emoji">🗑️</span>
+        <p class="modal-title">Eliminare l'insegnante?</p>
+        <p class="modal-sub" id="delete-teacher-modal-sub"></p>
+        <div class="modal-btns">
+            <button class="btn-modal btn-modal-cancel" onclick="closeDeleteTeacherModal()">Annulla</button>
+            <button class="btn-modal btn-modal-confirm" id="delete-teacher-confirm-btn">Elimina</button>
+        </div>
+    </div>
+</div>
+<script>
+    function submitAiToggle(checkbox) {
+        const form = checkbox.form;
+        const hiddenInput = form.querySelector('input[name="aiEnabled"]');
+        hiddenInput.value = checkbox.checked;
+        form.submit();
+    }
+
+    function submitEnabledToggle(checkbox) {
+        const form = checkbox.form;
+        const hiddenInput = form.querySelector('input[name="enabled"]');
+        hiddenInput.value = checkbox.checked;
+        form.submit();
+    }
+
+    function openDeleteTeacherModal(button) {
+        const form = button.closest('form');
+        const username = form.dataset.username || "questo insegnante";
+        document.getElementById('delete-teacher-modal-sub').textContent =
+            'Stai per eliminare "' + username + '". Questa azione non può essere annullata.';
+        document.getElementById('delete-teacher-confirm-btn').onclick = () => form.submit();
+        document.getElementById('delete-teacher-modal').style.display = 'flex';
+    }
+
+    function closeDeleteTeacherModal() {
+        document.getElementById('delete-teacher-modal').style.display = 'none';
+    }
+</script>
 </body>
 </html>

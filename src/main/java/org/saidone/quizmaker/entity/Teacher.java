@@ -28,6 +28,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Builder.Default;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 
@@ -55,6 +56,14 @@ public class Teacher {
 
     @Column(name = "is_admin", nullable = false)
     private boolean admin;
+
+    @Default
+    @Column(name = "ai_enabled", nullable = false)
+    private boolean aiEnabled = false;
+
+    @Default
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true;
 
     @CreationTimestamp
     @Convert(converter = LocalDateTimeColumnConverter.class)

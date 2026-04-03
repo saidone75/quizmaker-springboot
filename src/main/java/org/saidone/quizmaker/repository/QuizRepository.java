@@ -38,4 +38,6 @@ public interface QuizRepository extends JpaRepository<Quiz, UUID> {
     Optional<Quiz> findByIdAndTeacherAndPublishedTrue(UUID id, Teacher teacher);
 
     boolean existsByTitleAndTeacher(String title, Teacher teacher);
+
+    void deleteAllByTeacher(Teacher teacher);
 }

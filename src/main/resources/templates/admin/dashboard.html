@@ -85,8 +85,16 @@
                 <span class="manage-card-icon" th:text="${quiz.emoji}">🦕</span>
                 <div class="manage-card-info">
                     <div class="manage-card-title" th:text="${quiz.title}">Titolo</div>
-                    <div class="manage-card-meta">
+                    <div class="manage-card-meta" th:if="${quiz.createdByUsername == #authentication.name}">
                         Creato il <span th:text="${#temporals.format(quiz.createdAt, 'dd/MM/yyyy')}">01/01/2024</span>
+                    </div>
+                    <div class="manage-card-meta" th:if="${quiz.createdByUsername != #authentication.name}">
+                        Creato da <span th:text="${quiz.createdByUsername}">admin</span>
+                        il <span th:text="${#temporals.format(quiz.createdAt, 'dd/MM/yyyy')}">01/01/2024</span>
+                    </div>
+                    <div class="manage-card-meta" th:if="${quiz.modifiedByUsername != null and !#strings.isEmpty(quiz.modifiedByUsername)}">
+                        Modificato da <span th:text="${quiz.modifiedByUsername}">admin</span>
+                        il <span th:text="${#temporals.format(quiz.modifiedAt, 'dd/MM/yyyy')}">01/01/2024</span>
                     </div>
                 </div>
                 <div class="manage-card-actions">
@@ -97,6 +105,13 @@
                                onchange="togglePublication(this)">
                     </label>
                     <a th:href="@{/teacher/quiz/{id}/edit(id=${quiz.id})}" class="btn-icon-action btn-edit-quiz" title="Modifica">✏️</a>
+                    <button sec:authorize="hasRole('ADMIN')"
+                            th:if="${!#lists.isEmpty(shareTeachers)}"
+                            class="btn-icon-action btn-share-quiz"
+                            title="Invia ad altri insegnanti"
+                            th:data-id="${quiz.id}"
+                            th:data-title="${quiz.title}"
+                            onclick="openShareModal(this.dataset.id, this.dataset.title)">📤</button>
                     <button class="btn-icon-action btn-delete-quiz" title="Elimina"
                             th:data-id="${quiz.id}"
                             th:data-title="${quiz.title}"
@@ -128,10 +143,32 @@
     </div>
 </div>
 
+<div id="share-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box modal-box-share">
+        <span class="modal-emoji">📤</span>
+        <p class="modal-title">Invia quiz agli insegnanti</p>
+        <p class="modal-sub" id="share-modal-sub-text"></p>
+        <div class="share-grid">
+            <label class="share-option share-option-all">
+                <input type="checkbox" id="share-select-all" onchange="toggleShareSelectAll(this.checked)">
+                <span>Seleziona tutti</span>
+            </label>
+            <div id="share-teachers-list" class="share-list"></div>
+        </div>
+        <div class="modal-btns">
+            <button class="btn-modal btn-modal-cancel" onclick="closeShareModal()">Annulla</button>
+            <button class="btn-modal btn-modal-share" id="share-modal-confirm-btn">Invia</button>
+        </div>
+    </div>
+</div>
+
 <script th:src="@{/js/main.js}"></script>
 <script th:inline="javascript">
     const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
     const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
+    const IS_ADMIN = /*[[${isAdmin}]]*/ false;
+    const SHARE_TEACHERS = /*[[${shareTeachers}]]*/ [];
+    let quizIdToShare = null;
 
     function confirmDelete(id, title) {
         document.getElementById('modal-sub-text').textContent =
@@ -142,6 +179,73 @@
 
     function closeDeleteModal() {
         document.getElementById('delete-modal').style.display = 'none';
+    }
+
+    function openShareModal(id, title) {
+        if (!IS_ADMIN) return;
+        quizIdToShare = id;
+        document.getElementById('share-modal-sub-text').textContent =
+            'Seleziona i docenti destinatari per "' + title + '".';
+        renderShareTeachers();
+        document.getElementById('share-modal').style.display = 'flex';
+    }
+
+    function closeShareModal() {
+        document.getElementById('share-modal').style.display = 'none';
+        quizIdToShare = null;
+    }
+
+    function renderShareTeachers() {
+        const listEl = document.getElementById('share-teachers-list');
+        const selectAllEl = document.getElementById('share-select-all');
+        selectAllEl.checked = false;
+        listEl.innerHTML = SHARE_TEACHERS.map(teacher => `
+            <label class="share-option">
+                <input type="checkbox" class="share-teacher-checkbox" value="${teacher.id}" onchange="syncShareSelectAll()">
+                <span>${escHtml(teacher.username)}</span>
+            </label>
+        `).join('');
+    }
+
+    function toggleShareSelectAll(checked) {
+        document.querySelectorAll('.share-teacher-checkbox').forEach(cb => {
+            cb.checked = checked;
+        });
+    }
+
+    function syncShareSelectAll() {
+        const checkboxes = Array.from(document.querySelectorAll('.share-teacher-checkbox'));
+        const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
+        document.getElementById('share-select-all').checked = allChecked;
+    }
+
+    async function doShareQuiz() {
+        const selectedTeacherIds = Array.from(document.querySelectorAll('.share-teacher-checkbox:checked'))
+            .map(cb => cb.value);
+        if (!selectedTeacherIds.length) {
+            alert('Seleziona almeno un insegnante.');
+            return;
+        }
+        const targetQuizId = quizIdToShare;
+        closeShareModal();
+        showLoading('Invio quiz in corso...');
+        try {
+            const res = await fetch('/api/quizzes/' + targetQuizId + '/share', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [CSRF_HEADER]: CSRF_TOKEN
+                },
+                body: JSON.stringify({ teacherIds: selectedTeacherIds })
+            });
+            if (!res.ok) throw new Error('Errore server');
+            const copiedCount = await res.json();
+            hideLoading();
+            showToast('Quiz inviato a ' + copiedCount + ' insegnanti!');
+        } catch (e) {
+            hideLoading();
+            alert('Errore: ' + e.message);
+        }
     }
 
     async function doDelete(id) {
@@ -184,6 +288,8 @@
             checkbox.disabled = false;
         }
     }
+
+    document.getElementById('share-modal-confirm-btn').onclick = doShareQuiz;
 </script>
 </body>
 </html>
