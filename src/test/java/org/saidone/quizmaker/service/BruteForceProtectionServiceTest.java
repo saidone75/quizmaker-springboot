@@ -34,7 +34,7 @@ class BruteForceProtectionServiceTest {
 
     @Test
     void shouldBlockLoginAfterTooManyFailures() {
-        String key = "teacher|127.0.0.1";
+        val key = "teacher|127.0.0.1";
 
         for (int i = 0; i < BruteForceProtectionService.MAX_LOGIN_FAILURES; i++) {
             service.recordLoginFailure(key);
@@ -49,7 +49,7 @@ class BruteForceProtectionServiceTest {
 
     @Test
     void shouldLimitRegistrationAttemptsByIp() {
-        String ip = "127.0.0.1";
+        val ip = "127.0.0.1";
 
         for (int i = 0; i < BruteForceProtectionService.MAX_REGISTER_ATTEMPTS; i++) {
             assertThat(service.consumeRegisterAttempt(ip)).isTrue();
@@ -62,8 +62,8 @@ class BruteForceProtectionServiceTest {
     void shouldApplySlidingWindowForStudentLoginKeyword() {
         val clock = new MutableClock(Instant.parse("2026-01-01T10:00:00Z"));
         val bruteForce = new BruteForceProtectionService(clock);
-        String ip = "127.0.0.1";
-        String keyword = "abcde";
+        val ip = "127.0.0.1";
+        val keyword = "abcde";
 
         for (int i = 0; i < BruteForceProtectionService.MAX_STUDENT_LOGIN_FAILURES - 1; i++) {
             bruteForce.recordStudentLoginFailureByKeyword(keyword);
@@ -82,8 +82,8 @@ class BruteForceProtectionServiceTest {
     void shouldBlockStudentLoginByIpAndExpireShortLock() {
         val clock = new MutableClock(Instant.parse("2026-01-01T10:00:00Z"));
         val bruteForce = new BruteForceProtectionService(clock);
-        String ip = "127.0.0.1";
-        String keyword = "abcde";
+        val ip = "127.0.0.1";
+        val keyword = "abcde";
 
         for (int i = 0; i < BruteForceProtectionService.MAX_STUDENT_LOGIN_FAILURES; i++) {
             bruteForce.recordStudentLoginFailureByIp(ip);
