@@ -22,9 +22,11 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
 import java.util.UUID;
 
+@UtilityClass
 public class StudentDto {
 
     @Data

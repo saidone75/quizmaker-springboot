@@ -22,10 +22,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.UtilityClass;
 
 import java.util.List;
 import java.util.UUID;
 
+@UtilityClass
 public class QuizSubmissionDto {
 
     @Data
