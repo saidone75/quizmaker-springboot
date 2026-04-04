@@ -123,7 +123,7 @@
 <meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
 <meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
 <div id="quiz-editor-data"
-     th:attr="data-quiz-id=${quiz?.id},data-initial-questions-json=${quiz?.questions}"
+     th:attr="data-quiz-id=${quiz?.id},data-initial-questions-json=${quizQuestionsJson}"
      hidden></div>
 <script th:src="@{/js/quiz-editor-page.js}"></script>
 </body>

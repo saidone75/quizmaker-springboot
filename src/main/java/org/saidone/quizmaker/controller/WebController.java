@@ -262,13 +262,16 @@ public class WebController {
     @GetMapping("/teacher/quiz/new")
     public String newQuiz(Model model) {
         model.addAttribute("aiEnabled", teacherAuthService.getCurrentTeacher().isAiEnabled());
+        model.addAttribute("quizQuestionsJson", "[]");
         return "admin/quiz-editor";
     }
 
     @GetMapping("/teacher/quiz/{id}/edit")
     public String editQuiz(@PathVariable UUID id, Model model) {
         model.addAttribute("aiEnabled", teacherAuthService.getCurrentTeacher().isAiEnabled());
-        model.addAttribute("quiz", quizService.findByIdForTeacher(id, teacherAuthService.getCurrentTeacher()));
+        val quiz = quizService.findByIdForTeacher(id, teacherAuthService.getCurrentTeacher());
+        model.addAttribute("quiz", quiz);
+        model.addAttribute("quizQuestionsJson", serializeQuestions(quiz.getQuestions()));
         return "admin/quiz-editor";
     }
 
@@ -376,6 +379,14 @@ public class WebController {
         return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
                 .withZone(ZoneId.systemDefault())
                 .format(buildProperties.getTime());
+    }
+
+    private String serializeQuestions(Object questions) {
+        try {
+            return objectMapper.writeValueAsString(questions);
+        } catch (JsonProcessingException e) {
+            return "[]";
+        }
     }
 
     private record QuizResultGroup(UUID quizId, String quizTitle, List<QuizSubmissionService.ResultRow> results) {
