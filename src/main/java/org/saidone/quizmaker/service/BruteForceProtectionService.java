@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,9 +36,15 @@ public class BruteForceProtectionService {
     static final int MAX_LOGIN_FAILURES = 5;
     static final Duration LOGIN_WINDOW = Duration.ofMinutes(15);
     static final Duration LOGIN_LOCK = Duration.ofMinutes(20);
+    static final int MAX_STUDENT_LOGIN_FAILURES = 5;
+    static final Duration STUDENT_LOGIN_WINDOW = Duration.ofMinutes(5);
+    static final Duration STUDENT_LOGIN_LOCK = Duration.ofMinutes(3);
 
     static final int MAX_REGISTER_ATTEMPTS = 10;
     static final Duration REGISTER_WINDOW = Duration.ofMinutes(10);
+
+    private static final String STUDENT_IP_KEY_PREFIX = "student-ip|";
+    private static final String STUDENT_KEYWORD_KEY_PREFIX = "student-keyword|";
 
     private final Map<String, LoginState> loginStates = new ConcurrentHashMap<>();
     private final Map<String, Deque<Instant>> registerAttempts = new ConcurrentHashMap<>();
@@ -69,21 +76,42 @@ public class BruteForceProtectionService {
     }
 
     public void recordLoginFailure(String key) {
+        recordLoginFailure(key, MAX_LOGIN_FAILURES, LOGIN_WINDOW, LOGIN_LOCK);
+    }
+
+    public void recordStudentLoginFailureByIp(String ipAddress) {
+        recordLoginFailure(STUDENT_IP_KEY_PREFIX + ipAddress, MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
+    }
+
+    public void recordStudentLoginFailureByKeyword(String keyword) {
+        recordLoginFailure(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT), MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
+    }
+
+    public boolean isStudentLoginBlocked(String ipAddress, String keyword) {
+        return isLoginBlocked(STUDENT_IP_KEY_PREFIX + ipAddress)
+                || isLoginBlocked(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT));
+    }
+
+    public void clearStudentLoginFailures(String ipAddress, String keyword) {
+        clearLoginFailures(STUDENT_IP_KEY_PREFIX + ipAddress);
+        clearLoginFailures(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT));
+    }
+
+    private void recordLoginFailure(String key, int maxFailures, Duration window, Duration lockDuration) {
         val now = Instant.now(clock);
         loginStates.compute(key, (k, state) -> {
-            if (state == null || state.windowStart.plus(LOGIN_WINDOW).isBefore(now)) {
+            if (state == null) {
                 state = new LoginState();
-                state.windowStart = now;
-                state.failures = 0;
             }
 
             if (state.blockedUntil != null && state.blockedUntil.isAfter(now)) {
                 return state;
             }
 
-            state.failures++;
-            if (state.failures >= MAX_LOGIN_FAILURES) {
-                state.blockedUntil = now.plus(LOGIN_LOCK);
+            state.prune(now, window);
+            state.failures.addLast(now);
+            if (state.failures.size() >= maxFailures) {
+                state.blockedUntil = now.plus(lockDuration);
             }
             return state;
         });
@@ -109,8 +137,13 @@ public class BruteForceProtectionService {
     }
 
     private static class LoginState {
-        private int failures;
-        private Instant windowStart;
+        private final Deque<Instant> failures = new ArrayDeque<>();
         private Instant blockedUntil;
+
+        private void prune(Instant now, Duration window) {
+            while (!failures.isEmpty() && failures.peekFirst().plus(window).isBefore(now)) {
+                failures.removeFirst();
+            }
+        }
     }
 }

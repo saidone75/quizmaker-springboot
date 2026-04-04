@@ -50,6 +50,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -93,15 +94,30 @@ public class WebController {
     }
 
     @PostMapping("/student/login")
-    public String studentLogin(@RequestParam("keyword") String keyword, HttpSession session, Model model) {
+    public String studentLogin(@RequestParam("keyword") String keyword,
+                               HttpServletRequest request,
+                               HttpSession session,
+                               Model model) {
         if (keyword == null || keyword.trim().length() != 5) {
             model.addAttribute("loginError", "La parola chiave deve avere 5 caratteri.");
             return "student-login";
         }
 
-        return studentSessionService.login(session, keyword.trim())
-                .map(s -> "redirect:/")
+        val normalizedKeyword = keyword.trim().toLowerCase(Locale.ROOT);
+        val clientIp = RequestFingerprint.clientIp(request);
+        if (bruteForceProtectionService.isStudentLoginBlocked(clientIp, normalizedKeyword)) {
+            model.addAttribute("loginError", "Troppi tentativi di accesso. Riprova tra qualche minuto.");
+            return "student-login";
+        }
+
+        return studentSessionService.login(session, normalizedKeyword)
+                .map(s -> {
+                    bruteForceProtectionService.clearStudentLoginFailures(clientIp, normalizedKeyword);
+                    return "redirect:/";
+                })
                 .orElseGet(() -> {
+                    bruteForceProtectionService.recordStudentLoginFailureByIp(clientIp);
+                    bruteForceProtectionService.recordStudentLoginFailureByKeyword(normalizedKeyword);
                     model.addAttribute("loginError", "Parola chiave non valida.");
                     return "student-login";
                 });
