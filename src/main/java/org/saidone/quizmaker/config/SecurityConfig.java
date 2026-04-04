@@ -38,6 +38,19 @@ public class SecurityConfig {
     private final RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler;
     private final RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler;
 
+    private static final String CSP_POLICY = """
+            default-src 'self';
+            script-src 'self' https://challenges.cloudflare.com;
+            style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
+            font-src 'self' https://fonts.gstatic.com data:;
+            frame-src 'self' https://challenges.cloudflare.com;
+            connect-src 'self' https://challenges.cloudflare.com;
+            img-src 'self' data:;
+            object-src 'none';
+            base-uri 'self';
+            form-action 'self';
+            """;
+
     public SecurityConfig(LoginRateLimitFilter loginRateLimitFilter,
                           RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler,
                           RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler) {
@@ -88,6 +101,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/h2-console/**")
                 )
                 .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives(CSP_POLICY)
+                        )
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )
                 .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
