@@ -38,19 +38,6 @@ public class SecurityConfig {
     private final RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler;
     private final RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler;
 
-    private static final String CSP_POLICY = """
-            default-src 'self';
-            script-src 'self' https://challenges.cloudflare.com;
-            style-src 'self' https://fonts.googleapis.com 'unsafe-inline';
-            font-src 'self' https://fonts.gstatic.com data:;
-            frame-src 'self' https://challenges.cloudflare.com;
-            connect-src 'self' https://challenges.cloudflare.com;
-            img-src 'self' data:;
-            object-src 'none';
-            base-uri 'self';
-            form-action 'self';
-            """;
-
     public SecurityConfig(LoginRateLimitFilter loginRateLimitFilter,
                           RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler,
                           RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler) {
@@ -65,7 +52,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/error", "/teacher/login", "/teacher/login/**", "/teacher/register", "/teacher/register/**", "/", "/student/login").permitAll()
+                        .requestMatchers("/teacher/login", "/teacher/register", "/", "/student/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
@@ -101,9 +88,6 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/h2-console/**")
                 )
                 .headers(headers -> headers
-                        .contentSecurityPolicy(csp -> csp
-                                .policyDirectives(CSP_POLICY)
-                        )
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )
                 .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
