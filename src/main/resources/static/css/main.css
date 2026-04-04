@@ -877,6 +877,60 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     background: var(--blue-light);
     color: var(--blue-dark);
 }
+.results-analytics {
+    margin-top: 12px;
+    border-top: 1px dashed var(--gray-border);
+    padding-top: 12px;
+}
+.results-analytics h3 {
+    font-size: 15px;
+    color: var(--green-dark);
+    margin-bottom: 10px;
+}
+.results-analytics-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 10px;
+}
+.analytics-metric {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px;
+}
+.analytics-label {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-muted);
+    font-weight: 700;
+}
+.analytics-metric strong {
+    font-size: 20px;
+    color: var(--text);
+}
+.analytics-difficult h4 {
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+.analytics-difficult ul {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+}
+.analytics-difficult li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border: 1px solid #eef2f7;
+    border-radius: 8px;
+    padding: 7px 9px;
+    font-size: 13px;
+}
+.analytics-difficult p {
+    font-size: 13px;
+    color: var(--gray-muted);
+}
 
 .about-grid {
     display: grid;

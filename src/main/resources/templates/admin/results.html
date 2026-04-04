@@ -85,6 +85,31 @@
                         </tbody>
                     </table>
                 </div>
+
+                <div class="results-analytics" th:if="${group.analytics != null}">
+                    <h3>📊 Analytics</h3>
+                    <div class="results-analytics-grid">
+                        <div class="analytics-metric">
+                            <span class="analytics-label">Media punteggi</span>
+                            <strong th:text="${group.analytics.averageScore}">0.0%</strong>
+                        </div>
+                        <div class="analytics-metric">
+                            <span class="analytics-label">Completion rate</span>
+                            <strong th:text="${group.analytics.completionRate}">0.0%</strong>
+                        </div>
+                    </div>
+
+                    <div class="analytics-difficult">
+                        <h4>Domande più difficili</h4>
+                        <ul th:if="${!group.analytics.difficultQuestions.isEmpty()}">
+                            <li th:each="question : ${group.analytics.difficultQuestions}">
+                                <span th:text="${'#' + question.position + ' — ' + question.text}">#1 — Domanda</span>
+                                <strong th:text="${question.errorRate}">0.0%</strong>
+                            </li>
+                        </ul>
+                        <p th:if="${group.analytics.difficultQuestions.isEmpty()}">Non ci sono ancora abbastanza dati.</p>
+                    </div>
+                </div>
             </section>
         </div>
 

@@ -90,6 +90,7 @@ public class QuizSubmissionService {
                         s.getQuiz().getTitle(),
                         s.getScore(),
                         s.getTotalQuestions(),
+                        s.getAnswers(),
                         s.getSubmittedAt(),
                         Boolean.TRUE.equals(s.getUnlocked())
                 ))
@@ -119,6 +120,7 @@ public class QuizSubmissionService {
             String quizTitle,
             Integer score,
             Integer totalQuestions,
+            List<Integer> answers,
             LocalDateTime submittedAt,
             boolean unlocked
     ) {
