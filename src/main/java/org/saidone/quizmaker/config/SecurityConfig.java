@@ -65,7 +65,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
-                        .requestMatchers("/teacher/login", "/teacher/register", "/", "/student/login").permitAll()
+                        .requestMatchers("/error", "/teacher/login", "/teacher/login/**", "/teacher/register", "/teacher/register/**", "/", "/student/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
