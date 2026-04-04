@@ -18,6 +18,7 @@
 
 package org.saidone.quizmaker.bootstrap;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -27,7 +28,6 @@ import org.saidone.quizmaker.repository.StudentRepository;
 import org.saidone.quizmaker.repository.TeacherRepository;
 import org.saidone.quizmaker.service.StudentService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -40,7 +40,7 @@ import java.util.UUID;
 @Profile({"dev", "docker"})
 @RequiredArgsConstructor
 @Slf4j
-public class DevStudentBootstrap implements CommandLineRunner {
+public class DevStudentBootstrap  {
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -50,8 +50,8 @@ public class DevStudentBootstrap implements CommandLineRunner {
 
     private static final Faker FAKER = new Faker(Locale.ITALIAN);
 
-    @Override
-    public void run(String... args) {
+    @PostConstruct
+    public void init() {
         val teacher = teacherRepository.findByUsernameIgnoreCase(adminUsername).orElseThrow();
 
         for (var i = 0; i < 6; i++) {

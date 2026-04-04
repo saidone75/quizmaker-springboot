@@ -23,18 +23,17 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.TeacherRepository;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultAdminBootstrap implements CommandLineRunner {
+public class DefaultAdminBootstrap implements InitializingBean {
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -49,8 +48,7 @@ public class DefaultAdminBootstrap implements CommandLineRunner {
     private final Environment environment;
 
     @Override
-    @Transactional
-    public void run(String... args) {
+    public void afterPropertiesSet() throws Exception {
         if (!shouldBootstrapDefaultAdmin()) {
             log.debug("Bootstrap amministratore predefinito disattivato (profili dev/docker non attivi e -D{} non impostato)", CREATE_DEFAULT_ADMIN_PROPERTY);
             return;

@@ -18,22 +18,21 @@
 
 package org.saidone.quizmaker.bootstrap;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.TeacherRepository;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile({"dev", "docker"})
 @RequiredArgsConstructor
 @Slf4j
-public class DevTeacherBootstrap implements CommandLineRunner {
+public class DevTeacherBootstrap {
 
     private static final String DEV_TEACHER_USERNAME = "pincopanco";
     private static final String DEV_TEACHER_PASSWORD = "pancopinco";
@@ -41,9 +40,8 @@ public class DevTeacherBootstrap implements CommandLineRunner {
     private final TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
-    @Transactional
-    public void run(String... args) {
+    @PostConstruct
+    public void init() {
         val existingTeacher = teacherRepository.findByUsernameIgnoreCase(DEV_TEACHER_USERNAME).orElse(null);
         if (existingTeacher == null) {
             teacherRepository.save(Teacher.builder()

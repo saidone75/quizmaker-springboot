@@ -18,15 +18,15 @@
 
 package org.saidone.quizmaker.bootstrap;
 
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.entity.Quiz;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.TeacherRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -38,7 +38,7 @@ import java.util.List;
 @Profile({"dev", "docker"})
 @RequiredArgsConstructor
 @Slf4j
-public class DevQuizBootstrap implements CommandLineRunner {
+public class DevQuizBootstrap {
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -49,8 +49,8 @@ public class DevQuizBootstrap implements CommandLineRunner {
     private final QuizRepository quizRepository;
     private final TeacherRepository teacherRepository;
 
-    @Override
-    public void run(String... args) {
+    @PostConstruct
+    public void init() {
         var createdAstronomyQuiz = false;
         var createdDinoQuiz = false;
         val teacher = teacherRepository.findByUsernameIgnoreCase(adminUsername).orElseThrow();
