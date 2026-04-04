@@ -56,7 +56,7 @@
             </div>
 
             <div class="form-group" th:if="${turnstileEnabled}">
-                <div class="cf-turnstile" data-theme="light" th:attr="data-sitekey=${turnstileSiteKey}"></div>
+                <div class="cf-turnstile" data-theme="light" data-size="flexible" th:attr="data-sitekey=${turnstileSiteKey}"></div>
             </div>
 
             <button type="submit" class="btn-start-quiz" style="margin-top:1.25rem">
