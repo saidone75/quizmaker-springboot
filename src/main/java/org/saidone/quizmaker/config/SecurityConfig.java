@@ -27,11 +27,24 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final LoginRateLimitFilter loginRateLimitFilter;
+    private final RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler;
+    private final RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler;
+
+    public SecurityConfig(LoginRateLimitFilter loginRateLimitFilter,
+                          RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler,
+                          RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler) {
+        this.loginRateLimitFilter = loginRateLimitFilter;
+        this.rateLimitAuthenticationFailureHandler = rateLimitAuthenticationFailureHandler;
+        this.rateLimitAuthenticationSuccessHandler = rateLimitAuthenticationSuccessHandler;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -57,8 +70,8 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/teacher/login")
                         .loginProcessingUrl("/teacher/login")
-                        .defaultSuccessUrl("/teacher", true)
-                        .failureUrl("/teacher/login?error=true")
+                        .successHandler(rateLimitAuthenticationSuccessHandler)
+                        .failureHandler(rateLimitAuthenticationFailureHandler)
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .permitAll()
@@ -76,7 +89,8 @@ public class SecurityConfig {
                 )
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                );
+                )
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

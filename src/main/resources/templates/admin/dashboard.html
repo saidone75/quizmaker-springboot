@@ -102,20 +102,18 @@
                         <input type="checkbox"
                                th:checked="${quiz.published}"
                                th:data-id="${quiz.id}"
-                               onchange="togglePublication(this)">
+                               class="js-toggle-publication">
                     </label>
                     <a th:href="@{/teacher/quiz/{id}/edit(id=${quiz.id})}" class="btn-icon-action btn-edit-quiz" title="Modifica">✏️</a>
                     <button sec:authorize="hasRole('ADMIN')"
                             th:if="${!#lists.isEmpty(shareTeachers)}"
-                            class="btn-icon-action btn-share-quiz"
+                            class="btn-icon-action btn-share-quiz js-open-share-modal"
                             title="Invia ad altri insegnanti"
                             th:data-id="${quiz.id}"
-                            th:data-title="${quiz.title}"
-                            onclick="openShareModal(this.dataset.id, this.dataset.title)">📤</button>
-                    <button class="btn-icon-action btn-delete-quiz" title="Elimina"
+                            th:data-title="${quiz.title}">📤</button>
+                    <button class="btn-icon-action btn-delete-quiz js-open-delete-modal" title="Elimina"
                             th:data-id="${quiz.id}"
-                            th:data-title="${quiz.title}"
-                            onclick="confirmDelete(this.dataset.id, this.dataset.title)">🗑</button>
+                            th:data-title="${quiz.title}">🗑</button>
                 </div>
             </div>
         </div>
@@ -137,7 +135,7 @@
         <p class="modal-title">Eliminare il quiz?</p>
         <p class="modal-sub" id="modal-sub-text"></p>
         <div class="modal-btns">
-            <button class="btn-modal btn-modal-cancel" onclick="closeDeleteModal()">Annulla</button>
+            <button class="btn-modal btn-modal-cancel" id="close-delete-modal-btn">Annulla</button>
             <button class="btn-modal btn-modal-confirm" id="modal-confirm-btn">Elimina</button>
         </div>
     </div>
@@ -150,146 +148,28 @@
         <p class="modal-sub" id="share-modal-sub-text"></p>
         <div class="share-grid">
             <label class="share-option share-option-all">
-                <input type="checkbox" id="share-select-all" onchange="toggleShareSelectAll(this.checked)">
+                <input type="checkbox" id="share-select-all">
                 <span>Seleziona tutti</span>
             </label>
-            <div id="share-teachers-list" class="share-list"></div>
+            <div id="share-teachers-list" class="share-list">
+                <label class="share-option" th:each="teacher : ${shareTeachers}">
+                    <input type="checkbox" class="share-teacher-checkbox" th:value="${teacher.id}">
+                    <span th:text="${teacher.username}">teacher</span>
+                </label>
+            </div>
         </div>
         <div class="modal-btns">
-            <button class="btn-modal btn-modal-cancel" onclick="closeShareModal()">Annulla</button>
+            <button class="btn-modal btn-modal-cancel" id="close-share-modal-btn">Annulla</button>
             <button class="btn-modal btn-modal-share" id="share-modal-confirm-btn">Invia</button>
         </div>
     </div>
 </div>
 
 <script th:src="@{/js/main.js}"></script>
-<script th:inline="javascript">
-    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
-    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
-    const IS_ADMIN = /*[[${isAdmin}]]*/ false;
-    const SHARE_TEACHERS = /*[[${shareTeachers}]]*/ [];
-    let quizIdToShare = null;
+<meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
+<meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
+<div id="dashboard-page-data" th:attr="data-is-admin=${isAdmin}" hidden></div>
+<script th:src="@{/js/admin-dashboard.js}"></script>
 
-    function confirmDelete(id, title) {
-        document.getElementById('modal-sub-text').textContent =
-            'Stai per eliminare "' + title + '". Questa azione non può essere annullata.';
-        document.getElementById('modal-confirm-btn').onclick = () => doDelete(id);
-        document.getElementById('delete-modal').style.display = 'flex';
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('delete-modal').style.display = 'none';
-    }
-
-    function openShareModal(id, title) {
-        if (!IS_ADMIN) return;
-        quizIdToShare = id;
-        document.getElementById('share-modal-sub-text').textContent =
-            'Seleziona i docenti destinatari per "' + title + '".';
-        renderShareTeachers();
-        document.getElementById('share-modal').style.display = 'flex';
-    }
-
-    function closeShareModal() {
-        document.getElementById('share-modal').style.display = 'none';
-        quizIdToShare = null;
-    }
-
-    function renderShareTeachers() {
-        const listEl = document.getElementById('share-teachers-list');
-        const selectAllEl = document.getElementById('share-select-all');
-        selectAllEl.checked = false;
-        listEl.innerHTML = SHARE_TEACHERS.map(teacher => `
-            <label class="share-option">
-                <input type="checkbox" class="share-teacher-checkbox" value="${teacher.id}" onchange="syncShareSelectAll()">
-                <span>${escHtml(teacher.username)}</span>
-            </label>
-        `).join('');
-    }
-
-    function toggleShareSelectAll(checked) {
-        document.querySelectorAll('.share-teacher-checkbox').forEach(cb => {
-            cb.checked = checked;
-        });
-    }
-
-    function syncShareSelectAll() {
-        const checkboxes = Array.from(document.querySelectorAll('.share-teacher-checkbox'));
-        const allChecked = checkboxes.length > 0 && checkboxes.every(cb => cb.checked);
-        document.getElementById('share-select-all').checked = allChecked;
-    }
-
-    async function doShareQuiz() {
-        const selectedTeacherIds = Array.from(document.querySelectorAll('.share-teacher-checkbox:checked'))
-            .map(cb => cb.value);
-        if (!selectedTeacherIds.length) {
-            alert('Seleziona almeno un insegnante.');
-            return;
-        }
-        const targetQuizId = quizIdToShare;
-        closeShareModal();
-        showLoading('Invio quiz in corso...');
-        try {
-            const res = await fetch('/api/quizzes/' + targetQuizId + '/share', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    [CSRF_HEADER]: CSRF_TOKEN
-                },
-                body: JSON.stringify({ teacherIds: selectedTeacherIds })
-            });
-            if (!res.ok) throw new Error('Errore server');
-            const copiedCount = await res.json();
-            hideLoading();
-            showToast('Quiz inviato a ' + copiedCount + ' insegnanti!');
-        } catch (e) {
-            hideLoading();
-            alert('Errore: ' + e.message);
-        }
-    }
-
-    async function doDelete(id) {
-        closeDeleteModal();
-        showLoading('Eliminazione in corso...');
-        try {
-            const res = await fetch('/api/quizzes/' + id, {
-                method: 'DELETE',
-                headers: { [CSRF_HEADER]: CSRF_TOKEN }
-            });
-            if (!res.ok) throw new Error('Errore server');
-            hideLoading();
-            showToast('Quiz eliminato!');
-            setTimeout(() => location.reload(), 1000);
-        } catch(e) {
-            hideLoading();
-            alert('Errore: ' + e.message);
-        }
-    }
-
-    async function togglePublication(checkbox) {
-        const id = checkbox.dataset.id;
-        const published = checkbox.checked;
-        checkbox.disabled = true;
-        try {
-            const res = await fetch('/api/quizzes/' + id + '/publication', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    [CSRF_HEADER]: CSRF_TOKEN
-                },
-                body: JSON.stringify({ published })
-            });
-            if (!res.ok) throw new Error('Errore server');
-            showToast(published ? 'Quiz pubblicato!' : 'Quiz nascosto agli studenti');
-        } catch (e) {
-            checkbox.checked = !published;
-            alert('Errore: ' + e.message);
-        } finally {
-            checkbox.disabled = false;
-        }
-    }
-
-    document.getElementById('share-modal-confirm-btn').onclick = doShareQuiz;
-</script>
 </body>
 </html>

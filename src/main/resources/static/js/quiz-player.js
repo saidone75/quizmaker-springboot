@@ -157,7 +157,7 @@ function renderPlay() {
             <p class="quiz-question">${escHtml(q.text)}</p>
             <div class="quiz-options">
                 ${q.options.map((opt, i) => `
-                    <button class="quiz-opt" onclick="pickAnswer(${i})">
+                    <button class="quiz-opt" data-answer-index="${i}">
                         <span class="ql">${LETTERS[i]}</span>
                         ${escHtml(opt)}
                     </button>
@@ -165,13 +165,21 @@ function renderPlay() {
             </div>
             <div id="play-feedback"></div>
         </div>
-        <button class="quiz-next" id="play-next" style="display:none" onclick="nextQuestion()">
+        <button class="quiz-next" id="play-next" style="display:none">
             ${current < total - 1 ? 'Prossima domanda →' : 'Conferma risultato 🎉'}
         </button>
     `;
+
+    document.querySelectorAll('.quiz-opt').forEach((button) => {
+        button.addEventListener('click', () => {
+            pickAnswer(Number(button.dataset.answerIndex));
+        });
+    });
+
+    document.getElementById('play-next')?.addEventListener('click', nextQuestion);
 }
 
-window.pickAnswer = function pickAnswer(idx) {
+function pickAnswer(idx) {
     if (playState.answered) return;
     playState.answered = true;
 
@@ -193,13 +201,13 @@ window.pickAnswer = function pickAnswer(idx) {
         fb.innerHTML = `<div class="quiz-feedback wrong">❌ Risposta sbagliata! La risposta corretta era: <strong>${escHtml(correctText)}</strong>${q.feedback ? '. ' + escHtml(q.feedback) : '.'}</div>`;
     }
     document.getElementById('play-next').style.display = 'block';
-};
+}
 
-window.nextQuestion = function nextQuestion() {
+function nextQuestion() {
     playState.current++;
     if (playState.current >= playState.quiz.questions.length) showResult();
     else renderPlay();
-};
+}
 
 async function showResult() {
     const { score, wrong, quiz, answers } = playState;

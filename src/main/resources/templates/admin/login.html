@@ -35,6 +35,9 @@
         <div class="alert alert-error" th:if="${param.error}">
             ❌ Username o password errati.
         </div>
+        <div class="alert alert-error" th:if="${param.blocked}">
+            🛡️ Troppi tentativi falliti: accesso bloccato temporaneamente.
+        </div>
         <div class="alert alert-success" th:if="${param.logout}">
             ✅ Logout effettuato con successo.
         </div>

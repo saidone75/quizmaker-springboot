@@ -20,15 +20,19 @@ package org.saidone.quizmaker.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.logging.log4j.util.Strings;
+import org.saidone.quizmaker.config.RequestFingerprint;
+import org.saidone.quizmaker.service.BruteForceProtectionService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
 import org.saidone.quizmaker.service.TeacherAuthService;
+import org.saidone.quizmaker.service.TurnstileCaptchaService;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
@@ -46,6 +50,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -62,6 +67,8 @@ public class WebController {
     private final ObjectMapper objectMapper;
     private final BuildProperties buildProperties;
     private final TeacherAuthService teacherAuthService;
+    private final BruteForceProtectionService bruteForceProtectionService;
+    private final TurnstileCaptchaService turnstileCaptchaService;
 
     @GetMapping("/")
     public String studentPage(HttpSession session, Model model) {
@@ -87,15 +94,30 @@ public class WebController {
     }
 
     @PostMapping("/student/login")
-    public String studentLogin(@RequestParam("keyword") String keyword, HttpSession session, Model model) {
+    public String studentLogin(@RequestParam("keyword") String keyword,
+                               HttpServletRequest request,
+                               HttpSession session,
+                               Model model) {
         if (keyword == null || keyword.trim().length() != 5) {
             model.addAttribute("loginError", "La parola chiave deve avere 5 caratteri.");
             return "student-login";
         }
 
-        return studentSessionService.login(session, keyword.trim())
-                .map(s -> "redirect:/")
+        val normalizedKeyword = keyword.trim().toLowerCase(Locale.ROOT);
+        val clientIp = RequestFingerprint.clientIp(request);
+        if (bruteForceProtectionService.isStudentLoginBlocked(clientIp, normalizedKeyword)) {
+            model.addAttribute("loginError", "Troppi tentativi di accesso. Riprova tra qualche minuto.");
+            return "student-login";
+        }
+
+        return studentSessionService.login(session, normalizedKeyword)
+                .map(s -> {
+                    bruteForceProtectionService.clearStudentLoginFailures(clientIp, normalizedKeyword);
+                    return "redirect:/";
+                })
                 .orElseGet(() -> {
+                    bruteForceProtectionService.recordStudentLoginFailureByIp(clientIp);
+                    bruteForceProtectionService.recordStudentLoginFailureByKeyword(normalizedKeyword);
                     model.addAttribute("loginError", "Parola chiave non valida.");
                     return "student-login";
                 });
@@ -112,9 +134,9 @@ public class WebController {
         return "admin/login";
     }
 
-
     @GetMapping("/teacher/register")
-    public String registerPage() {
+    public String registerPage(Model model) {
+        populateTurnstileModel(model);
         return "admin/register";
     }
 
@@ -122,10 +144,27 @@ public class WebController {
     public String registerTeacher(@RequestParam("username") String username,
                                   @RequestParam("password") String password,
                                   @RequestParam("confirmPassword") String confirmPassword,
+                                  @RequestParam(name = "cf-turnstile-response", required = false) String turnstileToken,
+                                  HttpServletRequest request,
                                   Model model) {
+        if (!bruteForceProtectionService.consumeRegisterAttempt(RequestFingerprint.clientIp(request))) {
+            model.addAttribute("registerError", "Troppi tentativi ravvicinati. Riprova tra qualche minuto.");
+            model.addAttribute("username", username);
+            populateTurnstileModel(model);
+            return "admin/register";
+        }
+
+        if (!turnstileCaptchaService.verifyToken(turnstileToken, RequestFingerprint.clientIp(request))) {
+            model.addAttribute("registerError", "Verifica CAPTCHA non riuscita. Riprova.");
+            model.addAttribute("username", username);
+            populateTurnstileModel(model);
+            return "admin/register";
+        }
+
         if (!password.equals(confirmPassword)) {
             model.addAttribute("registerError", "Le password non coincidono.");
             model.addAttribute("username", username);
+            populateTurnstileModel(model);
             return "admin/register";
         }
 
@@ -135,8 +174,15 @@ public class WebController {
         } catch (IllegalArgumentException ex) {
             model.addAttribute("registerError", ex.getMessage());
             model.addAttribute("username", username);
+            populateTurnstileModel(model);
             return "admin/register";
         }
+    }
+
+
+    private void populateTurnstileModel(Model model) {
+        model.addAttribute("turnstileEnabled", turnstileCaptchaService.isEnabled());
+        model.addAttribute("turnstileSiteKey", turnstileCaptchaService.getSiteKey());
     }
 
     @GetMapping("/teacher")
@@ -249,8 +295,6 @@ public class WebController {
         teacherAuthService.updateTeacherAdminFlag(id, admin, teacherAuthService.getCurrentTeacher());
         return "redirect:/teacher/system/teachers";
     }
-
-
 
     @PostMapping("/teacher/system/teachers/{id}/ai")
     public String updateTeacherAiFlag(@PathVariable UUID id,

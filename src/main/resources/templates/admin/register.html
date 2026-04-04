@@ -24,6 +24,7 @@
     <title>Registrazione Insegnante — QuizMaker</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/main.css}">
+    <script th:if="${turnstileEnabled}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 <div class="login-screen">
@@ -52,6 +53,10 @@
             <div class="form-group">
                 <label class="form-label">Conferma password</label>
                 <input type="password" name="confirmPassword" class="input-field" placeholder="Ripeti la password" required>
+            </div>
+
+            <div class="form-group" th:if="${turnstileEnabled}">
+                <div class="cf-turnstile" data-theme="light" data-size="flexible" th:attr="data-sitekey=${turnstileSiteKey}"></div>
             </div>
 
             <button type="submit" class="btn-start-quiz" style="margin-top:1.25rem">

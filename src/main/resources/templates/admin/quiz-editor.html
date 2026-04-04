@@ -80,7 +80,7 @@
                     </select>
                 </div>
             </div>
-            <button class="btn-add-question" style="margin-top:10px" onclick="generateQuizWithAi()">🤖 Genera con AI</button>
+            <button class="btn-add-question" style="margin-top:10px" id="generate-quiz-ai-btn">🤖 Genera con AI</button>
             <div id="ai-generation-msg" class="validation-msg" style="margin-top:8px"></div>
         </div>
 
@@ -98,7 +98,7 @@
             <input type="text" id="quiz-title-input" class="input-field"
                    placeholder="Es: Quiz sulla Preistoria 🦕"
                    th:value="${quiz?.title}"
-                   oninput="updateBadge()">
+                  >
 
             <div class="section-label" style="margin-top:1.25rem">Emoji del quiz</div>
             <input type="text" id="quiz-emoji-input" class="input-field"
@@ -107,11 +107,11 @@
 
             <div class="section-label" style="margin-top:1.25rem">Domande</div>
             <div id="questions-list" class="questions-list"></div>
-            <button class="btn-add-question" onclick="addQuestion()">+ Aggiungi domanda</button>
+            <button class="btn-add-question" id="add-question-btn">+ Aggiungi domanda</button>
         </div>
 
         <div id="validation-msg" class="validation-msg"></div>
-        <button class="btn-start-quiz" id="save-btn" onclick="saveQuiz()">
+        <button class="btn-start-quiz" id="save-btn">
             <span th:text="${quiz != null ? '💾 Salva modifiche' : '🚀 Salva quiz'}">Salva</span>
         </button>
 
@@ -120,18 +120,11 @@
 
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/quiz-editor.js}"></script>
-<script th:inline="javascript">
-    // Dati passati da Spring al JS
-    const QUIZ_ID = /*[[${quiz?.id}]]*/ null;
-    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
-    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
-
-    // Se stiamo modificando, carichiamo le domande esistenti
-    const INITIAL_QUESTIONS_JSON = /*[[${quiz?.questions}]]*/ null;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        initEditor(QUIZ_ID, INITIAL_QUESTIONS_JSON);
-    });
-</script>
+<meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
+<meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
+<div id="quiz-editor-data"
+     th:attr="data-quiz-id=${quiz?.id},data-initial-questions-json=${quiz?.questions}"
+     hidden></div>
+<script th:src="@{/js/quiz-editor-page.js}"></script>
 </body>
 </html>

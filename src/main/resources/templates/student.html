@@ -50,7 +50,7 @@
                  th:each="quiz : ${quizzes}"
                  th:data-id="${quiz.id}"
                  th:data-locked="${lockedQuizIds.contains(quiz.id)}"
-                 onclick="startQuizFromCard(this)">
+                >
                 <span class="quiz-pick-icon" th:text="${quiz.emoji}">🦕</span>
                 <span>
                     <span class="quiz-pick-name" th:text="${quiz.title}">Titolo</span>
@@ -93,7 +93,7 @@
         <span class="result-stars" id="res-stars">⭐⭐⭐⭐⭐</span>
         <div class="result-pills" id="res-pills"></div>
         <div class="result-btns">
-            <button class="btn-retry btn-retry-home" onclick="goTo('student')">🎒 Torna ai quiz</button>
+            <button class="btn-retry btn-retry-home" id="student-back-home-btn">🎒 Torna ai quiz</button>
         </div>
     </div>
 </div>
@@ -106,22 +106,13 @@
     </div>
 </div>
 
+<meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
+<meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
+<div id="student-page-data"
+     th:attr="data-quizzes-json=${quizzesJson},data-locked-quiz-ids-json=${lockedQuizIdsJson}"
+     hidden></div>
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/quiz-player.js}"></script>
-<script th:inline="javascript">
-    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
-    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
-    const QUIZ_DATA = JSON.parse(/*[[${quizzesJson}]]*/ '[]');
-    const LOCKED_QUIZ_IDS = new Set(JSON.parse(/*[[${lockedQuizIdsJson}]]*/ '[]').map(String));
-    const quizById = {};
-    for (let i = 0; i < QUIZ_DATA.length; i++) {
-        const quiz = QUIZ_DATA[i];
-        quizById[String(quiz.id)] = quiz;
-    }
-    window.QUIZ_DATA_BY_ID = quizById;
-    window.LOCKED_QUIZ_IDS = LOCKED_QUIZ_IDS;
-    window.CSRF_TOKEN = CSRF_TOKEN;
-    window.CSRF_HEADER = CSRF_HEADER;
-</script>
+<script th:src="@{/js/student-page.js}"></script>
 </body>
 </html>

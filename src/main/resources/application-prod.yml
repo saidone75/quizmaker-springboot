@@ -15,7 +15,14 @@ spring:
     show-sql: false
   h2:
     console:
-      enabled: true
+      enabled: false
+
+server:
+  servlet:
+    session:
+      cookie:
+        secure: ${SESSION_COOKIE_SECURE:true}
+        same-site: strict
 
 app:
   db-backup:

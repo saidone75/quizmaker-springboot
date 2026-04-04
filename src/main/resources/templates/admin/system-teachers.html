@@ -56,7 +56,7 @@
                             <input type="hidden" name="enabled" th:value="${teacher.enabled}"/>
                             <label class="teacher-enabled-toggle-label"
                                    th:title="${teacher.id == currentTeacherId ? 'Non puoi disabilitare il tuo account' : (teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante')}">
-                                <input type="checkbox" th:checked="${teacher.enabled}" onchange="submitEnabledToggle(this)"
+                                <input type="checkbox" th:checked="${teacher.enabled}"
                                        th:disabled="${teacher.id == currentTeacherId}">
                             </label>
                         </form>
@@ -74,7 +74,7 @@
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <input type="hidden" name="aiEnabled" th:value="${teacher.aiEnabled}"/>
                         <label class="teacher-ai-toggle-label">
-                            <input type="checkbox" th:checked="${teacher.aiEnabled}" onchange="submitAiToggle(this)">
+                            <input type="checkbox" th:checked="${teacher.aiEnabled}">
                             AI attiva
                         </label>
                     </form>
@@ -99,8 +99,7 @@
                     <form th:action="@{/teacher/system/teachers/{id}/delete(id=${teacher.id})}" method="post" style="margin:0"
                           th:attr="data-username=${teacher.username}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="button" class="btn-teacher-action btn-teacher-action-danger"
-                                th:attr="onclick=|openDeleteTeacherModal(this)|"
+                        <button type="button" class="btn-teacher-action btn-teacher-action-danger delete-teacher-btn"
                                 th:disabled="${teacher.id == currentTeacherId}"
                                 th:title="${teacher.id == currentTeacherId ? 'Non puoi cancellare utente corrente' : 'Elimina insegnante e tutti i dati associati'}">🗑️ Elimina</button>
                     </form>
@@ -120,38 +119,12 @@
         <p class="modal-title">Eliminare l'insegnante?</p>
         <p class="modal-sub" id="delete-teacher-modal-sub"></p>
         <div class="modal-btns">
-            <button class="btn-modal btn-modal-cancel" onclick="closeDeleteTeacherModal()">Annulla</button>
+            <button class="btn-modal btn-modal-cancel" id="delete-teacher-cancel-btn">Annulla</button>
             <button class="btn-modal btn-modal-confirm" id="delete-teacher-confirm-btn">Elimina</button>
         </div>
     </div>
 </div>
-<script>
-    function submitAiToggle(checkbox) {
-        const form = checkbox.form;
-        const hiddenInput = form.querySelector('input[name="aiEnabled"]');
-        hiddenInput.value = checkbox.checked;
-        form.submit();
-    }
+<script th:src="@{/js/teacher-system.js}"></script>
 
-    function submitEnabledToggle(checkbox) {
-        const form = checkbox.form;
-        const hiddenInput = form.querySelector('input[name="enabled"]');
-        hiddenInput.value = checkbox.checked;
-        form.submit();
-    }
-
-    function openDeleteTeacherModal(button) {
-        const form = button.closest('form');
-        const username = form.dataset.username || "questo insegnante";
-        document.getElementById('delete-teacher-modal-sub').textContent =
-            'Stai per eliminare "' + username + '". Questa azione non può essere annullata.';
-        document.getElementById('delete-teacher-confirm-btn').onclick = () => form.submit();
-        document.getElementById('delete-teacher-modal').style.display = 'flex';
-    }
-
-    function closeDeleteTeacherModal() {
-        document.getElementById('delete-teacher-modal').style.display = 'none';
-    }
-</script>
 </body>
 </html>

@@ -8,6 +8,9 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+  threads:
+    virtual:
+      enabled: true
   thymeleaf:
     cache: false
     encoding: UTF-8
@@ -28,6 +31,11 @@ app:
     cron: ${DB_BACKUP_CRON:0 0 2 * * *}
     directory: ${DB_BACKUP_DIRECTORY:./backups}
     retention-count: ${DB_BACKUP_RETENTION_COUNT:30}
+  turnstile:
+    enabled: ${TURNSTILE_ENABLED:false}
+    site-key: ${TURNSTILE_SITE_KEY:}
+    secret-key: ${TURNSTILE_SECRET_KEY:}
+    verify-url: ${TURNSTILE_VERIFY_URL:https://challenges.cloudflare.com/turnstile/v0/siteverify}
 
 logging:
   level:

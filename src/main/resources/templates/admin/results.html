@@ -48,8 +48,7 @@
                         <span>📘</span>
                         <span th:text="${group.quizTitle}">Titolo quiz</span>
                     </h2>
-                    <button class="btn-unlock-all" th:data-quiz-id="${group.quizId}"
-                            onclick="unlockAllForQuiz(this.dataset.quizId)">
+                    <button class="btn-unlock-all js-unlock-all-quiz" th:data-quiz-id="${group.quizId}">
                         🔓 Sblocca tutti
                     </button>
                 </div>
@@ -75,11 +74,10 @@
                                       th:text="${result.unlocked ? 'Sbloccato' : 'Bloccato'}">Bloccato</span>
                             </td>
                             <td>
-                                <button class="btn-unlock-single"
+                                <button class="btn-unlock-single js-unlock-submission"
                                         th:data-student-id="${result.studentId}"
                                         th:data-quiz-id="${result.quizId}"
-                                        th:disabled="${result.unlocked}"
-                                        onclick="unlockSubmission(this.dataset.studentId, this.dataset.quizId)">
+                                        th:disabled="${result.unlocked}">
                                     🔓 Sblocca
                                 </button>
                             </td>
@@ -98,44 +96,9 @@
 </div>
 
 <script th:src="@{/js/main.js}"></script>
-<script th:inline="javascript">
-    const CSRF_TOKEN = /*[[${_csrf.token}]]*/ '';
-    const CSRF_HEADER = /*[[${_csrf.headerName}]]*/ '';
+<meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
+<meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
+<script th:src="@{/js/admin-results.js}"></script>
 
-    async function unlockSubmission(studentId, quizId) {
-        showLoading('Sblocco in corso...');
-        try {
-            const res = await fetch('/api/quizzes/' + quizId + '/unlock/' + studentId, {
-                method: 'POST',
-                headers: { [CSRF_HEADER]: CSRF_TOKEN }
-            });
-            if (!res.ok) throw new Error('Errore server');
-            hideLoading();
-            showToast('Quiz sbloccato per lo studente');
-            setTimeout(() => location.reload(), 700);
-        } catch (e) {
-            hideLoading();
-            alert('Errore: ' + e.message);
-        }
-    }
-
-    async function unlockAllForQuiz(quizId) {
-        showLoading('Sblocco quiz per tutti in corso...');
-        try {
-            const res = await fetch('/api/quizzes/' + quizId + '/unlock-all', {
-                method: 'POST',
-                headers: { [CSRF_HEADER]: CSRF_TOKEN }
-            });
-            if (!res.ok) throw new Error('Errore server');
-            const unlockedCount = await res.json();
-            hideLoading();
-            showToast('Sbloccati ' + unlockedCount + ' studenti');
-            setTimeout(() => location.reload(), 700);
-        } catch (e) {
-            hideLoading();
-            alert('Errore: ' + e.message);
-        }
-    }
-</script>
 </body>
 </html>

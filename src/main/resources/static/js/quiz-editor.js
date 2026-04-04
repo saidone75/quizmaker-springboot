@@ -125,24 +125,28 @@ function renderQuestions() {
 
     list.innerHTML = currentQuestions.map((q, i) => `
         <div class="q-card" id="qcard-${i}">
-            <div class="q-card-header" onclick="toggleCard(${i})">
+            <div class="q-card-header" data-action="toggle-card" data-question-index="${i}">
                 <div class="q-num">${i + 1}</div>
                 <div class="q-preview${q.text ? '' : ' empty'}" id="qpreview-${i}">${escHtml(q.text) || 'Domanda senza testo...'}</div>
                 <div class="q-toggle" id="qtoggle-${i}">▼</div>
-                <button class="q-delete" onclick="event.stopPropagation(); deleteQuestion(${i})" title="Elimina">✕</button>
+                <button class="q-delete" data-action="delete-question" data-question-index="${i}" title="Elimina">✕</button>
             </div>
             <div class="q-card-body" id="qbody-${i}">
                 <div class="q-row">
                     <div class="q-row-label">Testo della domanda</div>
                     <input type="text" class="input-field" placeholder="Scrivi la domanda..."
                            value="${escHtml(q.text)}"
-                           oninput="syncField(${i}, 'text', this.value)">
+                           data-action="sync-field"
+                           data-question-index="${i}"
+                           data-field="text">
                 </div>
                 <div class="q-row">
                     <div class="q-row-label">Emoji (opzionale)</div>
                     <input type="text" class="input-field" placeholder="❓"
                            value="${escHtml(q.emoji)}" maxlength="4" style="width:72px"
-                           oninput="syncField(${i}, 'emoji', this.value)">
+                           data-action="sync-field"
+                           data-question-index="${i}"
+                           data-field="emoji">
                 </div>
                 <div class="q-row">
                     <div class="q-row-label">Risposte — clicca la lettera per segnare quella corretta</div>
@@ -150,12 +154,16 @@ function renderQuestions() {
                         ${q.options.map((opt, j) => `
                             <div class="option-row">
                                 <div class="option-letter${q.answer === j ? ' correct' : ''}"
-                                     onclick="setCorrect(${i}, ${j})"
+                                     data-action="set-correct"
+                                     data-question-index="${i}"
+                                     data-option-index="${j}"
                                      title="Segna come corretta">${EDITOR_LETTERS[j]}</div>
                                 <input type="text" class="input-field"
                                        placeholder="Risposta ${EDITOR_LETTERS[j]}..."
                                        value="${escHtml(opt)}"
-                                       oninput="syncOption(${i}, ${j}, this.value)">
+                                       data-action="sync-option"
+                                       data-question-index="${i}"
+                                       data-option-index="${j}">
                             </div>
                         `).join('')}
                     </div>
@@ -166,11 +174,44 @@ function renderQuestions() {
                     <input type="text" class="input-field"
                            placeholder="Es: Il fuoco serviva per scaldarsi e cucinare..."
                            value="${escHtml(q.feedback)}"
-                           oninput="syncField(${i}, 'feedback', this.value)">
+                           data-action="sync-field"
+                           data-question-index="${i}"
+                           data-field="feedback">
                 </div>
             </div>
         </div>
     `).join('');
+
+    list.querySelectorAll('[data-action="toggle-card"]').forEach((header) => {
+        header.addEventListener('click', () => {
+            toggleCard(Number(header.dataset.questionIndex));
+        });
+    });
+
+    list.querySelectorAll('[data-action="delete-question"]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.stopPropagation();
+            deleteQuestion(Number(button.dataset.questionIndex));
+        });
+    });
+
+    list.querySelectorAll('[data-action="set-correct"]').forEach((optionLetter) => {
+        optionLetter.addEventListener('click', () => {
+            setCorrect(Number(optionLetter.dataset.questionIndex), Number(optionLetter.dataset.optionIndex));
+        });
+    });
+
+    list.querySelectorAll('[data-action="sync-field"]').forEach((input) => {
+        input.addEventListener('input', () => {
+            syncField(Number(input.dataset.questionIndex), input.dataset.field, input.value);
+        });
+    });
+
+    list.querySelectorAll('[data-action="sync-option"]').forEach((input) => {
+        input.addEventListener('input', () => {
+            syncOption(Number(input.dataset.questionIndex), Number(input.dataset.optionIndex), input.value);
+        });
+    });
 }
 
 async function saveQuiz() {

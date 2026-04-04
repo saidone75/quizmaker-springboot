@@ -21,3 +21,10 @@ logging:
   level:
     root: INFO
     org.saidone.quizmaker: DEBUG
+
+app:
+  turnstile:
+    enabled: ${TURNSTILE_ENABLED:true}
+    site-key: ${TURNSTILE_SITE_KEY:3x00000000000000000000FF}
+    secret-key: ${TURNSTILE_SECRET_KEY:1x0000000000000000000000000000000AA}
+    verify-url: ${TURNSTILE_VERIFY_URL:https://challenges.cloudflare.com/turnstile/v0/siteverify}

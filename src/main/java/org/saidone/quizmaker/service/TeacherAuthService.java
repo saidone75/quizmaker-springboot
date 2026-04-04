@@ -227,7 +227,7 @@ public class TeacherAuthService implements UserDetailsService {
         String temporaryPassword;
         do {
             temporaryPassword = String.format("%s%02d", FAKER.animal().name(), RANDOM.nextInt(100));
-        } while (temporaryPassword.length() < 6 || temporaryPassword.length() > 16);
+        } while (temporaryPassword.length() < 6 || temporaryPassword.length() > 16 || temporaryPassword.contains(" "));
 
         targetTeacher.setPassword(passwordEncoder.encode(temporaryPassword));
         teacherRepository.save(targetTeacher);

@@ -35,7 +35,7 @@ public class LogTailService {
     private static final Path DEFAULT_LOG_PATH = Path.of("./log/quizmaker.log");
 
     public LogTailResult readLastLines(int lines) {
-        val safeLineCount = Math.clamp(lines, 1, 500);
+        val safeLineCount = Math.clamp(lines, 1, 1000);
         if (!Files.exists(DEFAULT_LOG_PATH)) {
             return new LogTailResult(DEFAULT_LOG_PATH.toString(), List.of(), "File di log non trovato.");
         }
