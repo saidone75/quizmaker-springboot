@@ -112,7 +112,10 @@
                                     <strong th:text="${question.errorsSummary}">errori: 3/6</strong>
                                 </li>
                             </ul>
-                            <p th:if="${group.analytics.difficultQuestions.isEmpty()}">Non ci sono ancora abbastanza dati.</p>
+                            <p th:if="${group.analytics.difficultQuestions.isEmpty()}"
+                               th:text="${group.analytics.difficultQuestionsMessage}">
+                                Non ci sono ancora abbastanza dati.
+                            </p>
                         </div>
                     </div>
                 </details>
