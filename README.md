@@ -6,14 +6,15 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
 - Gestione **multi-insegnante** con ruoli admin/non-admin, abilitazione account, reset password e cancellazione completa account (solo admin).
-- Controlli di sicurezza avanzati:
+- Generazione quiz con **AI OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
+- Condivisione quiz verso più insegnanti.
+- Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
+- Controlli di sicurezza includono:
   - protezione brute-force login teacher e login studente;
   - rate limit registrazione teacher;
   - supporto **Cloudflare Turnstile** (opzionale) in fase di registrazione.
-- Generazione quiz con **AI OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
-- Condivisione quiz verso più insegnanti.
-- Gestione risultati con sblocco tentativi singolo studente o in blocco.
 - Backup schedulato database SQLite in produzione con retention configurabile.
+- Semplice dispiegamento in cloud o on premise.
 
 ## Stack tecnologico
 
@@ -190,3 +191,9 @@ Aggiungi ogni modifica schema in un nuovo file XML e includilo in `db.changelog-
 ```bash
 mvn test
 ```
+
+## Licenza
+
+Copyright (c) 2026 Saidone
+
+Distributed under the GNU General Public License v3.0
