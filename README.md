@@ -7,9 +7,9 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Java CI](https://github.com/saidone75/quizmaker-springboot/actions/workflows/build.yml/badge.svg)
 
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_alfresco-node-vault)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_alfresco-node-vault)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_alfresco-node-vault)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 
 ## Caratteristiche principali
 
