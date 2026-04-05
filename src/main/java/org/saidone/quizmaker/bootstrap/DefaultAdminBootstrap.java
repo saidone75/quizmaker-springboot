@@ -48,7 +48,7 @@ public class DefaultAdminBootstrap implements InitializingBean {
     private final Environment environment;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         if (!shouldBootstrapDefaultAdmin()) {
             log.debug("Bootstrap amministratore predefinito disattivato (profili dev/docker non attivi e -D{} non impostato)", CREATE_DEFAULT_ADMIN_PROPERTY);
             return;

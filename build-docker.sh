@@ -10,12 +10,12 @@ get_pom_value() {
   awk -v tag="$tag" '
     /<parent>/ { in_parent=1; next }
     /<\/parent>/ { in_parent=0; next }
-    !in_parent {
-      pattern = "<" tag ">[[:space:]]*([^<]+)[[:space:]]*</" tag ">"
-      if (match($0, pattern, m)) {
-        print m[1]
-        exit
-      }
+    !in_parent && $0 ~ "<" tag ">" {
+      line = $0
+      sub(".*<" tag ">[[:space:]]*", "", line)
+      sub("[[:space:]]*</" tag ">.*", "", line)
+      print line
+      exit
     }
   ' pom.xml
 }

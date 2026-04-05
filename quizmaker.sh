@@ -2,10 +2,23 @@
 
 set -euo pipefail
 
-DOCKER_COMPOSE="docker-compose -f docker/docker-compose.yml"
+COMPOSE_FILE="docker/docker-compose.yml"
+
+if command -v docker-compose >/dev/null 2>&1; then
+  DOCKER_COMPOSE_CMD=(docker-compose -f "$COMPOSE_FILE")
+elif docker compose version >/dev/null 2>&1; then
+  DOCKER_COMPOSE_CMD=(docker compose -f "$COMPOSE_FILE")
+else
+  echo "Errore: né 'docker-compose' né 'docker compose' sono disponibili." >&2
+  exit 1
+fi
 
 usage() {
   echo "Usage: $(basename "$0") {build|build_start|start|stop|restart|purge|tail}"
+}
+
+compose() {
+  "${DOCKER_COMPOSE_CMD[@]}" "$@"
 }
 
 build() {
@@ -13,19 +26,19 @@ build() {
 }
 
 start() {
-  eval "$DOCKER_COMPOSE up --build -d"
+  compose up --build -d
 }
 
 down() {
-  eval "$DOCKER_COMPOSE down"
+  compose down
 }
 
 tail_logs() {
-  eval "$DOCKER_COMPOSE logs -f"
+  compose logs -f
 }
 
 purge() {
-  eval "$DOCKER_COMPOSE down --rmi local --remove-orphans"
+  compose down --rmi local --remove-orphans
 }
 
 if [[ $# -eq 0 ]]; then
@@ -55,7 +68,6 @@ case "${1}" in
     tail_logs
     ;;
   purge)
-    down
     purge
     ;;
   tail)

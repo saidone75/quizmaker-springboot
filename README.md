@@ -46,8 +46,8 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 Link utili in locale:
 
 - App: http://localhost:8080
-- Login teacher: http://localhost:8080/teacher/login
-- Registrazione teacher: http://localhost:8080/teacher/register
+- Login insegnante: http://localhost:8080/teacher/login
+- Registrazione insegnante: http://localhost:8080/teacher/register
 - Console H2 (dev): http://localhost:8080/h2-console
 - JDBC URL H2: `jdbc:h2:mem:quizmakerdb`
 - User H2: `sa`
@@ -130,7 +130,7 @@ docker compose -f docker/docker-compose.yml up --build
 export DB_BACKUP_ENABLED=true
 export DB_BACKUP_CRON="0 0 2 * * *"
 export DB_BACKUP_DIRECTORY="./backups"
-export DB_BACKUP_RETENTION_COUNT=14
+export DB_BACKUP_RETENTION_COUNT=30
 ```
 
 ## Funzionalità web
