@@ -252,7 +252,7 @@ public class WebController {
                                                Map<UUID, QuizDto.Response> quizzesById,
                                                int totalStudents) {
         if (results == null || results.isEmpty()) {
-            return new QuizResultAnalytics("0.0%", "0.0%", List.of());
+            return new QuizResultAnalytics("0.0%", "0.0%", List.of(), "Non ci sono ancora abbastanza dati.");
         }
 
         val averageScorePct = results.stream()
@@ -267,21 +267,28 @@ public class WebController {
 
         val completionRatePct = totalStudents <= 0 ? 0D : (double) results.size() / totalStudents;
 
-        val difficultQuestions = buildDifficultQuestions(quizId, results, quizzesById);
+        val difficultQuestionsData = buildDifficultQuestions(quizId, results, quizzesById);
+        val difficultQuestions = difficultQuestionsData.questions();
+        val difficultQuestionsMessage = difficultQuestions.isEmpty()
+                ? (difficultQuestionsData.hasAttempts()
+                ? "Tutte le risposte erano corrette."
+                : "Non ci sono ancora abbastanza dati.")
+                : "";
 
         return new QuizResultAnalytics(
                 String.format(Locale.ROOT, "%.1f%%", averageScorePct * 100),
                 String.format(Locale.ROOT, "%.1f%%", completionRatePct * 100),
-                difficultQuestions
+                difficultQuestions,
+                difficultQuestionsMessage
         );
     }
 
-    private List<DifficultQuestion> buildDifficultQuestions(UUID quizId,
-                                                            List<QuizSubmissionService.ResultRow> results,
-                                                            Map<UUID, QuizDto.Response> quizzesById) {
+    private DifficultQuestionsData buildDifficultQuestions(UUID quizId,
+                                                           List<QuizSubmissionService.ResultRow> results,
+                                                           Map<UUID, QuizDto.Response> quizzesById) {
         val quiz = quizzesById.get(quizId);
         if (quiz == null || quiz.getQuestions() == null || quiz.getQuestions().isEmpty()) {
-            return List.of();
+            return new DifficultQuestionsData(List.of(), false);
         }
 
         val stats = new java.util.ArrayList<QuestionStats>(quiz.getQuestions().size());
@@ -304,8 +311,10 @@ public class WebController {
             }
         }
 
-        return stats.stream()
-                .filter(stat -> stat.attempts() > 0)
+        val attemptedStats = stats.stream()
+                .filter(stat -> stat.attempts() > 0);
+        val difficultQuestions = attemptedStats
+                .filter(stat -> stat.errors() > 0)
                 .sorted((left, right) -> {
                     val leftRate = (double) left.errors() / left.attempts();
                     val rightRate = (double) right.errors() / right.attempts();
@@ -318,6 +327,8 @@ public class WebController {
                         String.format(Locale.ROOT, "errori: %d/%d", stat.errors(), stat.attempts())
                 ))
                 .toList();
+        val hasAttempts = stats.stream().anyMatch(stat -> stat.attempts() > 0);
+        return new DifficultQuestionsData(difficultQuestions, hasAttempts);
     }
 
     @GetMapping("/teacher/profile")
@@ -481,10 +492,16 @@ public class WebController {
                                    QuizResultAnalytics analytics) {
     }
 
-    private record QuizResultAnalytics(String averageScore, String completionRate, List<DifficultQuestion> difficultQuestions) {
+    private record QuizResultAnalytics(String averageScore,
+                                       String completionRate,
+                                       List<DifficultQuestion> difficultQuestions,
+                                       String difficultQuestionsMessage) {
     }
 
     private record DifficultQuestion(int position, String text, String errorsSummary) {
+    }
+
+    private record DifficultQuestionsData(List<DifficultQuestion> questions, boolean hasAttempts) {
     }
 
     private record QuestionStats(int index, String text, int attempts, int errors) {

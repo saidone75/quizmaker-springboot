@@ -30,7 +30,7 @@
 <div id="screen-admin" class="screen active" style="background:var(--gray-bg);min-height:100vh;">
     <div class="topbar">
         <span class="topbar-title">🧾 Risultati quiz</span>
-        <div style="display:flex;gap:8px;align-items:center;">
+        <div class="topbar-actions">
             <a th:href="@{/teacher}" class="topbar-back" style="text-decoration:none">← Dashboard</a>
             <span class="topbar-badge" sec:authentication="name">teacher</span>
             <form th:action="@{/teacher/logout}" method="post" style="margin:0">
@@ -112,7 +112,10 @@
                                     <strong th:text="${question.errorsSummary}">errori: 3/6</strong>
                                 </li>
                             </ul>
-                            <p th:if="${group.analytics.difficultQuestions.isEmpty()}">Non ci sono ancora abbastanza dati.</p>
+                            <p th:if="${group.analytics.difficultQuestions.isEmpty()}"
+                               th:text="${group.analytics.difficultQuestionsMessage}">
+                                Non ci sono ancora abbastanza dati.
+                            </p>
                         </div>
                     </div>
                 </details>

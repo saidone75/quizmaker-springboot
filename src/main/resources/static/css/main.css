@@ -73,6 +73,14 @@ body { font-family: 'Nunito', sans-serif; background: var(--gray-bg); min-height
     border-radius: 99px; background: var(--green-light); color: var(--green-text);
     border: none; cursor: default; font-family: 'Nunito', sans-serif;
 }
+.topbar-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+}
 
 /* ===== TEACHER / EDITOR BODY ===== */
 .teacher-body { padding: 1.5rem 1rem; max-width: 700px; margin: 0 auto; width: 100%; }
@@ -561,6 +569,11 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     transition: all 0.15s;
 }
 .btn-regenerate-password:hover { background: #B5D4F4; }
+.students-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 480px;
+}
 .btn-publish-toggle {
     background: var(--green-light);
     color: var(--green-text);
@@ -716,6 +729,10 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
         font-size: 17px;
     }
 
+    .topbar-actions {
+        width: 100%;
+    }
+
     .teacher-body {
         padding: 1rem 0.75rem 1.25rem;
     }
@@ -781,6 +798,41 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 
     .btn-hero .btn-label {
         font-size: 17px;
+    }
+
+    .results-table {
+        min-width: 0;
+    }
+
+    .results-table th,
+    .results-table td {
+        padding: 9px 8px;
+        font-size: 12px;
+    }
+
+    .btn-unlock-single {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .students-table {
+        min-width: 0;
+    }
+
+    .students-table td,
+    .students-table th {
+        padding: 9px 8px !important;
+    }
+
+    .student-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .btn-regenerate-password {
+        width: 100%;
+        justify-content: center;
     }
 }
 

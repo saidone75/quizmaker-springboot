@@ -134,4 +134,42 @@
             alert('Errore: ' + e.message);
         }
     });
+
+    const copyKeyword = async (keyword) => {
+        if (!keyword) {
+            return;
+        }
+
+        const normalizedKeyword = keyword.trim();
+        if (!normalizedKeyword) {
+            return;
+        }
+
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(normalizedKeyword);
+            return;
+        }
+
+        const textarea = document.createElement('textarea');
+        textarea.value = normalizedKeyword;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+    };
+
+    document.querySelectorAll('.js-copy-keyword').forEach((keywordCell) => {
+        keywordCell.addEventListener('click', async () => {
+            const keyword = keywordCell.dataset.keyword || keywordCell.textContent;
+            try {
+                await copyKeyword(keyword || '');
+                showToast('Parola chiave copiata negli appunti');
+            } catch (e) {
+                alert('Errore durante la copia della parola chiave');
+            }
+        });
+    });
 })();
