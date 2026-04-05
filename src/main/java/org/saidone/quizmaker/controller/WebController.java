@@ -26,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.config.RequestFingerprint;
+import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.service.BruteForceProtectionService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
@@ -51,6 +52,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -215,7 +218,16 @@ public class WebController {
 
     @GetMapping("/teacher/results")
     public String adminResults(Model model) {
-        val results = quizSubmissionService.findAllResults(teacherAuthService.getCurrentTeacher());
+        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        val results = quizSubmissionService.findAllResults(currentTeacher);
+        val quizzesById = quizService.findAllForAdmin(currentTeacher).stream()
+                .collect(Collectors.toMap(
+                        quiz -> quiz.getId(),
+                        quiz -> quiz,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+        val totalStudents = studentService.findAll(currentTeacher).size();
 
         val groupedResults = results.stream()
                 .collect(Collectors.groupingBy(
@@ -227,11 +239,85 @@ public class WebController {
                 .map(entry -> new QuizResultGroup(
                         entry.getKey(),
                         entry.getValue().get(0).quizTitle(),
-                        entry.getValue()))
+                        entry.getValue(),
+                        buildAnalytics(entry.getKey(), entry.getValue(), quizzesById, totalStudents)))
                 .toList();
 
         model.addAttribute("groupedResults", groupedResults);
         return "admin/results";
+    }
+
+    private QuizResultAnalytics buildAnalytics(UUID quizId,
+                                               List<QuizSubmissionService.ResultRow> results,
+                                               Map<UUID, QuizDto.Response> quizzesById,
+                                               int totalStudents) {
+        if (results == null || results.isEmpty()) {
+            return new QuizResultAnalytics("0.0%", "0.0%", List.of());
+        }
+
+        val averageScorePct = results.stream()
+                .mapToDouble(result -> {
+                    if (result.totalQuestions() == null || result.totalQuestions() <= 0 || result.score() == null) {
+                        return 0D;
+                    }
+                    return (double) result.score() / result.totalQuestions();
+                })
+                .average()
+                .orElse(0D);
+
+        val completionRatePct = totalStudents <= 0 ? 0D : (double) results.size() / totalStudents;
+
+        val difficultQuestions = buildDifficultQuestions(quizId, results, quizzesById);
+
+        return new QuizResultAnalytics(
+                String.format(Locale.ROOT, "%.1f%%", averageScorePct * 100),
+                String.format(Locale.ROOT, "%.1f%%", completionRatePct * 100),
+                difficultQuestions
+        );
+    }
+
+    private List<DifficultQuestion> buildDifficultQuestions(UUID quizId,
+                                                            List<QuizSubmissionService.ResultRow> results,
+                                                            Map<UUID, QuizDto.Response> quizzesById) {
+        val quiz = quizzesById.get(quizId);
+        if (quiz == null || quiz.getQuestions() == null || quiz.getQuestions().isEmpty()) {
+            return List.of();
+        }
+
+        val stats = new java.util.ArrayList<QuestionStats>(quiz.getQuestions().size());
+        for (int i = 0; i < quiz.getQuestions().size(); i++) {
+            stats.add(new QuestionStats(i, quiz.getQuestions().get(i).getText(), 0, 0));
+        }
+
+        for (val result : results) {
+            if (result.answers() == null) {
+                continue;
+            }
+            int max = Math.min(result.answers().size(), quiz.getQuestions().size());
+            for (int i = 0; i < max; i++) {
+                val given = result.answers().get(i);
+                val expected = quiz.getQuestions().get(i).getAnswer();
+                val current = stats.get(i);
+                int attempts = current.attempts() + 1;
+                int errors = current.errors() + (Objects.equals(given, expected) ? 0 : 1);
+                stats.set(i, new QuestionStats(current.index(), current.text(), attempts, errors));
+            }
+        }
+
+        return stats.stream()
+                .filter(stat -> stat.attempts() > 0)
+                .sorted((left, right) -> {
+                    val leftRate = (double) left.errors() / left.attempts();
+                    val rightRate = (double) right.errors() / right.attempts();
+                    return Double.compare(rightRate, leftRate);
+                })
+                .limit(3)
+                .map(stat -> new DifficultQuestion(
+                        stat.index() + 1,
+                        stat.text() == null || stat.text().isBlank() ? "Domanda senza testo" : stat.text(),
+                        String.format(Locale.ROOT, "errori: %d/%d", stat.errors(), stat.attempts())
+                ))
+                .toList();
     }
 
     @GetMapping("/teacher/profile")
@@ -389,7 +475,19 @@ public class WebController {
         }
     }
 
-    private record QuizResultGroup(UUID quizId, String quizTitle, List<QuizSubmissionService.ResultRow> results) {
+    private record QuizResultGroup(UUID quizId,
+                                   String quizTitle,
+                                   List<QuizSubmissionService.ResultRow> results,
+                                   QuizResultAnalytics analytics) {
+    }
+
+    private record QuizResultAnalytics(String averageScore, String completionRate, List<DifficultQuestion> difficultQuestions) {
+    }
+
+    private record DifficultQuestion(int position, String text, String errorsSummary) {
+    }
+
+    private record QuestionStats(int index, String text, int attempts, int errors) {
     }
 
     private record ShareTeacherOption(UUID id, String username) {
