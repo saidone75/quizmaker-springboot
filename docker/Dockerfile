@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.2
 
-ARG MAVEN_VERSION=3-sapmachine-21
+ARG MAVEN_VERSION=3-sapmachine-25
 ARG JAVA_VENDOR=azul/zulu-openjdk-alpine
-ARG JAVA_VERSION=21-jre-headless-latest
+ARG JAVA_VERSION=25-jre-headless-latest
 
 # --- Stage 1: Builder ---
 FROM maven:${MAVEN_VERSION} as builder
@@ -32,4 +32,4 @@ USER spring:spring
 ARG JAR_FILE=/application/target/quizmaker*.jar
 COPY --from=builder ${JAR_FILE} app.jar
 
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MinRAMPercentage=35", "-XX:MaxRAMPercentage=70", "-jar", "/app.jar"]
+ENTRYPOINT ["java", "-XX:+UseCompactObjectHeaders", "-XX:+UseContainerSupport", "-XX:MinRAMPercentage=35", "-XX:MaxRAMPercentage=70", "-jar", "/app.jar"]
