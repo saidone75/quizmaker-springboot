@@ -13,6 +13,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 
 ## Caratteristiche principali
 
+- Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
 - Gestione **multi-insegnante** con ruoli admin/non-admin, abilitazione account, reset password e cancellazione completa account (solo admin).
 - Generazione quiz con **AI OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
