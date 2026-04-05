@@ -1,6 +1,22 @@
+/*
+ * QuizMaker - fun quizzes for curious minds
+ * Copyright (C) 2026 Saidone
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 (function () {
-    const csrfToken = document.querySelector('meta[name="quizmaker-csrf-token"]')?.content || '';
-    const csrfHeader = document.querySelector('meta[name="quizmaker-csrf-header"]')?.content || '';
     const isAdmin = document.getElementById('dashboard-page-data')?.dataset.isAdmin === 'true';
     let quizIdToShare = null;
 
@@ -57,11 +73,10 @@
         closeShareModal();
         showLoading('Invio quiz in corso...');
         try {
-            const res = await fetch('/api/quizzes/' + targetQuizId + '/share', {
+            const res = await apiFetch('/api/quizzes/' + targetQuizId + '/share', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    [csrfHeader]: csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({teacherIds: selectedTeacherIds})
             });
@@ -81,9 +96,8 @@
         closeDeleteModal();
         showLoading('Eliminazione in corso...');
         try {
-            const res = await fetch('/api/quizzes/' + id, {
-                method: 'DELETE',
-                headers: {[csrfHeader]: csrfToken}
+            const res = await apiFetch('/api/quizzes/' + id, {
+                method: 'DELETE'
             });
             if (!res.ok) {
                 throw new Error('Errore server');
@@ -102,11 +116,10 @@
         const published = checkbox.checked;
         checkbox.disabled = true;
         try {
-            const res = await fetch('/api/quizzes/' + id + '/publication', {
+            const res = await apiFetch('/api/quizzes/' + id + '/publication', {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
-                    [csrfHeader]: csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({published})
             });

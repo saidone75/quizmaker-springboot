@@ -32,6 +32,4 @@ USER spring:spring
 ARG JAR_FILE=/application/target/quizmaker*.jar
 COPY --from=builder ${JAR_FILE} app.jar
 
-ENV SPRING_PROFILES_ACTIVE dev
-
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MinRAMPercentage=35", "-XX:MaxRAMPercentage=70", "-jar", "/app.jar"]

@@ -31,7 +31,7 @@
 
     <groupId>com.quizmaker</groupId>
     <artifactId>quizmaker</artifactId>
-    <version>0.3.6</version>
+    <version>0.3.7</version>
     <name>quizmaker</name>
     <description>QuizMaker - App per quiz scolastici</description>
 
@@ -95,18 +95,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-liquibase</artifactId>
             <scope>compile</scope>
-        </dependency>
-
-        <!-- H2 (dev) -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-h2console</artifactId>
-            <scope>runtime</scope>
         </dependency>
 
         <!-- SQLite (prod) -->
@@ -270,6 +258,36 @@
             <properties>
                 <spring.profiles.active>dev</spring.profiles.active>
             </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-h2console</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>docker</id>
+            <properties>
+                <spring.profiles.active>docker</spring.profiles.active>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-h2console</artifactId>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
         </profile>
         <profile>
             <id>prod</id>

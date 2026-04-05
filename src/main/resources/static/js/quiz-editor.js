@@ -243,11 +243,10 @@ async function saveQuiz() {
         const url = quizId ? '/api/quizzes/' + quizId : '/api/quizzes';
         const method = quizId ? 'PUT' : 'POST';
 
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
             method,
             headers: {
-                'Content-Type': 'application/json',
-                [CSRF_HEADER]: CSRF_TOKEN
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 title,
@@ -323,11 +322,8 @@ async function generateQuizWithAi() {
     showLoading('Generazione quiz con AI in corso...');
 
     try {
-        const res = await fetch('/api/quizzes/generate', {
+        const res = await apiFetch('/api/quizzes/generate', {
             method: 'POST',
-            headers: {
-                [CSRF_HEADER]: CSRF_TOKEN
-            },
             body: formData
         });
 

@@ -214,14 +214,9 @@ async function showResult() {
     const total = quiz.questions.length;
 
     try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (window.CSRF_HEADER && window.CSRF_TOKEN) {
-            headers[window.CSRF_HEADER] = window.CSRF_TOKEN;
-        }
-
-        const res = await fetch('/api/quizzes/' + quiz.id + '/submit', {
+        const res = await apiFetch('/api/quizzes/' + quiz.id + '/submit', {
             method: 'POST',
-            headers,
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ answers })
         });
         const payload = await res.json();

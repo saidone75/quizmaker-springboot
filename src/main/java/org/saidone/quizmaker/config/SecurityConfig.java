@@ -34,6 +34,9 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private static final String ROLE_ADMIN = "ADMIN";
+    private static final String ROLE_TEACHER = "TEACHER";
+
     private final LoginRateLimitFilter loginRateLimitFilter;
     private final RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler;
     private final RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler;
@@ -56,15 +59,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole("TEACHER")
-                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole("TEACHER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole("TEACHER")
-                        .requestMatchers("/api/students/**").hasRole("TEACHER")
-                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
-                        .requestMatchers("/about").hasRole("ADMIN")
-                        .requestMatchers("/teacher/about").hasRole("ADMIN")
-                        .requestMatchers("/teacher/system/**").hasRole("ADMIN")
-                        .requestMatchers("/teacher/**").hasRole("TEACHER")
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole(ROLE_TEACHER)
+                        .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole(ROLE_TEACHER)
+                        .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole(ROLE_TEACHER)
+                        .requestMatchers("/api/students/**").hasRole(ROLE_TEACHER)
+                        .requestMatchers("/api/teacher/**").hasRole(ROLE_TEACHER)
+                        .requestMatchers("/about").hasRole(ROLE_ADMIN)
+                        .requestMatchers("/teacher/about").hasRole(ROLE_ADMIN)
+                        .requestMatchers("/teacher/system/**").hasRole(ROLE_ADMIN)
+                        .requestMatchers("/teacher/**").hasRole(ROLE_TEACHER)
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

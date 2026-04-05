@@ -1,7 +1,22 @@
-(function () {
-    const csrfToken = document.querySelector('meta[name="quizmaker-csrf-token"]')?.content || '';
-    const csrfHeader = document.querySelector('meta[name="quizmaker-csrf-header"]')?.content || '';
+/*
+ * QuizMaker - fun quizzes for curious minds
+ * Copyright (C) 2026 Saidone
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
+(function () {
     const deleteModal = document.getElementById('delete-student-modal');
     const deleteModalSub = document.getElementById('delete-student-modal-sub');
     const deleteConfirmBtn = document.getElementById('delete-student-confirm-btn');
@@ -28,11 +43,10 @@
 
         showLoading('Creazione studente...');
         try {
-            const res = await fetch('/api/students', {
+            const res = await apiFetch('/api/students', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    [csrfHeader]: csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({fullName})
             });
@@ -53,9 +67,8 @@
         closeDeleteStudentModal();
         showLoading('Eliminazione studente...');
         try {
-            const res = await fetch('/api/students/' + studentId, {
-                method: 'DELETE',
-                headers: {[csrfHeader]: csrfToken}
+            const res = await apiFetch('/api/students/' + studentId, {
+                method: 'DELETE'
             });
             if (!res.ok) {
                 const payload = await res.json();
@@ -88,9 +101,8 @@
     const regenerateStudentPassword = async (studentId) => {
         showLoading('Rigenerazione password...');
         try {
-            const res = await fetch('/api/students/' + studentId + '/regenerate-password', {
-                method: 'POST',
-                headers: {[csrfHeader]: csrfToken}
+            const res = await apiFetch('/api/students/' + studentId + '/regenerate-password', {
+                method: 'POST'
             });
             if (!res.ok) {
                 const payload = await res.json();
@@ -118,9 +130,8 @@
     document.getElementById('regenerate-all-passwords-btn')?.addEventListener('click', async () => {
         showLoading('Rigenerazione password per tutti...');
         try {
-            const res = await fetch('/api/students/regenerate-passwords', {
-                method: 'POST',
-                headers: {[csrfHeader]: csrfToken}
+            const res = await apiFetch('/api/students/regenerate-passwords', {
+                method: 'POST'
             });
             if (!res.ok) {
                 throw new Error('Errore server');

@@ -62,3 +62,20 @@ function escHtml(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 }
+
+// ===== API HELPERS =====
+function getCsrfHeaders(baseHeaders) {
+    const headers = {...(baseHeaders || {})};
+    const csrfToken = document.querySelector('meta[name="quizmaker-csrf-token"]')?.content || '';
+    const csrfHeader = document.querySelector('meta[name="quizmaker-csrf-header"]')?.content || '';
+    if (csrfToken && csrfHeader) {
+        headers[csrfHeader] = csrfToken;
+    }
+    return headers;
+}
+
+async function apiFetch(url, options) {
+    const opts = {...(options || {})};
+    opts.headers = getCsrfHeaders(opts.headers);
+    return fetch(url, opts);
+}
