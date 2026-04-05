@@ -34,11 +34,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class BruteForceProtectionService {
 
-    static final int MAX_LOGIN_FAILURES = 5;
-    static final Duration LOGIN_WINDOW = Duration.ofMinutes(15);
-    static final Duration LOGIN_LOCK = Duration.ofMinutes(20);
+    static final int MAX_LOGIN_FAILURES = 3;
+    static final Duration LOGIN_WINDOW = Duration.ofMinutes(1);
+    static final Duration LOGIN_LOCK = Duration.ofMinutes(5);
     static final int MAX_STUDENT_LOGIN_FAILURES = 5;
-    static final Duration STUDENT_LOGIN_WINDOW = Duration.ofMinutes(5);
+    static final Duration STUDENT_LOGIN_WINDOW = Duration.ofMinutes(1);
     static final Duration STUDENT_LOGIN_LOCK = Duration.ofMinutes(3);
 
     static final int MAX_REGISTER_ATTEMPTS = 10;
