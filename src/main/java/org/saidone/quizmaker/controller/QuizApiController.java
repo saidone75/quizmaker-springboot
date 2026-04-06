@@ -18,7 +18,6 @@
 
 package org.saidone.quizmaker.controller;
 
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -30,8 +29,8 @@ import org.saidone.quizmaker.service.ai.QuizGenerationApplicationService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSharingService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
-import org.saidone.quizmaker.service.StudentSessionService;
 import org.saidone.quizmaker.service.TeacherAuthenticationService;
+import org.saidone.quizmaker.service.StudentAuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,33 +46,29 @@ public class QuizApiController {
 
     private final QuizService quizService;
     private final QuizSubmissionService quizSubmissionService;
-    private final StudentSessionService studentSessionService;
     private final QuizGenerationApplicationService quizGenerationApplicationService;
     private final DocumentTextExtractorService documentTextExtractorService;
     private final TeacherAuthenticationService teacherAuthenticationService;
+    private final StudentAuthenticationService studentAuthenticationService;
     private final QuizSharingService quizSharingService;
 
     @GetMapping
-    public ResponseEntity<List<QuizDto.Response>> getAll(HttpSession session) {
-        val student = studentSessionService.getLoggedStudent(session)
-                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+    public ResponseEntity<List<QuizDto.Response>> getAll() {
+        val student = studentAuthenticationService.getCurrentStudent();
         return ResponseEntity.ok(quizService.findPublishedForTeacher(student.getTeacher()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id, HttpSession session) {
-        val student = studentSessionService.getLoggedStudent(session)
-                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+    public ResponseEntity<QuizDto.Response> getById(@PathVariable UUID id) {
+        val student = studentAuthenticationService.getCurrentStudent();
         return ResponseEntity.ok(quizService.findPublishedByIdForTeacher(id, student.getTeacher()));
     }
 
     @PostMapping("/{id}/submit")
     public ResponseEntity<QuizSubmissionDto.Response> submit(
             @PathVariable UUID id,
-            @Valid @RequestBody QuizSubmissionDto.Request request,
-            HttpSession session) {
-        val student = studentSessionService.getLoggedStudent(session)
-                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
+            @Valid @RequestBody QuizSubmissionDto.Request request) {
+        val student = studentAuthenticationService.getCurrentStudent();
         return ResponseEntity.ok(quizSubmissionService.submit(id, student, request.getAnswers()));
     }
 

@@ -38,17 +38,21 @@ public class SecurityConfig {
 
     private static final String ROLE_ADMIN = "ADMIN";
     private static final String ROLE_TEACHER = "TEACHER";
+    private static final String ROLE_STUDENT = "STUDENT";
 
     private final LoginRateLimitFilter loginRateLimitFilter;
     private final RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler;
     private final RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler;
+    private final StudentSessionAuthenticationFilter studentSessionAuthenticationFilter;
 
     public SecurityConfig(LoginRateLimitFilter loginRateLimitFilter,
                           RateLimitAuthenticationFailureHandler rateLimitAuthenticationFailureHandler,
-                          RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler) {
+                          RateLimitAuthenticationSuccessHandler rateLimitAuthenticationSuccessHandler,
+                          StudentSessionAuthenticationFilter studentSessionAuthenticationFilter) {
         this.loginRateLimitFilter = loginRateLimitFilter;
         this.rateLimitAuthenticationFailureHandler = rateLimitAuthenticationFailureHandler;
         this.rateLimitAuthenticationSuccessHandler = rateLimitAuthenticationSuccessHandler;
+        this.studentSessionAuthenticationFilter = studentSessionAuthenticationFilter;
     }
 
     @Bean
@@ -59,8 +63,8 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/teacher/login", "/teacher/register", "/", "/student/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/quizzes", "/api/quizzes/**").hasRole(ROLE_STUDENT)
+                        .requestMatchers(HttpMethod.POST, "/api/quizzes/*/submit").hasRole(ROLE_STUDENT)
                         .requestMatchers(HttpMethod.POST, "/api/quizzes/**", "/api/quizzes/*/unlock/*").hasRole(ROLE_TEACHER)
                         .requestMatchers(HttpMethod.PUT, "/api/quizzes/**").hasRole(ROLE_TEACHER)
                         .requestMatchers(HttpMethod.DELETE, "/api/quizzes/**").hasRole(ROLE_TEACHER)
@@ -95,7 +99,8 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
                 )
-                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(loginRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(studentSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

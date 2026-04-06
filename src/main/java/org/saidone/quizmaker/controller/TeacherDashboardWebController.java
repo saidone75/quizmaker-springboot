@@ -20,22 +20,16 @@ package org.saidone.quizmaker.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.apache.logging.log4j.util.Strings;
-import org.saidone.quizmaker.config.RequestFingerprint;
 import org.saidone.quizmaker.dto.QuizDto;
-import org.saidone.quizmaker.service.BruteForceProtectionService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
-import org.saidone.quizmaker.service.StudentSessionService;
 import org.saidone.quizmaker.service.TeacherAdministrationService;
 import org.saidone.quizmaker.service.TeacherAuthenticationService;
 import org.saidone.quizmaker.service.TeacherLifecycleService;
-import org.saidone.quizmaker.service.TurnstileCaptchaService;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.SpringVersion;
@@ -46,8 +40,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -63,134 +57,16 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Controller
 @RequiredArgsConstructor
-public class WebController {
+public class TeacherDashboardWebController {
 
     private final QuizService quizService;
     private final QuizSubmissionService quizSubmissionService;
-    private final StudentSessionService studentSessionService;
     private final StudentService studentService;
     private final ObjectMapper objectMapper;
     private final BuildProperties buildProperties;
     private final TeacherAuthenticationService teacherAuthenticationService;
     private final TeacherAdministrationService teacherAdministrationService;
     private final TeacherLifecycleService teacherLifecycleService;
-    private final BruteForceProtectionService bruteForceProtectionService;
-    private final TurnstileCaptchaService turnstileCaptchaService;
-
-    @GetMapping("/")
-    public String studentPage(HttpSession session, Model model) {
-        val maybeStudent = studentSessionService.getLoggedStudent(session);
-        if (maybeStudent.isEmpty()) {
-            return "student-login";
-        }
-
-        val quizzes = quizService.findPublishedForTeacher(maybeStudent.get().getTeacher());
-        val lockedQuizIds = quizSubmissionService.findLockedQuizIdsForStudent(maybeStudent.get());
-
-        model.addAttribute("studentName", maybeStudent.get().getFullName());
-        model.addAttribute("quizzes", quizzes);
-        model.addAttribute("lockedQuizIds", lockedQuizIds);
-        try {
-            model.addAttribute("quizzesJson", objectMapper.writeValueAsString(quizzes));
-            model.addAttribute("lockedQuizIdsJson", objectMapper.writeValueAsString(lockedQuizIds));
-        } catch (JsonProcessingException e) {
-            model.addAttribute("quizzesJson", "[]");
-            model.addAttribute("lockedQuizIdsJson", "[]");
-        }
-        return "student";
-    }
-
-    @PostMapping("/student/login")
-    public String studentLogin(@RequestParam("keyword") String keyword,
-                               HttpServletRequest request,
-                               HttpSession session,
-                               Model model) {
-        if (keyword == null || keyword.trim().length() != 5) {
-            model.addAttribute("loginError", "La parola chiave deve avere 5 caratteri.");
-            return "student-login";
-        }
-
-        val normalizedKeyword = keyword.trim().toLowerCase(Locale.ROOT);
-        val clientIp = RequestFingerprint.clientIp(request);
-        if (bruteForceProtectionService.isStudentLoginBlocked(clientIp, normalizedKeyword)) {
-            model.addAttribute("loginError", "Troppi tentativi di accesso. Riprova tra qualche minuto.");
-            return "student-login";
-        }
-
-        return studentSessionService.login(session, normalizedKeyword)
-                .map(s -> {
-                    bruteForceProtectionService.clearStudentLoginFailures(clientIp, normalizedKeyword);
-                    return "redirect:/";
-                })
-                .orElseGet(() -> {
-                    bruteForceProtectionService.recordStudentLoginFailureByIp(clientIp);
-                    bruteForceProtectionService.recordStudentLoginFailureByKeyword(normalizedKeyword);
-                    model.addAttribute("loginError", "Parola chiave non valida.");
-                    return "student-login";
-                });
-    }
-
-    @PostMapping("/student/logout")
-    public String studentLogout(HttpSession session) {
-        studentSessionService.logout(session);
-        return "redirect:/";
-    }
-
-    @GetMapping("/teacher/login")
-    public String loginPage() {
-        return "admin/login";
-    }
-
-    @GetMapping("/teacher/register")
-    public String registerPage(Model model) {
-        populateTurnstileModel(model);
-        return "admin/register";
-    }
-
-    @PostMapping("/teacher/register")
-    public String registerTeacher(@RequestParam("username") String username,
-                                  @RequestParam("password") String password,
-                                  @RequestParam("confirmPassword") String confirmPassword,
-                                  @RequestParam(name = "cf-turnstile-response", required = false) String turnstileToken,
-                                  HttpServletRequest request,
-                                  Model model) {
-        if (!bruteForceProtectionService.consumeRegisterAttempt(RequestFingerprint.clientIp(request))) {
-            model.addAttribute("registerError", "Troppi tentativi ravvicinati. Riprova tra qualche minuto.");
-            model.addAttribute("username", username);
-            populateTurnstileModel(model);
-            return "admin/register";
-        }
-
-        if (!turnstileCaptchaService.verifyToken(turnstileToken, RequestFingerprint.clientIp(request))) {
-            model.addAttribute("registerError", "Verifica CAPTCHA non riuscita. Riprova.");
-            model.addAttribute("username", username);
-            populateTurnstileModel(model);
-            return "admin/register";
-        }
-
-        if (!password.equals(confirmPassword)) {
-            model.addAttribute("registerError", "Le password non coincidono.");
-            model.addAttribute("username", username);
-            populateTurnstileModel(model);
-            return "admin/register";
-        }
-
-        try {
-            teacherAuthenticationService.register(username, password);
-            return "redirect:/teacher/login?registered=true";
-        } catch (IllegalArgumentException ex) {
-            model.addAttribute("registerError", ex.getMessage());
-            model.addAttribute("username", username);
-            populateTurnstileModel(model);
-            return "admin/register";
-        }
-    }
-
-
-    private void populateTurnstileModel(Model model) {
-        model.addAttribute("turnstileEnabled", turnstileCaptchaService.isEnabled());
-        model.addAttribute("turnstileSiteKey", turnstileCaptchaService.getSiteKey());
-    }
 
     @GetMapping("/teacher")
     public String adminDashboard(Model model) {

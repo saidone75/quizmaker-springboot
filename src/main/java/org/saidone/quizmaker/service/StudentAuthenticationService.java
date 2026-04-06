@@ -18,33 +18,28 @@
 
 package org.saidone.quizmaker.service;
 
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.saidone.quizmaker.config.StudentAuthenticationToken;
 import org.saidone.quizmaker.entity.Student;
-import org.saidone.quizmaker.repository.StudentRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @Service
-public class StudentSessionService {
+public class StudentAuthenticationService {
 
-    public static final String STUDENT_ID_SESSION_KEY = "STUDENT_ID";
+    public Optional<Student> getCurrentStudentOptional() {
+        val authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!(authentication instanceof StudentAuthenticationToken studentAuthentication)) {
+            return Optional.empty();
+        }
 
-    private final StudentRepository studentRepository;
-
-    public Optional<Student> login(HttpSession session, String keyword) {
-        return studentRepository.findByLoginKeywordIgnoreCase(keyword)
-                .map(student -> {
-                    session.setAttribute(STUDENT_ID_SESSION_KEY, student.getId().toString());
-                    return student;
-                });
+        return Optional.ofNullable(studentAuthentication.getPrincipal());
     }
 
-    public void logout(HttpSession session) {
-        session.removeAttribute(STUDENT_ID_SESSION_KEY);
-        SecurityContextHolder.clearContext();
+    public Student getCurrentStudent() {
+        return getCurrentStudentOptional()
+                .orElseThrow(() -> new IllegalStateException("Studente non autenticato"));
     }
 }
