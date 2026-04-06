@@ -44,8 +44,9 @@ public class BruteForceProtectionService {
     static final int MAX_REGISTER_ATTEMPTS = 10;
     static final Duration REGISTER_WINDOW = Duration.ofMinutes(10);
 
-    private static final String STUDENT_IP_KEY_PREFIX = "student-ip|";
-    private static final String STUDENT_KEYWORD_KEY_PREFIX = "student-keyword|";
+    private static final String STUDENT_IP_KEY_PREFIX = "student-ip";
+    private static final String STUDENT_KEYWORD_KEY_PREFIX = "student-keyword";
+    private static final String KEY_FORMAT = "%s|%s";
 
     private final Map<String, LoginState> loginStates = new ConcurrentHashMap<>();
     private final Map<String, Deque<Instant>> registerAttempts = new ConcurrentHashMap<>();
@@ -77,26 +78,30 @@ public class BruteForceProtectionService {
         return false;
     }
 
+    private static String key(String prefix, String suffix) {
+        return String.format(KEY_FORMAT, prefix, suffix);
+    }
+
     public void recordLoginFailure(String key) {
         recordLoginFailure(key, MAX_LOGIN_FAILURES, LOGIN_WINDOW, LOGIN_LOCK);
     }
 
     public void recordStudentLoginFailureByIp(String ipAddress) {
-        recordLoginFailure(STUDENT_IP_KEY_PREFIX + ipAddress, MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
+        recordLoginFailure(key(STUDENT_IP_KEY_PREFIX, ipAddress), MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
     }
 
     public void recordStudentLoginFailureByKeyword(String keyword) {
-        recordLoginFailure(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT), MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
+        recordLoginFailure(key(STUDENT_KEYWORD_KEY_PREFIX, keyword.toLowerCase(Locale.ROOT)), MAX_STUDENT_LOGIN_FAILURES, STUDENT_LOGIN_WINDOW, STUDENT_LOGIN_LOCK);
     }
 
     public boolean isStudentLoginBlocked(String ipAddress, String keyword) {
-        return isLoginBlocked(STUDENT_IP_KEY_PREFIX + ipAddress)
-                || isLoginBlocked(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT));
+        return isLoginBlocked(key(STUDENT_IP_KEY_PREFIX, ipAddress))
+                || isLoginBlocked(key(STUDENT_KEYWORD_KEY_PREFIX, keyword.toLowerCase(Locale.ROOT)));
     }
 
     public void clearStudentLoginFailures(String ipAddress, String keyword) {
-        clearLoginFailures(STUDENT_IP_KEY_PREFIX + ipAddress);
-        clearLoginFailures(STUDENT_KEYWORD_KEY_PREFIX + keyword.toLowerCase(Locale.ROOT));
+        clearLoginFailures(key(STUDENT_IP_KEY_PREFIX, ipAddress));
+        clearLoginFailures(key(STUDENT_KEYWORD_KEY_PREFIX, keyword.toLowerCase(Locale.ROOT)));
     }
 
     private void recordLoginFailure(String key, int maxFailures, Duration window, Duration lockDuration) {

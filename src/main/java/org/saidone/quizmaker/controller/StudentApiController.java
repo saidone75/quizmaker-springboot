@@ -22,7 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.saidone.quizmaker.dto.StudentDto;
 import org.saidone.quizmaker.service.StudentService;
-import org.saidone.quizmaker.service.TeacherAuthService;
+import org.saidone.quizmaker.service.TeacherAuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,31 +36,31 @@ import java.util.UUID;
 public class StudentApiController {
 
     private final StudentService studentService;
-    private final TeacherAuthService teacherAuthService;
+    private final TeacherAuthenticationService teacherAuthenticationService;
 
     @GetMapping
     public ResponseEntity<List<StudentDto.Response>> getAll() {
-        return ResponseEntity.ok(studentService.findAll(teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(studentService.findAll(teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PostMapping
     public ResponseEntity<StudentDto.Response> create(@Valid @RequestBody StudentDto.CreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(studentService.create(request.getFullName(), teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(studentService.create(request.getFullName(), teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        studentService.delete(id, teacherAuthService.getCurrentTeacher());
+        studentService.delete(id, teacherAuthenticationService.getCurrentTeacher());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/regenerate-password")
     public ResponseEntity<StudentDto.Response> regeneratePassword(@PathVariable UUID id) {
-        return ResponseEntity.ok(studentService.regenerateLoginKeyword(id, teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(studentService.regenerateLoginKeyword(id, teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PostMapping("/regenerate-passwords")
     public ResponseEntity<Integer> regenerateAllPasswords() {
-        return ResponseEntity.ok(studentService.regenerateAllLoginKeywords(teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(studentService.regenerateAllLoginKeywords(teacherAuthenticationService.getCurrentTeacher()));
     }
 }

@@ -32,7 +32,9 @@ import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentService;
 import org.saidone.quizmaker.service.StudentSessionService;
-import org.saidone.quizmaker.service.TeacherAuthService;
+import org.saidone.quizmaker.service.TeacherAdministrationService;
+import org.saidone.quizmaker.service.TeacherAuthenticationService;
+import org.saidone.quizmaker.service.TeacherLifecycleService;
 import org.saidone.quizmaker.service.TurnstileCaptchaService;
 import org.springframework.boot.SpringBootVersion;
 import org.springframework.boot.info.BuildProperties;
@@ -69,7 +71,9 @@ public class WebController {
     private final StudentService studentService;
     private final ObjectMapper objectMapper;
     private final BuildProperties buildProperties;
-    private final TeacherAuthService teacherAuthService;
+    private final TeacherAuthenticationService teacherAuthenticationService;
+    private final TeacherAdministrationService teacherAdministrationService;
+    private final TeacherLifecycleService teacherLifecycleService;
     private final BruteForceProtectionService bruteForceProtectionService;
     private final TurnstileCaptchaService turnstileCaptchaService;
 
@@ -172,7 +176,7 @@ public class WebController {
         }
 
         try {
-            teacherAuthService.register(username, password);
+            teacherAuthenticationService.register(username, password);
             return "redirect:/teacher/login?registered=true";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("registerError", ex.getMessage());
@@ -190,11 +194,11 @@ public class WebController {
 
     @GetMapping("/teacher")
     public String adminDashboard(Model model) {
-        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
         model.addAttribute("quizzes", quizService.findAllForAdmin(currentTeacher));
         model.addAttribute("isAdmin", currentTeacher.isAdmin());
         if (currentTeacher.isAdmin()) {
-            val shareTeachers = teacherAuthService.findAllTeachers().stream()
+            val shareTeachers = teacherAdministrationService.findAllTeachers(currentTeacher).stream()
                     .filter(teacher -> !teacher.getId().equals(currentTeacher.getId()))
                     .map(teacher -> new ShareTeacherOption(teacher.getId(), teacher.getUsername()))
                     .toList();
@@ -207,7 +211,7 @@ public class WebController {
 
     @GetMapping("/teacher/students")
     public String adminStudents(Model model) {
-        model.addAttribute("students", studentService.findAll(teacherAuthService.getCurrentTeacher()));
+        model.addAttribute("students", studentService.findAll(teacherAuthenticationService.getCurrentTeacher()));
         return "admin/students";
     }
 
@@ -218,7 +222,7 @@ public class WebController {
 
     @GetMapping("/teacher/results")
     public String adminResults(Model model) {
-        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
         val results = quizSubmissionService.findAllResults(currentTeacher);
         val quizzesById = quizService.findAllForAdmin(currentTeacher).stream()
                 .collect(Collectors.toMap(
@@ -347,7 +351,7 @@ public class WebController {
         }
 
         try {
-            teacherAuthService.changePassword(teacherAuthService.getCurrentTeacher(), currentPassword, newPassword);
+            teacherAuthenticationService.changePassword(teacherAuthenticationService.getCurrentTeacher(), currentPassword, newPassword);
             model.addAttribute("profileSuccess", "Password aggiornata con successo.");
             return "admin/profile";
         } catch (IllegalArgumentException ex) {
@@ -358,15 +362,15 @@ public class WebController {
 
     @GetMapping("/teacher/quiz/new")
     public String newQuiz(Model model) {
-        model.addAttribute("aiEnabled", teacherAuthService.getCurrentTeacher().isAiEnabled());
+        model.addAttribute("aiEnabled", teacherAuthenticationService.getCurrentTeacher().isAiEnabled());
         model.addAttribute("quizQuestionsJson", "[]");
         return "admin/quiz-editor";
     }
 
     @GetMapping("/teacher/quiz/{id}/edit")
     public String editQuiz(@PathVariable UUID id, Model model) {
-        model.addAttribute("aiEnabled", teacherAuthService.getCurrentTeacher().isAiEnabled());
-        val quiz = quizService.findByIdForTeacher(id, teacherAuthService.getCurrentTeacher());
+        model.addAttribute("aiEnabled", teacherAuthenticationService.getCurrentTeacher().isAiEnabled());
+        val quiz = quizService.findByIdForTeacher(id, teacherAuthenticationService.getCurrentTeacher());
         model.addAttribute("quiz", quiz);
         model.addAttribute("quizQuestionsJson", serializeQuestions(quiz.getQuestions()));
         return "admin/quiz-editor";
@@ -381,8 +385,8 @@ public class WebController {
     @GetMapping("/teacher/system/teachers")
     public String teacherManagementPage(Model model) {
         ensureAdmin();
-        val currentTeacher = teacherAuthService.getCurrentTeacher();
-        val teachers = teacherAuthService.findAllTeachers();
+        val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
+        val teachers = teacherAdministrationService.findAllTeachers(currentTeacher);
         model.addAttribute("teachers", teachers);
         model.addAttribute("currentTeacherId", currentTeacher.getId());
         return "admin/system-teachers";
@@ -392,7 +396,7 @@ public class WebController {
     public String updateTeacherAdminFlag(@PathVariable UUID id,
                                          @RequestParam("admin") boolean admin) {
         ensureAdmin();
-        teacherAuthService.updateTeacherAdminFlag(id, admin, teacherAuthService.getCurrentTeacher());
+        teacherAdministrationService.updateTeacherAdminFlag(id, admin, teacherAuthenticationService.getCurrentTeacher());
         return "redirect:/teacher/system/teachers";
     }
 
@@ -400,7 +404,7 @@ public class WebController {
     public String updateTeacherAiFlag(@PathVariable UUID id,
                                       @RequestParam("aiEnabled") boolean aiEnabled) {
         ensureAdmin();
-        teacherAuthService.updateTeacherAiFlag(id, aiEnabled, teacherAuthService.getCurrentTeacher());
+        teacherAdministrationService.updateTeacherAiFlag(id, aiEnabled, teacherAuthenticationService.getCurrentTeacher());
         return "redirect:/teacher/system/teachers";
     }
 
@@ -408,7 +412,7 @@ public class WebController {
     public String updateTeacherEnabledFlag(@PathVariable UUID id,
                                            @RequestParam("enabled") boolean enabled) {
         ensureAdmin();
-        teacherAuthService.updateTeacherEnabledFlag(id, enabled, teacherAuthService.getCurrentTeacher());
+        teacherAdministrationService.updateTeacherEnabledFlag(id, enabled, teacherAuthenticationService.getCurrentTeacher());
         return "redirect:/teacher/system/teachers";
     }
 
@@ -416,7 +420,7 @@ public class WebController {
     public String resetTeacherPassword(@PathVariable UUID id,
                                        RedirectAttributes redirectAttributes) {
         ensureAdmin();
-        val temporaryPassword = teacherAuthService.resetTeacherPassword(id, teacherAuthService.getCurrentTeacher());
+        val temporaryPassword = teacherAdministrationService.resetTeacherPassword(id, teacherAuthenticationService.getCurrentTeacher());
         redirectAttributes.addFlashAttribute("teacherResetSuccess", String.format("Password resettata correttamente a %s", temporaryPassword));
         return "redirect:/teacher/system/teachers";
     }
@@ -424,7 +428,7 @@ public class WebController {
     @PostMapping("/teacher/system/teachers/{id}/delete")
     public String deleteTeacher(@PathVariable UUID id) {
         ensureAdmin();
-        teacherAuthService.deleteTeacherCompletely(id, teacherAuthService.getCurrentTeacher());
+        teacherLifecycleService.deleteTeacherCompletely(id, teacherAuthenticationService.getCurrentTeacher());
         return "redirect:/teacher/system/teachers";
     }
 
@@ -459,7 +463,7 @@ public class WebController {
     }
 
     private void ensureAdmin() {
-        if (!teacherAuthService.getCurrentTeacher().isAdmin()) {
+        if (!teacherAuthenticationService.getCurrentTeacher().isAdmin()) {
             throw new ResponseStatusException(FORBIDDEN);
         }
     }

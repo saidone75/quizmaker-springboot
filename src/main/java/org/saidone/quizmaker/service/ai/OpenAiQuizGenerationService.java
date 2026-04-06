@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker.service;
+package org.saidone.quizmaker.service.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
@@ -35,10 +35,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
-public class OpenAiQuizGeneratorService {
+public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
     private final RestClient restClient = RestClient.builder().baseUrl("https://api.openai.com/v1").build();
@@ -49,9 +49,7 @@ public class OpenAiQuizGeneratorService {
     @Value("${app.openai.model:gpt-5.4-mini}")
     private String model;
 
-    @Value("${app.openai.max-attachment-chars:30000}")
-    private int maxAttachmentChars;
-
+    @Override
     public QuizDto.Request generateQuiz(QuizGenerationRequestDto request, String attachmentText) {
         if (!StringUtils.hasText(apiKey)) {
             throw new IllegalStateException("Chiave API di OpenAI non configurata. Imposta app.openai.api-key.");
@@ -69,9 +67,7 @@ public class OpenAiQuizGeneratorService {
         try {
             val root = objectMapper.readTree(responseBody);
             val rawJson = root.path("choices").path(0).path("message").path("content").asText();
-            val generated = objectMapper.readValue(rawJson, QuizDto.Request.class);
-            sanitize(generated, request.getNumberOfQuestions());
-            return generated;
+            return objectMapper.readValue(rawJson, QuizDto.Request.class);
         } catch (Exception e) {
             log.error("Risposta OpenAI non valida: {}", responseBody, e);
             throw new IllegalStateException("La risposta di OpenAI non è valida o è incompleta.");
@@ -83,7 +79,7 @@ public class OpenAiQuizGeneratorService {
                 Crea un quiz in italiano e rispondi SOLO con JSON valido compatibile con QuizDto.Request.
                 Campi obbligatori: title (string), emoji (string), questions (array).
                 Ogni question deve avere: text, emoji, options (4 risposte), answer (indice corretto 0-3), feedback.
-                
+
                 Vincoli:
                 - Argomento: %s
                 - Numero domande: %d
@@ -93,7 +89,7 @@ public class OpenAiQuizGeneratorService {
                 - Le risposte devono essere chiare e plausibili.
                 - answer deve sempre puntare a un indice valido
                 - feedback deve contenere una curiosità sulla risposta corretta
-                
+
                 Testo di riferimento allegato (se presente):
                 %s
                 """.formatted(
@@ -101,7 +97,7 @@ public class OpenAiQuizGeneratorService {
                 request.getNumberOfQuestions(),
                 request.getDifficulty(),
                 request.getTone(),
-                truncateAttachmentText(attachmentText)
+                StringUtils.hasText(attachmentText) ? attachmentText : "N/A"
         );
 
         Map<String, Object> responseFormat = Map.of(
@@ -146,28 +142,5 @@ public class OpenAiQuizGeneratorService {
         ));
         payload.put("temperature", 0.7);
         return payload;
-    }
-
-    private String truncateAttachmentText(String attachmentText) {
-        if (!StringUtils.hasText(attachmentText)) {
-            return "N/A";
-        }
-        int effectiveMaxAttachmentChars = maxAttachmentChars > 0 ? maxAttachmentChars : 30000;
-        return attachmentText.substring(0, Math.min(effectiveMaxAttachmentChars, attachmentText.length()));
-    }
-
-    private void sanitize(QuizDto.Request generated, int maxQuestions) {
-        if (generated == null || generated.getQuestions() == null || generated.getQuestions().isEmpty()) {
-            throw new IllegalStateException("L'IA non ha generato domande valide.");
-        }
-        if (!StringUtils.hasText(generated.getTitle())) {
-            generated.setTitle("Quiz generato dall'IA");
-        }
-        if (!StringUtils.hasText(generated.getEmoji())) {
-            generated.setEmoji("🤖");
-        }
-        if (generated.getQuestions().size() > maxQuestions) {
-            generated.setQuestions(generated.getQuestions().subList(0, maxQuestions));
-        }
     }
 }

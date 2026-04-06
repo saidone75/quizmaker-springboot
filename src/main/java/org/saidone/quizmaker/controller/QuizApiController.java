@@ -26,11 +26,12 @@ import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.service.DocumentTextExtractorService;
-import org.saidone.quizmaker.service.OpenAiQuizGeneratorService;
+import org.saidone.quizmaker.service.ai.QuizGenerationApplicationService;
 import org.saidone.quizmaker.service.QuizService;
+import org.saidone.quizmaker.service.QuizSharingService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.StudentSessionService;
-import org.saidone.quizmaker.service.TeacherAuthService;
+import org.saidone.quizmaker.service.TeacherAuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,9 +48,10 @@ public class QuizApiController {
     private final QuizService quizService;
     private final QuizSubmissionService quizSubmissionService;
     private final StudentSessionService studentSessionService;
-    private final OpenAiQuizGeneratorService openAiQuizGeneratorService;
+    private final QuizGenerationApplicationService quizGenerationApplicationService;
     private final DocumentTextExtractorService documentTextExtractorService;
-    private final TeacherAuthService teacherAuthService;
+    private final TeacherAuthenticationService teacherAuthenticationService;
+    private final QuizSharingService quizSharingService;
 
     @GetMapping
     public ResponseEntity<List<QuizDto.Response>> getAll(HttpSession session) {
@@ -79,30 +81,30 @@ public class QuizApiController {
     public ResponseEntity<Void> unlockQuiz(
             @PathVariable UUID quizId,
             @PathVariable UUID studentId) {
-        quizSubmissionService.unlockQuizForStudent(studentId, quizId, teacherAuthService.getCurrentTeacher());
+        quizSubmissionService.unlockQuizForStudent(studentId, quizId, teacherAuthenticationService.getCurrentTeacher());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{quizId}/unlock-all")
     public ResponseEntity<Integer> unlockAllForQuiz(@PathVariable UUID quizId) {
-        return ResponseEntity.ok(quizSubmissionService.unlockAllForQuiz(quizId, teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(quizSubmissionService.unlockAllForQuiz(quizId, teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PostMapping
     public ResponseEntity<QuizDto.Response> create(@Valid @RequestBody QuizDto.Request request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(quizService.create(request, teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(quizService.create(request, teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<QuizDto.Response> update(
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.Request request) {
-        return ResponseEntity.ok(quizService.update(id, request, teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(quizService.update(id, request, teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        quizService.delete(id, teacherAuthService.getCurrentTeacher());
+        quizService.delete(id, teacherAuthenticationService.getCurrentTeacher());
         return ResponseEntity.noContent().build();
     }
 
@@ -110,26 +112,26 @@ public class QuizApiController {
     public ResponseEntity<QuizDto.Response> updatePublicationStatus(
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.PublicationUpdateRequest request) {
-        return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished(), teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(quizService.updatePublicationStatus(id, request.getPublished(), teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PostMapping("/{id}/share")
     public ResponseEntity<Integer> shareQuiz(
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.ShareRequest request) {
-        return ResponseEntity.ok(quizService.shareQuizToTeachers(id, request.getTeacherIds(), teacherAuthService.getCurrentTeacher()));
+        return ResponseEntity.ok(quizSharingService.shareQuizToTeachers(id, request.getTeacherIds(), teacherAuthenticationService.getCurrentTeacher()));
     }
 
     @PostMapping(value = "/generate", consumes = {"multipart/form-data"})
     public ResponseEntity<QuizDto.Request> generateWithAi(
             @Valid @ModelAttribute QuizGenerationRequestDto request,
             @RequestParam(value = "file", required = false) MultipartFile file) {
-        val currentTeacher = teacherAuthService.getCurrentTeacher();
+        val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
         if (!currentTeacher.isAiEnabled()) {
             throw new IllegalStateException("Generazione AI disabilitata per questo insegnante.");
         }
         val attachmentText = documentTextExtractorService.extractText(file);
-        return ResponseEntity.ok(openAiQuizGeneratorService.generateQuiz(request, attachmentText));
+        return ResponseEntity.ok(quizGenerationApplicationService.generateQuiz(request, attachmentText));
     }
 
 }
