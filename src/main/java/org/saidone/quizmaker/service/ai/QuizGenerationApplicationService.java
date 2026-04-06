@@ -28,8 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -45,9 +43,6 @@ public class QuizGenerationApplicationService {
 
     @Value("${app.ai.generation.max-attempts:2}")
     private int maxAttempts;
-
-    @Value("${app.ai.generation.fallback-enabled:true}")
-    private boolean fallbackEnabled;
 
     public QuizDto.Request generateQuiz(QuizGenerationRequestDto request, String attachmentText) {
         validateRequestLimits(request);
@@ -66,12 +61,6 @@ public class QuizGenerationApplicationService {
                 log.warn("Tentativo generazione quiz {} di {} fallito", i, attempts, ex);
             }
         }
-
-        if (fallbackEnabled) {
-            log.warn("Uso fallback locale per la generazione quiz dopo {} tentativi falliti", attempts);
-            return buildFallbackQuiz(request);
-        }
-
         throw new IllegalStateException("Impossibile generare il quiz con l'AI al momento.", lastError);
     }
 
@@ -128,26 +117,4 @@ public class QuizGenerationApplicationService {
                 && question.getAnswer() < 4;
     }
 
-    private QuizDto.Request buildFallbackQuiz(QuizGenerationRequestDto request) {
-        int questionsToBuild = Math.max(1, request.getNumberOfQuestions());
-        val fallbackQuestions = java.util.stream.IntStream.range(0, questionsToBuild)
-                .mapToObj(i -> buildFallbackQuestion(i, request.getTopic()))
-                .toList();
-
-        return QuizDto.Request.builder()
-                .title("Quiz provvisorio: " + request.getTopic())
-                .emoji("⚠️")
-                .questions(fallbackQuestions)
-                .build();
-    }
-
-    private QuestionDto buildFallbackQuestion(int index, String topic) {
-        val question = new QuestionDto();
-        question.setText("Domanda %d su %s".formatted(index + 1, topic));
-        question.setEmoji("🧠");
-        question.setOptions(List.of("Opzione A", "Opzione B", "Opzione C", "Opzione D"));
-        question.setAnswer(0);
-        question.setFeedback("Questa è una domanda provvisoria. Rigenera il quiz per ottenere contenuti AI reali.");
-        return question;
-    }
 }

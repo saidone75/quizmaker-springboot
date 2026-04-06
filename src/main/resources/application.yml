@@ -30,7 +30,6 @@ app:
       max-questions: ${AI_GENERATION_MAX_QUESTIONS:20}
       max-attachment-chars: ${AI_GENERATION_MAX_ATTACHMENT_CHARS:60000}
       max-attempts: ${AI_GENERATION_MAX_ATTEMPTS:2}
-      fallback-enabled: ${AI_GENERATION_FALLBACK_ENABLED:true}
   db-backup:
     enabled: ${DB_BACKUP_ENABLED:false}
     cron: ${DB_BACKUP_CRON:0 0 2 * * *}
