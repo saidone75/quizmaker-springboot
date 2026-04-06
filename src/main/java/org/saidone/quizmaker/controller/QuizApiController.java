@@ -26,7 +26,7 @@ import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.service.DocumentTextExtractorService;
-import org.saidone.quizmaker.service.OpenAiQuizGeneratorService;
+import org.saidone.quizmaker.service.ai.QuizGenerationApplicationService;
 import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.service.QuizSharingService;
 import org.saidone.quizmaker.service.QuizSubmissionService;
@@ -48,7 +48,7 @@ public class QuizApiController {
     private final QuizService quizService;
     private final QuizSubmissionService quizSubmissionService;
     private final StudentSessionService studentSessionService;
-    private final OpenAiQuizGeneratorService openAiQuizGeneratorService;
+    private final QuizGenerationApplicationService quizGenerationApplicationService;
     private final DocumentTextExtractorService documentTextExtractorService;
     private final TeacherAuthenticationService teacherAuthenticationService;
     private final QuizSharingService quizSharingService;
@@ -131,7 +131,7 @@ public class QuizApiController {
             throw new IllegalStateException("Generazione AI disabilitata per questo insegnante.");
         }
         val attachmentText = documentTextExtractorService.extractText(file);
-        return ResponseEntity.ok(openAiQuizGeneratorService.generateQuiz(request, attachmentText));
+        return ResponseEntity.ok(quizGenerationApplicationService.generateQuiz(request, attachmentText));
     }
 
 }
