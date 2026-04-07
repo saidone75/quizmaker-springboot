@@ -15,7 +15,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 
 - Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
-- Gestione **multi-insegnante** con ruoli admin/non-admin, abilitazione account, reset password e cancellazione completa account (solo admin).
+- Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione completa account (solo amministratore).
 - Generazione quiz con **AI OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
 - Condivisione quiz verso più insegnanti.
 - Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
@@ -56,7 +56,7 @@ Link utili in locale:
 
 ## Credenziali iniziali
 
-L'app crea un utente admin di default via configurazione:
+L'app crea un utente amministratore di default via configurazione:
 
 | Username | Password   |
 |----------|------------|
@@ -108,25 +108,25 @@ docker compose -f docker/docker-compose.yml up --build
 
 ## Variabili d'ambiente principali
 
-| Variabile                           | Default                           | Descrizione                                 |
-|-------------------------------------|-----------------------------------|---------------------------------------------|
-| `ADMIN_USERNAME`                    | `admin`                           | Username teacher/admin bootstrap            |
-| `ADMIN_PASSWORD`                    | `changeme`                        | Password teacher/admin bootstrap            |
-| `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                |
-| `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                              |
-| `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                |
-| `AI_GENERATION_MAX_QUESTIONS`       | `20`                              | Numero massimo domande generate             |
-| `AI_GENERATION_MAX_ATTACHMENT_CHARS`| `60000`                           | Max caratteri estratti da allegato          |
-| `AI_GENERATION_MAX_ATTEMPTS`        | `2`                               | Tentativi massimi di generazione/validazione|
-| `TURNSTILE_ENABLED`                 | `false` (`true` in dev)           | Abilita verifica CAPTCHA Turnstile          |
-| `TURNSTILE_SITE_KEY`                | vuota (o test key in dev)         | Site key Turnstile                          |
-| `TURNSTILE_SECRET_KEY`              | vuota (o test key in dev)         | Secret key Turnstile                        |
-| `TURNSTILE_VERIFY_URL`              | endpoint Cloudflare               | URL verifica Turnstile                      |
-| `DB_BACKUP_ENABLED`                 | `false` (`true` in prod)          | Abilita job backup SQLite                   |
-| `DB_BACKUP_CRON`                    | `0 0 2 * * *`                     | Pianificazione backup                       |
-| `DB_BACKUP_DIRECTORY`               | `./backups`                       | Directory output backup                     |
-| `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                     |
-| `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS               |
+| Variabile                           | Default                           | Descrizione                                  |
+|-------------------------------------|-----------------------------------|----------------------------------------------|
+| `ADMIN_USERNAME`                    | `admin`                           | Username insegnante/amministratore bootstrap |
+| `ADMIN_PASSWORD`                    | `changeme`                        | Password insegnante/amministratore bootstrap |
+| `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                 |
+| `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                               |
+| `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                 |
+| `AI_GENERATION_MAX_QUESTIONS`       | `20`                              | Numero massimo domande generate              |
+| `AI_GENERATION_MAX_ATTACHMENT_CHARS`| `60000`                           | Max caratteri estratti da allegato           |
+| `AI_GENERATION_MAX_ATTEMPTS`        | `2`                               | Tentativi massimi di generazione/validazione |
+| `TURNSTILE_ENABLED`                 | `false` (`true` in dev)           | Abilita verifica CAPTCHA Turnstile           |
+| `TURNSTILE_SITE_KEY`                | vuota (o test key in dev)         | Site key Turnstile                           |
+| `TURNSTILE_SECRET_KEY`              | vuota (o test key in dev)         | Secret key Turnstile                         |
+| `TURNSTILE_VERIFY_URL`              | endpoint Cloudflare               | URL verifica Turnstile                       |
+| `DB_BACKUP_ENABLED`                 | `false` (`true` in prod)          | Abilita job backup SQLite                    |
+| `DB_BACKUP_CRON`                    | `0 0 2 * * *`                     | Pianificazione backup                        |
+| `DB_BACKUP_DIRECTORY`               | `./backups`                       | Directory output backup                      |
+| `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                      |
+| `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS                |
 
 ## Backup schedulato database (SQLite)
 
@@ -139,21 +139,21 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ## Funzionalità web
 
-| URL                        | Accesso                      | Descrizione                             |
-|----------------------------|------------------------------|-----------------------------------------|
-| `/`                        | Pubblico / sessione studente | Login studente + pagina quiz            |
-| `/teacher/login`           | Pubblico                     | Login teacher                           |
-| `/teacher/register`        | Pubblico                     | Registrazione teacher                   |
-| `/teacher`                 | Teacher                      | Dashboard quiz                          |
-| `/teacher/students`        | Teacher                      | Gestione studenti                       |
-| `/teacher/results`         | Teacher                      | Risultati + analytics + sblocco quiz    |
-| `/teacher/logs`            | Admin                        | Visualizzazione log applicativi         |
-| `/teacher/profile`         | Teacher                      | Cambio password personale               |
-| `/teacher/quiz/new`        | Teacher                      | Editor nuovo quiz                       |
-| `/teacher/quiz/{id}/edit`  | Teacher                      | Editor modifica quiz                    |
-| `/teacher/system`          | Admin                        | Pannello sistema                        |
-| `/teacher/system/teachers` | Admin                        | Gestione insegnanti (ruoli, AI, stato)  |
-| `/teacher/about`           | Admin                        | Info build/runtime                      |
+| URL                        | Accesso                      | Descrizione                            |
+|----------------------------|------------------------------|----------------------------------------|
+| `/`                        | Pubblico / sessione studente | Login studente + pagina quiz           |
+| `/teacher/login`           | Pubblico                     | Login insegnante                       |
+| `/teacher/register`        | Pubblico                     | Registrazione insegnante               |
+| `/teacher`                 | Insegnante                   | Dashboard quiz                         |
+| `/teacher/students`        | Insegnante                   | Gestione studenti                      |
+| `/teacher/results`         | Insegnante                   | Risultati + analytics + sblocco quiz   |
+| `/teacher/logs`            | Amministratore               | Visualizzazione log applicativi        |
+| `/teacher/profile`         | Insegnante                   | Cambio password personale              |
+| `/teacher/quiz/new`        | Insegnante                   | Editor nuovo quiz                      |
+| `/teacher/quiz/{id}/edit`  | Insegnante                   | Editor modifica quiz                   |
+| `/teacher/system`          | Amministratore               | Pannello sistema                       |
+| `/teacher/system/teachers` | Amministratore               | Gestione insegnanti (ruoli, AI, stato) |
+| `/teacher/about`           | Amministratore               | Info build/runtime                     |
 
 ## API principali
 
@@ -162,19 +162,19 @@ export DB_BACKUP_RETENTION_COUNT=30
 - `GET /api/quizzes` elenco quiz pubblicati per studente autenticato.
 - `GET /api/quizzes/{id}` dettaglio quiz pubblicato.
 - `POST /api/quizzes/{id}/submit` invio risposte studente.
-- `POST /api/quizzes` creazione quiz (teacher).
-- `PUT /api/quizzes/{id}` modifica quiz (teacher).
-- `DELETE /api/quizzes/{id}` eliminazione quiz (teacher).
+- `POST /api/quizzes` creazione quiz (insegnante).
+- `PUT /api/quizzes/{id}` modifica quiz (insegnante).
+- `DELETE /api/quizzes/{id}` eliminazione quiz (insegnante).
 - `PUT /api/quizzes/{id}/publication` pubblicazione/depubblicazione.
 - `PUT /api/quizzes/{id}/archived` archiviazione/riattivazione quiz.
-- `POST /api/quizzes/{id}/share` condivisione quiz a più teacher.
+- `POST /api/quizzes/{id}/share` condivisione quiz a più insegnanti.
 - `POST /api/quizzes/{quizId}/unlock/{studentId}` sblocco tentativo singolo.
 - `POST /api/quizzes/{quizId}/unlock-all` sblocco massivo tentativi.
 - `POST /api/quizzes/generate` generazione quiz via AI (multipart, allegato opzionale).
 
 ### Studenti (`/api/students`)
 
-- `GET /api/students` elenco studenti del teacher corrente.
+- `GET /api/students` elenco studenti dell'insegnante corrente.
 - `POST /api/students` creazione studente.
 - `DELETE /api/students/{id}` eliminazione studente.
 - `POST /api/students/{id}/regenerate-password` rigenera parola chiave singolo studente.
@@ -182,7 +182,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ### Log (`/api/teacher/logs`)
 
-- `GET /api/teacher/logs/tail?lines=200` ultime righe log (max 1000, solo admin).
+- `GET /api/teacher/logs/tail?lines=200` ultime righe log applicazione (max 1000, solo amministratore).
 
 ## Sicurezza
 
@@ -190,7 +190,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 - Login insegnante con blocco temporaneo dopo troppi tentativi falliti.
 - Login studente protetto da rate-limit su IP e keyword.
 - Registrazione insegnante rate-limited con integrazione Turnstile (se abilitato).
-- Ruoli applicativi: `ROLE_TEACHER`, `ROLE_ADMIN`.
+- Ruoli applicativi: `ROLE_STUDENT`, `ROLE_TEACHER`, `ROLE_ADMIN`.
 
 ## Database e migration
 
