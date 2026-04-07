@@ -131,21 +131,21 @@ public class TeacherDashboardWebController {
                                                List<QuizSubmissionService.ResultRow> results,
                                                Map<UUID, QuizDto.Response> quizzesById,
                                                int totalStudents) {
+        int totalQuestions = resolveTotalQuestions(quizId, results, quizzesById);
+        String completionRate = String.format(Locale.ROOT, "%d su %d", results == null ? 0 : results.size(), Math.max(totalStudents, 0));
+
         if (results == null || results.isEmpty()) {
-            return new QuizResultAnalytics("0.0%", "0.0%", List.of(), "Non ci sono ancora abbastanza dati.");
+            return new QuizResultAnalytics(
+                    String.format(Locale.ROOT, "%.1f su %d", 0D, totalQuestions),
+                    completionRate,
+                    List.of(),
+                    "Non ci sono ancora abbastanza dati.");
         }
 
-        val averageScorePct = results.stream()
-                .mapToDouble(result -> {
-                    if (result.totalQuestions() == null || result.totalQuestions() <= 0 || result.score() == null) {
-                        return 0D;
-                    }
-                    return (double) result.score() / result.totalQuestions();
-                })
+        val averageScore = results.stream()
+                .mapToDouble(result -> result.score() == null ? 0D : result.score())
                 .average()
                 .orElse(0D);
-
-        val completionRatePct = totalStudents <= 0 ? 0D : (double) results.size() / totalStudents;
 
         val difficultQuestionsData = buildDifficultQuestions(quizId, results, quizzesById);
         val difficultQuestions = difficultQuestionsData.questions();
@@ -156,11 +156,30 @@ public class TeacherDashboardWebController {
                 : "";
 
         return new QuizResultAnalytics(
-                String.format(Locale.ROOT, "%.1f%%", averageScorePct * 100),
-                String.format(Locale.ROOT, "%.1f%%", completionRatePct * 100),
+                String.format(Locale.ROOT, "%.1f su %d", averageScore, totalQuestions),
+                completionRate,
                 difficultQuestions,
                 difficultQuestionsMessage
         );
+    }
+
+    private int resolveTotalQuestions(UUID quizId,
+                                      List<QuizSubmissionService.ResultRow> results,
+                                      Map<UUID, QuizDto.Response> quizzesById) {
+        val quiz = quizzesById.get(quizId);
+        if (quiz != null && quiz.getQuestions() != null) {
+            return quiz.getQuestions().size();
+        }
+
+        if (results == null || results.isEmpty()) {
+            return 0;
+        }
+
+        return results.stream()
+                .map(QuizSubmissionService.ResultRow::totalQuestions)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
     }
 
     private DifficultQuestionsData buildDifficultQuestions(UUID quizId,
