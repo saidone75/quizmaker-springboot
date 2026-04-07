@@ -16,7 +16,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 - Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
 - Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione completa account (solo amministratore).
-- Generazione quiz con **AI OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
+- Generazione quiz con **OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
 - Condivisione quiz verso più insegnanti.
 - Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
 - Backup schedulato database SQLite in produzione con retention configurabile.
@@ -110,8 +110,8 @@ docker compose -f docker/docker-compose.yml up --build
 
 | Variabile                           | Default                           | Descrizione                                  |
 |-------------------------------------|-----------------------------------|----------------------------------------------|
-| `ADMIN_USERNAME`                    | `admin`                           | Username insegnante/amministratore bootstrap |
-| `ADMIN_PASSWORD`                    | `changeme`                        | Password insegnante/amministratore bootstrap |
+| `ADMIN_USERNAME`                    | `admin`                           | Username amministratore iniziale             |
+| `ADMIN_PASSWORD`                    | `changeme`                        | Password amministratore iniziale             |
 | `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                 |
 | `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                               |
 | `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                 |
