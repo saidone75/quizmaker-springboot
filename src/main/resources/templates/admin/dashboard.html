@@ -149,11 +149,6 @@
             </div>
         </details>
 
-        <div class="manage-empty" th:if="${archivedQuizzes.isEmpty()}">
-            <span>🗂️</span>
-            Nessun quiz archiviato.
-        </div>
-
         <div class="admin-about-footer" sec:authorize="hasRole('ADMIN')">
             <a th:href="@{/teacher/system}" class="admin-about-link">Pagina di amministrazione</a>
         </div>
