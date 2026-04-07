@@ -64,6 +64,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
                         .requestMatchers("/api/quizzes/**").authenticated()
                         .requestMatchers("/api/students/**").hasRole(ROLE_TEACHER)
+                        .requestMatchers("/api/teacher/logs/**").hasRole(ROLE_ADMIN)
                         .requestMatchers("/api/teacher/**").hasRole(ROLE_TEACHER)
                         .requestMatchers("/about").hasRole(ROLE_ADMIN)
                         .requestMatchers("/teacher/about").hasRole(ROLE_ADMIN)

@@ -147,7 +147,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 | `/teacher`                 | Teacher                      | Dashboard quiz                          |
 | `/teacher/students`        | Teacher                      | Gestione studenti                       |
 | `/teacher/results`         | Teacher                      | Risultati + analytics + sblocco quiz    |
-| `/teacher/logs`            | Teacher                      | Visualizzazione log applicativi         |
+| `/teacher/logs`            | Admin                        | Visualizzazione log applicativi         |
 | `/teacher/profile`         | Teacher                      | Cambio password personale               |
 | `/teacher/quiz/new`        | Teacher                      | Editor nuovo quiz                       |
 | `/teacher/quiz/{id}/edit`  | Teacher                      | Editor modifica quiz                    |
@@ -182,7 +182,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ### Log (`/api/teacher/logs`)
 
-- `GET /api/teacher/logs/tail?lines=200` ultime righe log (max 1000).
+- `GET /api/teacher/logs/tail?lines=200` ultime righe log (max 1000, solo admin).
 
 ## Sicurezza
 
