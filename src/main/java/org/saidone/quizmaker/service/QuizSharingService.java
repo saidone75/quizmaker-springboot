@@ -66,7 +66,7 @@ public class QuizSharingService {
         for (val recipient : recipients) {
             if (isAlreadyShared(sourceQuiz, recipient)) {
                 skippedCount++;
-                log.info("Quiz share skipped (idempotent): sourceQuizId={}, recipientTeacherId={}, recipientUsername={}, by={}",
+                log.info("Questa condivisione è già stata effettuata: sourceQuizId={}, recipientTeacherId={}, recipientUsername={}, by={}",
                         sourceQuiz.getId(), recipient.getId(), recipient.getUsername(), actingTeacher.getUsername());
                 continue;
             }
@@ -83,11 +83,11 @@ public class QuizSharingService {
                     .build();
             quizRepository.save(clonedQuiz);
             sharedCount++;
-            log.info("Quiz shared: sourceQuizId={}, clonedQuizId={}, recipientTeacherId={}, recipientUsername={}, by={}",
+            log.info("Quiz condiviso: sourceQuizId={}, clonedQuizId={}, recipientTeacherId={}, recipientUsername={}, by={}",
                     sourceQuiz.getId(), clonedQuiz.getId(), recipient.getId(), recipient.getUsername(), actingTeacher.getUsername());
         }
 
-        log.info("Quiz share completed: sourceQuizId={}, requestedDestinations={}, recipientsResolved={}, sharedCount={}, skippedCount={}, by={}",
+        log.info("Condivisione quiz completata: sourceQuizId={}, requestedDestinations={}, recipientsResolved={}, sharedCount={}, skippedCount={}, by={}",
                 sourceQuiz.getId(), uniqueDestinationIds.size(), recipients.size(), sharedCount, skippedCount, actingTeacher.getUsername());
         return sharedCount;
     }
