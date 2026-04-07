@@ -560,6 +560,9 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     transition: all 0.15s;
 }
 .btn-regenerate-password:hover { background: #B5D4F4; }
+.btn-regenerate-icon-mobile {
+    display: none;
+}
 .students-table {
     width: 100%;
     border-collapse: collapse;
@@ -844,14 +847,24 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     }
 
     .student-actions {
-        width: 100%;
         justify-content: flex-end;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
     }
 
     .btn-regenerate-password {
-        width: 100%;
+        width: 36px;
+        padding: 0;
         justify-content: center;
+    }
+
+    .btn-regenerate-text {
+        display: none;
+    }
+
+    .btn-regenerate-icon-mobile {
+        display: inline;
+        font-size: 16px;
+        line-height: 1;
     }
 }
 

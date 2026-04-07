@@ -102,7 +102,10 @@
                         <div class="student-actions">
                             <button class="btn-regenerate-password js-regenerate-student-password"
                                     title="Rigenera parola chiave"
-                                    th:data-id="${student.id}">🔐 Rigenera password</button>
+                                    th:data-id="${student.id}">
+                                <span class="btn-regenerate-icon-mobile" aria-hidden="true">🔁</span>
+                                <span class="btn-regenerate-text">🔐 Rigenera password</span>
+                            </button>
                             <button class="btn-icon-action btn-delete-quiz js-delete-student"
                                     title="Elimina studente"
                                     th:data-id="${student.id}"
