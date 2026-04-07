@@ -25,6 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 @Entity
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Student {
+public class Student implements Serializable {
 
     @Id
     @Column(name = "id", nullable = false)
