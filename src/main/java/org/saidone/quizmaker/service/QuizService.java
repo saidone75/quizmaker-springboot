@@ -92,7 +92,7 @@ public class QuizService {
                 .teacher(teacher)
                 .build();
         val saved = quizRepository.save(quiz);
-        log.info("Quiz created: {} ({})", saved.getTitle(), saved.getId());
+        log.info("Quiz creato: {} ({})", saved.getTitle(), saved.getId());
         return toResponse(saved);
     }
 
@@ -107,7 +107,7 @@ public class QuizService {
         quiz.setModifiedByUsername(teacher.getUsername());
         quiz.setModifiedAt(LocalDateTime.now());
         val saved = quizRepository.save(quiz);
-        log.info("Quiz updated: {} ({})", saved.getTitle(), saved.getId());
+        log.info("Quiz aggiornato: {} ({})", saved.getTitle(), saved.getId());
         return toResponse(saved);
     }
 
@@ -118,7 +118,7 @@ public class QuizService {
                 .orElseThrow(() -> new EntityNotFoundException(String.format(QUIZ_NOT_FOUND_MESSAGE, id)));
         quizSubmissionRepository.deleteAllByQuizIdAndQuizTeacher(id, teacher);
         quizRepository.delete(quiz);
-        log.info("Quiz deleted: {}", id);
+        log.info("Quiz cancellato: {}", id);
     }
 
     @Transactional
@@ -130,7 +130,7 @@ public class QuizService {
         quiz.setModifiedByUsername(teacher.getUsername());
         quiz.setModifiedAt(LocalDateTime.now());
         val saved = quizRepository.save(quiz);
-        log.info("Quiz publication status updated: {} ({}) => {}", saved.getTitle(), saved.getId(), saved.getPublished());
+        log.info("Stato pubblicazione del quiz aggiornato: {} ({}) => {}", saved.getTitle(), saved.getId(), saved.getPublished());
         return toResponse(saved);
     }
 
@@ -147,7 +147,7 @@ public class QuizService {
         quiz.setModifiedByUsername(teacher.getUsername());
         quiz.setModifiedAt(LocalDateTime.now());
         val saved = quizRepository.save(quiz);
-        log.info("Quiz archived status updated: {} ({}) => {}", saved.getTitle(), saved.getId(), saved.getArchived());
+        log.info("Stato archiviazione del quiz aggiornato: {} ({}) => {}", saved.getTitle(), saved.getId(), saved.getArchived());
         return toResponse(saved);
     }
 

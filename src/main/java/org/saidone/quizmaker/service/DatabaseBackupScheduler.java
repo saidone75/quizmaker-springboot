@@ -59,7 +59,7 @@ public class DatabaseBackupScheduler {
             }
 
             if (!Files.exists(sourceDbPath)) {
-                log.warn("Database backup skipped. SQLite file not found at {}", sourceDbPath);
+                log.warn("Backup del database non eseguito. File SQLite non trovato in {}", sourceDbPath);
                 return;
             }
 
@@ -75,23 +75,23 @@ public class DatabaseBackupScheduler {
             val backupFile = backupDirPath.resolve(String.format("%s-%s.db", baseName, timestamp));
 
             Files.copy(sourceDbPath, backupFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
-            log.info("Database backup completed: {}", backupFile);
+            log.info("Backup del database completato: {}", backupFile);
 
             cleanupOldBackups(backupDirPath, baseName);
         } catch (Exception ex) {
-            log.error("Database backup failed.", ex);
+            log.error("Backup del database fallito.", ex);
         }
     }
 
     private Path resolveSqliteFilePath() {
         if (datasourceUrl == null || !datasourceUrl.startsWith(SQLITE_JDBC_PREFIX)) {
-            log.debug("Database backup skipped. Datasource is not SQLite: {}", datasourceUrl);
+            log.debug("Backup del database non eseguito. Il datasource non è SQLite: {}", datasourceUrl);
             return null;
         }
 
         val dbPathString = datasourceUrl.substring(SQLITE_JDBC_PREFIX.length());
         if (dbPathString.isBlank() || ":memory:".equalsIgnoreCase(dbPathString)) {
-            log.debug("Database backup skipped. SQLite datasource is in-memory.");
+            log.debug("Backup del database non eseguito. Il datasource SQLite è in memoria.");
             return null;
         }
 
@@ -115,7 +115,7 @@ public class DatabaseBackupScheduler {
 
             for (int i = retentionCount; i < backups.size(); i++) {
                 Files.deleteIfExists(backups.get(i));
-                log.info("Deleted old database backup: {}", backups.get(i));
+                log.info("Cancellato un vecchio backup del database: {}", backups.get(i));
             }
         }
     }
