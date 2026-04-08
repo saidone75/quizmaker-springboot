@@ -271,7 +271,6 @@ public class TeacherDashboardWebController {
                                      RedirectAttributes redirectAttributes) {
         try {
             teacherAuthenticationService.updateThemePreference(teacherAuthenticationService.getCurrentTeacher(), themePreference);
-            redirectAttributes.addFlashAttribute("profileSuccess", "Tema aggiornato con successo.");
             return "redirect:/teacher/profile";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("profileError", ex.getMessage());
