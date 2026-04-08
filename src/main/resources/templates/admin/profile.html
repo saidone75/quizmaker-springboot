@@ -43,7 +43,7 @@
             <h2 style="font-size:24px;font-weight:900;color:var(--green-dark);margin-bottom:6px;">Tema interfaccia</h2>
             <p style="color:var(--text-light);font-weight:600;margin-bottom:1rem;">Scegli il tema del pannello insegnante.</p>
 
-            <form th:action="@{/teacher/profile/theme}" method="post">
+            <form th:action="@{/teacher/profile/theme}" method="post" id="themePreferenceForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                 <div class="form-group">
@@ -99,5 +99,13 @@
     </div>
 </div>
 <script th:src="@{/js/main.js}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('themePreferenceForm');
+        const select = document.getElementById('themePreference');
+        if (!form || !select) return;
+        select.addEventListener('change', () => form.submit());
+    });
+</script>
 </body>
 </html>

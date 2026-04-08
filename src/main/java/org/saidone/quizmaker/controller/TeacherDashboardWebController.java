@@ -268,14 +268,14 @@ public class TeacherDashboardWebController {
 
     @PostMapping("/teacher/profile/theme")
     public String updateTeacherTheme(@RequestParam("themePreference") String themePreference,
-                                     Model model) {
+                                     RedirectAttributes redirectAttributes) {
         try {
             teacherAuthenticationService.updateThemePreference(teacherAuthenticationService.getCurrentTeacher(), themePreference);
-            model.addAttribute("profileSuccess", "Tema aggiornato con successo.");
-            return "admin/profile";
+            redirectAttributes.addFlashAttribute("profileSuccess", "Tema aggiornato con successo.");
+            return "redirect:/teacher/profile";
         } catch (IllegalArgumentException ex) {
-            model.addAttribute("profileError", ex.getMessage());
-            return "admin/profile";
+            redirectAttributes.addFlashAttribute("profileError", ex.getMessage());
+            return "redirect:/teacher/profile";
         }
     }
 
