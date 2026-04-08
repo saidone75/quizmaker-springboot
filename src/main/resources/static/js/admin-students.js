@@ -99,7 +99,6 @@
     document.getElementById('close-delete-student-modal-btn')?.addEventListener('click', closeDeleteStudentModal);
 
     const regenerateStudentPassword = async (studentId) => {
-        showLoading('Rigenerazione password...');
         try {
             const res = await apiFetch('/api/students/' + studentId + '/regenerate-password', {
                 method: 'POST'
@@ -109,11 +108,9 @@
                 throw new Error(payload.message || 'Errore server');
             }
             const payload = await res.json();
-            hideLoading();
             showToast('Nuova parola chiave: ' + payload.loginKeyword);
             setTimeout(() => location.reload(), 900);
         } catch (e) {
-            hideLoading();
             alert('Errore: ' + e.message);
         }
     };
@@ -128,7 +125,6 @@
     });
 
     document.getElementById('regenerate-all-passwords-btn')?.addEventListener('click', async () => {
-        showLoading('Rigenerazione password per tutti...');
         try {
             const res = await apiFetch('/api/students/regenerate-passwords', {
                 method: 'POST'
@@ -137,11 +133,9 @@
                 throw new Error('Errore server');
             }
             const regeneratedCount = await res.json();
-            hideLoading();
             showToast('Password rigenerate per ' + regeneratedCount + ' studenti');
             setTimeout(() => location.reload(), 700);
         } catch (e) {
-            hideLoading();
             alert('Errore: ' + e.message);
         }
     });

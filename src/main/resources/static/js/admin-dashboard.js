@@ -116,7 +116,6 @@
         const currentlyArchived = button.dataset.archived === 'true';
         const archived = !currentlyArchived;
         button.disabled = true;
-        showLoading(archived ? 'Archiviazione in corso...' : 'Riattivazione quiz in corso...');
         try {
             const res = await apiFetch('/api/quizzes/' + id + '/archived', {
                 method: 'PUT',
@@ -128,11 +127,9 @@
             if (!res.ok) {
                 throw new Error('Errore server');
             }
-            hideLoading();
             showToast(archived ? 'Quiz archiviato' : 'Quiz riattivato');
             setTimeout(() => location.reload(), 700);
         } catch (e) {
-            hideLoading();
             alert('Errore: ' + e.message);
         } finally {
             button.disabled = false;

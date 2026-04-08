@@ -128,6 +128,7 @@ body[data-theme="dark"] {
     --archive-bg: #4A3B24;
     --archive-bg-hover: #5A492F;
     --blue-light-hover: #2A4F71;
+    --loading-overlay-bg: rgba(30, 40, 40, 0.78);
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
 }
@@ -169,6 +170,7 @@ body[data-theme="zenburn"] {
     --archive-bg: var(--amber-light);
     --archive-bg-hover: #5C5132;
     --blue-light-hover: #3E5E60;
+    --loading-overlay-bg: rgba(35, 35, 35, 0.80);
     --log-console-bg: #1C1C1C;
     --log-console-text: #DCDCCC;
     --log-console-border: #404040;
