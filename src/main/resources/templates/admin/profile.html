@@ -127,13 +127,6 @@
     </div>
 </div>
 <script th:src="@{/js/main.js}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const form = document.getElementById('themePreferenceForm');
-        const select = document.getElementById('themePreference');
-        if (!form || !select) return;
-        select.addEventListener('change', () => form.submit());
-    });
-</script>
+<script th:src="@{/js/admin-profile.js}"></script>
 </body>
 </html>
