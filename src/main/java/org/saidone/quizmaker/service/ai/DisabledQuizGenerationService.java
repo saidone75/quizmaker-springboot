@@ -16,18 +16,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker.config;
+package org.saidone.quizmaker.service.ai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.saidone.quizmaker.dto.QuizDto;
+import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.stereotype.Component;
 
-@Configuration
-public class ApplicationConfig {
+@Component
+@ConditionalOnMissingBean(QuizGenerationService.class)
+public class DisabledQuizGenerationService implements QuizGenerationService {
 
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+    @Override
+    public QuizDto.Request generateQuiz(QuizGenerationRequestDto request, String attachmentText) {
+        throw new IllegalStateException("Integrazione OpenAI disabilitata. Abilita app.openai.enabled=true.");
     }
-
 }

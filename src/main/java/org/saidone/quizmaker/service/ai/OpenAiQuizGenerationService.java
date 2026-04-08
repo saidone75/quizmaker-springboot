@@ -21,30 +21,36 @@ package org.saidone.quizmaker.service.ai;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.resilience4j.retry.Retry;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Component
-@RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "app.openai", name = "enabled", havingValue = "true")
 @Slf4j
 public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
-    private final RestClient restClient = RestClient.builder().baseUrl("https://api.openai.com/v1").build();
+    @Qualifier("openAiRestClient")
+    private final RestClient restClient;
+    @Qualifier("openAiRetry")
+    private final Retry openAiRetry;
 
     @Value("${app.openai.api-key:}")
     private String apiKey;
@@ -87,6 +93,12 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             }
             """;
 
+    public OpenAiQuizGenerationService(ObjectMapper objectMapper, RestClient restClient, Retry openAiRetry) {
+        this.objectMapper = objectMapper;
+        this.restClient = restClient;
+        this.openAiRetry = openAiRetry;
+    }
+
     @PostConstruct
     void initSchema() {
         try {
@@ -103,13 +115,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         }
 
         val payload = buildPayload(request, attachmentText);
-        val responseBody = restClient.post()
-                .uri("/chat/completions")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .body(String.class);
+        val responseBody = executeWithResilience(payload);
 
         try {
             val root = objectMapper.readTree(responseBody);
@@ -119,6 +125,34 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             log.error("Risposta OpenAI non valida: {}", responseBody, e);
             throw new IllegalStateException("La risposta di OpenAI non è valida o è incompleta.");
         }
+    }
+
+    private String executeWithResilience(Map<String, Object> payload) {
+        Supplier<String> openAiCall = () -> invokeOpenAi(payload);
+        Supplier<String> retryProtected = Retry.decorateSupplier(openAiRetry, openAiCall);
+
+        try {
+            return retryProtected.get();
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            throw new IllegalStateException("OpenAI ha raggiunto il rate limit (429). Riprova tra poco.");
+        } catch (HttpServerErrorException e) {
+            throw new IllegalStateException("OpenAI non è al momento disponibile (errore server). Riprova tra poco.");
+        } catch (ResourceAccessException e) {
+            throw new IllegalStateException("Timeout o errore di rete verso OpenAI. Riprova più tardi.");
+        } catch (RestClientResponseException e) {
+            log.error("Errore OpenAI non ritentabile. status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new IllegalStateException(String.format("Errore OpenAI: %s.", e.getStatusCode()));
+        }
+    }
+
+    private String invokeOpenAi(Map<String, Object> payload) {
+        return restClient.post()
+                .uri("/chat/completions")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(String.class);
     }
 
     private Map<String, Object> buildPayload(QuizGenerationRequestDto request, String attachmentText) {

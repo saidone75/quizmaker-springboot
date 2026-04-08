@@ -23,8 +23,17 @@ app:
     username: ${ADMIN_USERNAME:admin}
     password: ${ADMIN_PASSWORD:changeme}
   openai:
+    enabled: ${OPENAI_ENABLED:true}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-5.4-mini}
+    retry:
+      max-attempts: ${OPENAI_RETRY_MAX_ATTEMPTS:3}
+      initial-backoff-ms: ${OPENAI_RETRY_INITIAL_BACKOFF_MS:400}
+      max-backoff-ms: ${OPENAI_RETRY_MAX_BACKOFF_MS:3000}
+    http:
+      connect-timeout-ms: ${OPENAI_CONNECT_TIMEOUT_MS:5000}
+      read-timeout-ms: ${OPENAI_READ_TIMEOUT_MS:30000}
   ai:
     generation:
       max-questions: ${AI_GENERATION_MAX_QUESTIONS:20}
