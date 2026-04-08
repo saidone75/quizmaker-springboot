@@ -39,6 +39,7 @@ function resolveInitialTheme() {
 
 function applyTheme(theme) {
     const nextTheme = theme === 'dark' || theme === 'zenburn' ? theme : 'light';
+    document.documentElement.setAttribute('data-theme', nextTheme);
     document.body.setAttribute('data-theme', nextTheme);
     localStorage.setItem(QUIZMAKER_THEME_KEY, nextTheme);
 

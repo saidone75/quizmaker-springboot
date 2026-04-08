@@ -38,6 +38,11 @@ public class TeacherAuthWebController {
     private final BruteForceProtectionService bruteForceProtectionService;
     private final TurnstileCaptchaService turnstileCaptchaService;
 
+    @GetMapping("/admin")
+    public String legacyAdminEntryPoint() {
+        return "redirect:/teacher";
+    }
+
     @GetMapping("/teacher/login")
     public String loginPage() {
         return "admin/login";

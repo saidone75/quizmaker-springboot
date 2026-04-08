@@ -23,9 +23,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="quizmaker-theme-preference" th:content="${teacherThemePreference}">
     <title>Dashboard — QuizMaker</title>
+    <script>
+        (function () {
+            const profilePreference = document.querySelector('meta[name="quizmaker-theme-preference"]')?.content || '';
+            let savedTheme = '';
+            try {
+                savedTheme = localStorage.getItem('quizmaker-theme') || '';
+            } catch (error) {
+                savedTheme = '';
+            }
+            const theme = profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn'
+                ? profilePreference
+                : (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn' ? savedTheme : 'light');
+            const preloadBackground = theme === 'dark' ? '#2F3939' : (theme === 'zenburn' ? '#2D2D2D' : '#F7F6F2');
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.backgroundColor = preloadBackground;
+            document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+        })();
+    </script>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
+<script>
+    (function () {
+        const theme = document.documentElement.getAttribute('data-theme');
+        if (theme) {
+            document.body.setAttribute('data-theme', theme);
+            document.body.style.backgroundColor = theme === 'dark' ? '#2F3939' : (theme === 'zenburn' ? '#2D2D2D' : '#F7F6F2');
+            document.body.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+        }
+    })();
+</script>
 
 <div id="screen-admin" class="screen active" style="background:var(--page-bg);min-height:100vh;">
     <div class="topbar">
