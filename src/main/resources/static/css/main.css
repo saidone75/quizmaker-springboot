@@ -984,7 +984,6 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     list-style: none;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
     cursor: pointer;
     padding: 10px 12px;
@@ -1008,11 +1007,18 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 }
 
 .result-mobile-student {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: 800;
     color: var(--text);
 }
 
 .result-mobile-score {
+    margin-left: auto;
+    flex: 0 0 auto;
     font-size: 12px;
     font-weight: 800;
     color: var(--green-dark);
