@@ -149,6 +149,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 | `/teacher/results`         | Insegnante                   | Risultati + analytics + sblocco quiz   |
 | `/teacher/logs`            | Amministratore               | Visualizzazione log applicativi        |
 | `/teacher/profile`         | Insegnante                   | Cambio password personale              |
+| `/teacher/profile/theme`   | Insegnante                   | Salvataggio preferenza tema (POST)     |
 | `/teacher/quiz/new`        | Insegnante                   | Editor nuovo quiz                      |
 | `/teacher/quiz/{id}/edit`  | Insegnante                   | Editor modifica quiz                   |
 | `/teacher/system`          | Amministratore               | Pannello sistema                       |
@@ -183,6 +184,10 @@ export DB_BACKUP_RETENTION_COUNT=30
 ### Log (`/api/teacher/logs`)
 
 - `GET /api/teacher/logs/tail?lines=200` ultime righe log applicazione (max 1000, solo amministratore).
+
+### Profilo insegnante (`/teacher/profile`)
+
+- `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`system`, `light`, `dark`).
 
 ## Sicurezza
 
