@@ -630,6 +630,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: #5A492F; }
     transition: all 0.15s;
 }
 .btn-regenerate-password:hover { background: #B5D4F4; }
+body[data-theme="dark"] .btn-regenerate-password:hover { background: #2A4F71; }
 .btn-regenerate-icon-mobile {
     display: none;
 }
@@ -883,6 +884,10 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: #5A492F; }
     font-family: var(--font-sans); font-size: 15px; font-weight: 800;
     z-index: 9999; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     transition: opacity 0.3s; opacity: 0; pointer-events: none;
+}
+body[data-theme="dark"] #toast {
+    background: #1D8A6B;
+    color: #F3FFFB;
 }
 
 @media (max-width: 480px) {
