@@ -28,17 +28,17 @@ const QUIZMAKER_THEME_KEY = 'quizmaker-theme';
 
 function resolveInitialTheme() {
     const profilePreference = document.querySelector('meta[name="quizmaker-theme-preference"]')?.content || '';
-    if (profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn') {
+    if (profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn' || profilePreference === 'true-summer') {
         return profilePreference;
     }
 
     const savedTheme = localStorage.getItem(QUIZMAKER_THEME_KEY);
-    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn') return savedTheme;
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn' || savedTheme === 'true-summer') return savedTheme;
     return 'light';
 }
 
 function applyTheme(theme) {
-    const nextTheme = theme === 'dark' || theme === 'zenburn' ? theme : 'light';
+    const nextTheme = theme === 'dark' || theme === 'zenburn' || theme === 'true-summer' ? theme : 'light';
     document.documentElement.setAttribute('data-theme', nextTheme);
     document.body.setAttribute('data-theme', nextTheme);
     localStorage.setItem(QUIZMAKER_THEME_KEY, nextTheme);

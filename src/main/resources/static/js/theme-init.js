@@ -25,11 +25,13 @@
         savedTheme = '';
     }
 
-    const theme = profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn'
+    const theme = profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn' || profilePreference === 'true-summer'
         ? profilePreference
-        : (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn' ? savedTheme : 'light');
+        : (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn' || savedTheme === 'true-summer' ? savedTheme : 'light');
 
-    const preloadBackground = theme === 'dark' ? '#2F3939' : (theme === 'zenburn' ? '#2D2D2D' : '#F7F6F2');
+    const preloadBackground = theme === 'dark'
+        ? '#2F3939'
+        : (theme === 'zenburn' ? '#2D2D2D' : (theme === 'true-summer' ? '#EAF4FB' : '#F7F6F2'));
 
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.style.backgroundColor = preloadBackground;

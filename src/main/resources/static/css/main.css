@@ -178,6 +178,49 @@ body[data-theme="zenburn"] {
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
 }
 
+
+:root[data-theme="true-summer"],
+body[data-theme="true-summer"] {
+    --green: #4A9FB0;
+    --green-dark: #2C7F8D;
+    --green-light: #DFF2F6;
+    --green-text: #1F5D67;
+    --blue: #5E93C9;
+    --blue-dark: #3D74AB;
+    --blue-light: #E4EEF8;
+    --blue-text: #2F5F8E;
+    --red: #D47F90;
+    --red-light: #F8E6EB;
+    --red-text: #8F3E4F;
+    --amber: #C8A87A;
+    --amber-light: #F9F1E4;
+    --amber-text: #7B5D36;
+    --gray-bg: #EAF4FB;
+    --gray-border: #C8D9E6;
+    --gray-muted: #6C7F91;
+    --text: #2A3E4F;
+    --text-light: #4C6173;
+    --text-on-accent: #FFFFFF;
+    --white: #F7FBFF;
+    --surface-soft: #F0F7FD;
+    --editor-ai-bg: #ECF8F8;
+    --editor-manual-bg: #EDF3FB;
+    --locked-bg: #ECF2F8;
+    --locked-border: #CFDBE6;
+    --locked-text: #5E7283;
+    --alert-bg: #F7F2E6;
+    --alert-border: #D8C8A9;
+    --share-bg: #E9EEFF;
+    --share-text: #4D5EA8;
+    --share-bg-hover: #DCE4FF;
+    --archive-bg: #F8F1DF;
+    --archive-bg-hover: #F1E5C4;
+    --blue-light-hover: #CFE1F5;
+    --loading-overlay-bg: rgba(234, 244, 251, 0.86);
+    --shadow: 0 8px 24px rgba(70, 112, 145, 0.16);
+    --shadow-lg: 0 10px 40px rgba(70, 112, 145, 0.2);
+}
+
 /* ===== SCREENS ===== */
 .screen { display: none; min-height: 100vh; }
 .screen.active { display: flex; flex-direction: column; }
