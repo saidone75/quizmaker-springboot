@@ -130,8 +130,8 @@ public class TeacherAuthenticationService implements UserDetailsService {
 
         String normalizedTheme = themePreference == null ? "" : themePreference.trim().toLowerCase();
         switch (normalizedTheme) {
-            case "light", "dark" -> teacher.setThemePreference(normalizedTheme);
-            case "", "system" -> teacher.setThemePreference(null);
+            case "light", "dark", "zenburn" -> teacher.setThemePreference(normalizedTheme);
+            case "" -> teacher.setThemePreference(null);
             default -> throw new IllegalArgumentException("Tema non valido");
         }
         teacherRepository.save(teacher);

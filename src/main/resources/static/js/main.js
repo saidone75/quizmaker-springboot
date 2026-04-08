@@ -28,21 +28,17 @@ const QUIZMAKER_THEME_KEY = 'quizmaker-theme';
 
 function resolveInitialTheme() {
     const profilePreference = document.querySelector('meta[name="quizmaker-theme-preference"]')?.content || '';
-    if (profilePreference === 'light' || profilePreference === 'dark') {
+    if (profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn') {
         return profilePreference;
-    }
-    if (profilePreference === 'system') {
-        localStorage.removeItem(QUIZMAKER_THEME_KEY);
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     const savedTheme = localStorage.getItem(QUIZMAKER_THEME_KEY);
-    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn') return savedTheme;
+    return 'light';
 }
 
 function applyTheme(theme) {
-    const nextTheme = theme === 'dark' ? 'dark' : 'light';
+    const nextTheme = theme === 'dark' || theme === 'zenburn' ? theme : 'light';
     document.body.setAttribute('data-theme', nextTheme);
     localStorage.setItem(QUIZMAKER_THEME_KEY, nextTheme);
 
@@ -51,9 +47,19 @@ function applyTheme(theme) {
 
     const icon = toggle.querySelector('.theme-toggle-icon');
     const label = toggle.querySelector('.theme-toggle-label');
-    if (icon) icon.textContent = nextTheme === 'dark' ? '☀️' : '🌙';
-    if (label) label.textContent = nextTheme === 'dark' ? 'Chiaro' : 'Scuro';
-    toggle.setAttribute('aria-label', nextTheme === 'dark' ? 'Attiva tema chiaro' : 'Attiva tema scuro');
+    if (nextTheme === 'dark') {
+        if (icon) icon.textContent = '☀️';
+        if (label) label.textContent = 'Chiaro';
+        toggle.setAttribute('aria-label', 'Attiva tema chiaro');
+    } else if (nextTheme === 'zenburn') {
+        if (icon) icon.textContent = '🌗';
+        if (label) label.textContent = 'Scuro';
+        toggle.setAttribute('aria-label', 'Attiva tema scuro');
+    } else {
+        if (icon) icon.textContent = '🌙';
+        if (label) label.textContent = 'Scuro';
+        toggle.setAttribute('aria-label', 'Attiva tema scuro');
+    }
 }
 
 function setupThemeToggle() {

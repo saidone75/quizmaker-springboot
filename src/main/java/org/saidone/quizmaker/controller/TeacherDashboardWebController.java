@@ -72,7 +72,7 @@ public class TeacherDashboardWebController {
     @ModelAttribute("teacherThemePreference")
     public String teacherThemePreference() {
         val preference = teacherAuthenticationService.getCurrentTeacher().getThemePreference();
-        return preference == null || preference.isBlank() ? "system" : preference;
+        return preference == null || preference.isBlank() ? "light" : preference;
     }
 
     @GetMapping("/teacher")
