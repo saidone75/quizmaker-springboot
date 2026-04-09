@@ -76,6 +76,8 @@
     --restore-bg-hover: #C7EBD9;
     --restore-text: #0F6E56;
     --publish-bg-hover: #BFE7DA;
+    --publish-checkbox-accent: var(--green);
+    --publish-checkbox-bg: var(--white);
     --overlay-bg: rgba(0,0,0,0.4);
     --loading-overlay-bg: rgba(255,255,255,0.85);
     --toast-shadow: rgba(0,0,0,0.2);
@@ -222,6 +224,8 @@ body[data-theme="true-summer"] {
     --share-bg-hover: #DCE4FF;
     --archive-bg: #F8F1DF;
     --archive-bg-hover: #F1E5C4;
+    --publish-checkbox-accent: #7CBAC7;
+    --publish-checkbox-bg: #F4FAFD;
     --blue-light-hover: #CFE1F5;
     --loading-overlay-bg: rgba(234, 244, 251, 0.86);
     --shadow: 0 8px 24px rgba(70, 112, 145, 0.16);
@@ -792,8 +796,34 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 .btn-publish-toggle input[type="checkbox"] {
     width: 16px;
     height: 16px;
-    accent-color: var(--green);
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--publish-checkbox-bg);
+    border: 2px solid var(--publish-checkbox-accent);
+    border-radius: 4px;
+    display: inline-grid;
+    place-content: center;
     cursor: pointer;
+}
+.btn-publish-toggle input[type="checkbox"]::before {
+    content: "";
+    width: 4px;
+    height: 8px;
+    border-right: 2px solid var(--text-on-accent);
+    border-bottom: 2px solid var(--text-on-accent);
+    transform: rotate(45deg) scale(0);
+    transform-origin: center;
+    transition: transform 0.08s ease-in-out;
+}
+.btn-publish-toggle input[type="checkbox"]:checked {
+    background: var(--publish-checkbox-accent);
+}
+.btn-publish-toggle input[type="checkbox"]:checked::before {
+    transform: rotate(45deg) scale(1);
+}
+.btn-publish-toggle input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--publish-checkbox-accent);
+    outline-offset: 1px;
 }
 .btn-publish-toggle input[type="checkbox"]:disabled { cursor: not-allowed; }
 .manage-empty { text-align: center; padding: 3rem 1rem; color: var(--gray-muted); font-size: 15px; font-weight: 600; }

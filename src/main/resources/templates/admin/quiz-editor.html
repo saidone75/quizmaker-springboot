@@ -44,7 +44,7 @@
     <div class="teacher-body">
 
 
-        <div class="editor-mode-card editor-mode-card-ai" th:if="${aiEnabled}">
+        <div class="editor-mode-card editor-mode-card-ai" th:if="${aiEnabled and quiz == null}">
             <div class="editor-mode-header">
                 <div class="section-label">Genera quiz con AI</div>
                 <div class="editor-mode-subtitle">Parti da un argomento o da un file e lascia creare all'AI la prima bozza.</div>
@@ -84,14 +84,14 @@
             <div id="ai-generation-msg" class="validation-msg" style="margin-top:8px"></div>
         </div>
 
-        <div class="editor-mode-divider" aria-hidden="true" th:if="${aiEnabled}">
+        <div class="editor-mode-divider" aria-hidden="true" th:if="${aiEnabled and quiz == null}">
             <span>oppure</span>
         </div>
 
         <div class="editor-mode-card editor-mode-card-manual">
             <div class="editor-mode-header">
-                <div class="section-label">Crea quiz manualmente</div>
-                <div class="editor-mode-subtitle">Inserisci titolo, emoji e domande personalizzate una per una.</div>
+                <div class="section-label" th:text="${quiz != null ? 'Modifica quiz' : 'Crea quiz manualmente'}">Crea quiz manualmente</div>
+                <div class="editor-mode-subtitle" th:text="${quiz != null ? 'Aggiorna titolo, emoji e domande del quiz.' : 'Inserisci titolo, emoji e domande personalizzate una per una.'}">Inserisci titolo, emoji e domande personalizzate una per una.</div>
             </div>
 
             <div class="section-label">Nome del quiz</div>

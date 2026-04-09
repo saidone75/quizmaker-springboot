@@ -12,7 +12,6 @@ ${AnsiColor.GREEN}
  jgs  `-._   ````    _.-'
           ``-------''
 ${AnsiColor.YELLOW}
-Alice's Simple Quiz Maker
 ${application.title} v.${application.version}
 Powered by Spring Boot ${spring-boot.version}
 Active profiles: ${spring.profiles.active}

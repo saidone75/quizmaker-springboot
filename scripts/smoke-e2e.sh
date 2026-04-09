@@ -5,6 +5,7 @@ BASE_URL="${BASE_URL:-http://localhost:8080}"
 SPRING_PROFILE="${SPRING_PROFILE:-dev}"
 ADMIN_USERNAME="${ADMIN_USERNAME:-admin}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-changeme}"
+AUTO_REGISTER_TEACHER_ON_LOGIN_FAIL="${AUTO_REGISTER_TEACHER_ON_LOGIN_FAIL:-1}"
 START_APP="${START_APP:-1}"
 DISABLE_TURNSTILE="${DISABLE_TURNSTILE:-1}"
 
@@ -14,6 +15,13 @@ STUDENT_COOKIES="$WORKDIR/student.cookies"
 APP_LOG="$WORKDIR/app.log"
 APP_PID=""
 QUIZ_ID=""
+TEACHER_USERNAME="$ADMIN_USERNAME"
+TEACHER_PASSWORD="$ADMIN_PASSWORD"
+LAST_TEACHER_LOGIN_URL=""
+TEACHER_CSRF_TOKEN=""
+TEACHER_CSRF_HEADER=""
+STUDENT_CSRF_TOKEN=""
+STUDENT_CSRF_HEADER=""
 
 cleanup() {
   if [[ -n "${APP_PID}" ]]; then
@@ -30,14 +38,57 @@ require_cmd() {
   }
 }
 
-extract_xsrf_from_cookie_jar() {
-  local cookie_jar="$1"
-  awk '$6=="XSRF-TOKEN"{print $7}' "$cookie_jar" | tail -n1
+extract_csrf_hidden_field() {
+  local html="$1"
+  echo "$html" | sed -n 's/.*name="_csrf"[[:space:]]\+value="\([^"]*\)".*/\1/p' | head -n1
+}
+
+extract_meta_content() {
+  local html="$1"
+  local meta_name="$2"
+  echo "$html" | sed -n "s/.*<meta name=\"$meta_name\" content=\"\\([^\"]*\\)\".*/\\1/p" | head -n1
 }
 
 print_header() {
   echo
   echo "== $* =="
+}
+
+require_json_object_response() {
+  local context="$1"
+  local payload="$2"
+
+  PAYLOAD="$payload" python3 - "$context" <<'PY'
+import json
+import os
+import sys
+
+context = sys.argv[1]
+payload = os.environ.get("PAYLOAD", "")
+
+if not payload.strip():
+    print(f"Errore: risposta vuota durante '{context}'.", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    data = json.loads(payload)
+except json.JSONDecodeError as exc:
+    preview = payload[:300].replace("\n", "\\n")
+    print(
+        f"Errore: risposta non JSON durante '{context}' "
+        f"(preview: {preview!r}, dettaglio: {exc}).",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+if not isinstance(data, dict):
+    print(
+        f"Errore: risposta JSON inattesa durante '{context}' "
+        f"(tipo: {type(data).__name__}).",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+PY
 }
 
 wait_for_app() {
@@ -64,12 +115,17 @@ start_app_if_requested() {
   print_header "Start app ($SPRING_PROFILE)"
 
   local -a env_prefix=()
+  local -a run_args=()
   if [[ "$DISABLE_TURNSTILE" == "1" ]]; then
     env_prefix+=("TURNSTILE_ENABLED=false")
+    env_prefix+=("APP_TURNSTILE_ENABLED=false")
+    run_args+=("--app.turnstile.enabled=false")
   fi
 
   # shellcheck disable=SC2086
-  env ${env_prefix[*]} mvn -q spring-boot:run -Dspring-boot.run.profiles="$SPRING_PROFILE" >"$APP_LOG" 2>&1 &
+  env ${env_prefix[*]} mvn -q spring-boot:run \
+    -Dspring-boot.run.profiles="$SPRING_PROFILE" \
+    -Dspring-boot.run.arguments="${run_args[*]}" >"$APP_LOG" 2>&1 &
   APP_PID=$!
 
   wait_for_app
@@ -78,35 +134,117 @@ start_app_if_requested() {
 teacher_login() {
   print_header "Teacher login"
 
-  curl -fsS -c "$TEACHER_COOKIES" "$BASE_URL/teacher/login" >/dev/null
+  attempt_teacher_login "$TEACHER_USERNAME" "$TEACHER_PASSWORD" && return 0
 
-  local xsrf
-  xsrf="$(extract_xsrf_from_cookie_jar "$TEACHER_COOKIES")"
-  [[ -n "$xsrf" ]] || { echo "Errore: XSRF teacher non trovato" >&2; exit 1; }
+  if [[ "$AUTO_REGISTER_TEACHER_ON_LOGIN_FAIL" != "1" ]]; then
+    echo "Errore: login teacher fallito con utente '$TEACHER_USERNAME'." >&2
+    exit 1
+  fi
+
+  print_header "Teacher auto-register fallback"
+  local attempt
+  for attempt in $(seq 1 5); do
+    register_teacher_for_smoke || exit 1
+    attempt_teacher_login "$TEACHER_USERNAME" "$TEACHER_PASSWORD" && return 0
+  done
+
+  echo "Errore: login teacher fallito anche dopo 5 tentativi di auto-registrazione (ultimo utente '$TEACHER_USERNAME', url finale: '$LAST_TEACHER_LOGIN_URL')." >&2
+  exit 1
+}
+
+attempt_teacher_login() {
+  local username="$1"
+  local password="$2"
+
+  local login_html
+  login_html="$(curl -fsS -c "$TEACHER_COOKIES" "$BASE_URL/teacher/login")"
+
+  local csrf
+  csrf="$(extract_csrf_hidden_field "$login_html")"
+  [[ -n "$csrf" ]] || { echo "Errore: CSRF login teacher non trovato" >&2; exit 1; }
 
   curl -fsS -L \
     -b "$TEACHER_COOKIES" -c "$TEACHER_COOKIES" \
-    -H "X-XSRF-TOKEN: $xsrf" \
     -H "Content-Type: application/x-www-form-urlencoded" \
-    --data-urlencode "username=$ADMIN_USERNAME" \
-    --data-urlencode "password=$ADMIN_PASSWORD" \
-    --data-urlencode "_csrf=$xsrf" \
+    --data-urlencode "username=$username" \
+    --data-urlencode "password=$password" \
+    --data-urlencode "_csrf=$csrf" \
     "$BASE_URL/teacher/login" >/dev/null
+
+  LAST_TEACHER_LOGIN_URL="$(curl -fsS -o /dev/null -w '%{url_effective}' -b "$TEACHER_COOKIES" -L "$BASE_URL/teacher")"
+  [[ "$LAST_TEACHER_LOGIN_URL" != *"/teacher/login"* ]]
+}
+
+register_teacher_for_smoke() {
+  local suffix
+  suffix="$(date +%s)-$RANDOM"
+  TEACHER_USERNAME="smoke${suffix//-/}"
+  TEACHER_PASSWORD="smoke${suffix//-/}"
+
+  local register_html
+  register_html="$(curl -fsS -c "$TEACHER_COOKIES" "$BASE_URL/teacher/register")"
+
+  local csrf
+  csrf="$(extract_csrf_hidden_field "$register_html")"
+  [[ -n "$csrf" ]] || { echo "Errore: CSRF register teacher non trovato" >&2; exit 1; }
+
+  local register_body
+  register_body="$(curl -fsS -L \
+    -b "$TEACHER_COOKIES" -c "$TEACHER_COOKIES" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    --data-urlencode "username=$TEACHER_USERNAME" \
+    --data-urlencode "password=$TEACHER_PASSWORD" \
+    --data-urlencode "confirmPassword=$TEACHER_PASSWORD" \
+    --data-urlencode "_csrf=$csrf" \
+    "$BASE_URL/teacher/register")"
+
+  if [[ "$register_body" == *"Verifica CAPTCHA non riuscita"* ]]; then
+    echo "Errore: auto-registrazione fallita (CAPTCHA attivo). Imposta credenziali valide via ADMIN_USERNAME/ADMIN_PASSWORD oppure disabilita Turnstile." >&2
+    return 1
+  fi
+
+  echo "Teacher registrato automaticamente: $TEACHER_USERNAME"
+  return 0
+}
+
+refresh_teacher_csrf_headers() {
+  local page_html
+  page_html="$(curl -fsS -b "$TEACHER_COOKIES" -c "$TEACHER_COOKIES" "$BASE_URL/teacher/students")"
+
+  TEACHER_CSRF_TOKEN="$(extract_meta_content "$page_html" "quizmaker-csrf-token")"
+  TEACHER_CSRF_HEADER="$(extract_meta_content "$page_html" "quizmaker-csrf-header")"
+  [[ -n "$TEACHER_CSRF_TOKEN" && -n "$TEACHER_CSRF_HEADER" ]] || {
+    echo "Errore: CSRF meta teacher non trovati nella pagina admin." >&2
+    exit 1
+  }
+}
+
+refresh_student_csrf_headers() {
+  local page_html
+  page_html="$(curl -fsS -b "$STUDENT_COOKIES" -c "$STUDENT_COOKIES" "$BASE_URL/")"
+
+  STUDENT_CSRF_TOKEN="$(extract_meta_content "$page_html" "quizmaker-csrf-token")"
+  STUDENT_CSRF_HEADER="$(extract_meta_content "$page_html" "quizmaker-csrf-header")"
+  [[ -n "$STUDENT_CSRF_TOKEN" && -n "$STUDENT_CSRF_HEADER" ]] || {
+    echo "Errore: CSRF meta studente non trovati nella pagina student." >&2
+    exit 1
+  }
 }
 
 create_student() {
   print_header "Create student"
-
-  local xsrf
-  xsrf="$(extract_xsrf_from_cookie_jar "$TEACHER_COOKIES")"
+  refresh_teacher_csrf_headers
 
   local student_json
-  student_json="$(curl -fsS \
+  student_json="$(curl -fsSL \
     -b "$TEACHER_COOKIES" \
-    -H "X-XSRF-TOKEN: $xsrf" \
+    -H "$TEACHER_CSRF_HEADER: $TEACHER_CSRF_TOKEN" \
+    -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{"fullName":"Smoke Student"}' \
     "$BASE_URL/api/students")"
+
+  require_json_object_response "create student" "$student_json"
 
   STUDENT_ID="$(echo "$student_json" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')"
   STUDENT_KEYWORD="$(echo "$student_json" | python3 -c 'import sys,json; print(json.load(sys.stdin)["loginKeyword"])')"
@@ -117,14 +255,13 @@ create_student() {
 
 create_and_publish_quiz() {
   print_header "Create quiz"
-
-  local xsrf
-  xsrf="$(extract_xsrf_from_cookie_jar "$TEACHER_COOKIES")"
+  refresh_teacher_csrf_headers
 
   local quiz_json
-  quiz_json="$(curl -fsS \
+  quiz_json="$(curl -fsSL \
     -b "$TEACHER_COOKIES" \
-    -H "X-XSRF-TOKEN: $xsrf" \
+    -H "$TEACHER_CSRF_HEADER: $TEACHER_CSRF_TOKEN" \
+    -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{
       "title":"Smoke Quiz",
@@ -141,16 +278,18 @@ create_and_publish_quiz() {
     }' \
     "$BASE_URL/api/quizzes")"
 
+  require_json_object_response "create quiz" "$quiz_json"
+
   QUIZ_ID="$(echo "$quiz_json" | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')"
   echo "Quiz ID: $QUIZ_ID"
 
   print_header "Publish quiz"
-  xsrf="$(extract_xsrf_from_cookie_jar "$TEACHER_COOKIES")"
+  refresh_teacher_csrf_headers
 
   curl -fsS \
     -X PUT \
     -b "$TEACHER_COOKIES" \
-    -H "X-XSRF-TOKEN: $xsrf" \
+    -H "$TEACHER_CSRF_HEADER: $TEACHER_CSRF_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"published":true}' \
     "$BASE_URL/api/quizzes/$QUIZ_ID/publication" >/dev/null
@@ -159,23 +298,28 @@ create_and_publish_quiz() {
 student_login_and_submit() {
   print_header "Student login"
 
-  curl -fsS -c "$STUDENT_COOKIES" "$BASE_URL/" >/dev/null
+  local login_html
+  login_html="$(curl -fsS -c "$STUDENT_COOKIES" "$BASE_URL/")"
 
-  local xsrf
-  xsrf="$(extract_xsrf_from_cookie_jar "$STUDENT_COOKIES")"
-  [[ -n "$xsrf" ]] || { echo "Errore: XSRF studente non trovato" >&2; exit 1; }
+  local csrf
+  csrf="$(extract_csrf_hidden_field "$login_html")"
+  [[ -n "$csrf" ]] || { echo "Errore: CSRF studente non trovato" >&2; exit 1; }
 
   curl -fsS -L \
     -b "$STUDENT_COOKIES" -c "$STUDENT_COOKIES" \
-    -H "X-XSRF-TOKEN: $xsrf" \
     -H "Content-Type: application/x-www-form-urlencoded" \
     --data-urlencode "keyword=$STUDENT_KEYWORD" \
-    --data-urlencode "_csrf=$xsrf" \
+    --data-urlencode "_csrf=$csrf" \
     "$BASE_URL/student/login" >/dev/null
 
   print_header "Student list published quizzes"
+  refresh_student_csrf_headers
   local quizzes_json
-  quizzes_json="$(curl -fsS -b "$STUDENT_COOKIES" "$BASE_URL/api/quizzes")"
+  quizzes_json="$(curl -fsSL \
+    -b "$STUDENT_COOKIES" \
+    -H "$STUDENT_CSRF_HEADER: $STUDENT_CSRF_TOKEN" \
+    -H "Accept: application/json" \
+    "$BASE_URL/api/quizzes")"
 
   QUIZZES_JSON="$quizzes_json" python3 - <<'PY'
 import json
@@ -189,11 +333,15 @@ PY
 
   print_header "Student submit"
   local submit_json
-  submit_json="$(curl -fsS \
+  submit_json="$(curl -fsSL \
     -b "$STUDENT_COOKIES" \
+    -H "$STUDENT_CSRF_HEADER: $STUDENT_CSRF_TOKEN" \
+    -H "Accept: application/json" \
     -H "Content-Type: application/json" \
     -d '{"answers":[1]}' \
     "$BASE_URL/api/quizzes/$QUIZ_ID/submit")"
+
+  require_json_object_response "submit quiz" "$submit_json"
 
   SUBMIT_JSON="$submit_json" python3 - <<'PY'
 import json
