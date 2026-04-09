@@ -224,6 +224,33 @@ Aggiungi ogni modifica schema in un nuovo file XML e includilo in `db.changelog-
 mvn test
 ```
 
+## 🧪 Smoke test end-to-end
+
+Per validare rapidamente il flusso completo (teacher login, creazione studente, creazione quiz, pubblicazione, login studente e submit), usa lo script:
+
+```bash
+./scripts/smoke-e2e.sh
+```
+
+Variabili utili:
+
+- `BASE_URL` (default `http://localhost:8080`)
+- `ADMIN_USERNAME` (default `admin`)
+- `ADMIN_PASSWORD` (default `changeme`)
+- `SPRING_PROFILE` (default `dev`)
+- `START_APP=0` se vuoi riutilizzare un'istanza già avviata
+- `DISABLE_TURNSTILE=0` per non forzare `TURNSTILE_ENABLED=false` all'avvio
+
+Esempi:
+
+```bash
+# App già in esecuzione
+START_APP=0 BASE_URL=http://localhost:8080 ./scripts/smoke-e2e.sh
+
+# Credenziali admin custom
+ADMIN_USERNAME=myadmin ADMIN_PASSWORD='supersecret' ./scripts/smoke-e2e.sh
+```
+
 ## 📜 Licenza
 
 Copyright (c) 2026 Miss Alice & Saidone
