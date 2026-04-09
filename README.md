@@ -1,4 +1,4 @@
-# Alice's Simple Quiz Maker 🦕
+# 🍄 Alice's Simple Quiz Maker 🐇
 
 Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici divertenti, con interfaccia web e API REST.
 
