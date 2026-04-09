@@ -44,6 +44,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.lang.management.ManagementFactory;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -365,7 +366,7 @@ public class TeacherDashboardWebController {
         model.addAttribute("heapMaxMb", runtime.maxMemory() / (1024 * 1024));
         model.addAttribute("heapTotalMb", runtime.totalMemory() / (1024 * 1024));
         model.addAttribute("heapFreeMb", runtime.freeMemory() / (1024 * 1024));
-        model.addAttribute("uptime", 0);
+        model.addAttribute("uptime", formatUptime(ManagementFactory.getRuntimeMXBean().getUptime()));
         model.addAttribute("osName", System.getProperty("os.name"));
         model.addAttribute("osVersion", System.getProperty("os.version"));
         model.addAttribute("osArch", System.getProperty("os.arch"));
@@ -399,6 +400,14 @@ public class TeacherDashboardWebController {
         return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
                 .withZone(ZoneId.systemDefault())
                 .format(buildProperties.getTime());
+    }
+
+    private String formatUptime(long uptimeMillis) {
+        val totalSeconds = uptimeMillis / 1000;
+        val hours = totalSeconds / 3600;
+        val minutes = (totalSeconds % 3600) / 60;
+        val seconds = totalSeconds % 60;
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
     }
 
     private String serializeQuestions(Object questions) {
