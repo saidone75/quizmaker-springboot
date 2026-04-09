@@ -362,13 +362,14 @@ public class TeacherDashboardWebController {
         model.addAttribute("javaVendor", System.getProperty("java.vendor"));
         model.addAttribute("jvmName", System.getProperty("java.vm.name"));
         model.addAttribute("jvmVersion", System.getProperty("java.vm.version"));
+        model.addAttribute("heapMaxMb", runtime.maxMemory() / (1024 * 1024));
+        model.addAttribute("heapTotalMb", runtime.totalMemory() / (1024 * 1024));
+        model.addAttribute("heapFreeMb", runtime.freeMemory() / (1024 * 1024));
+        model.addAttribute("uptime", 0);
         model.addAttribute("osName", System.getProperty("os.name"));
         model.addAttribute("osVersion", System.getProperty("os.version"));
         model.addAttribute("osArch", System.getProperty("os.arch"));
         model.addAttribute("availableProcessors", runtime.availableProcessors());
-        model.addAttribute("heapMaxMb", runtime.maxMemory() / (1024 * 1024));
-        model.addAttribute("heapTotalMb", runtime.totalMemory() / (1024 * 1024));
-        model.addAttribute("heapFreeMb", runtime.freeMemory() / (1024 * 1024));
         return "about";
     }
 

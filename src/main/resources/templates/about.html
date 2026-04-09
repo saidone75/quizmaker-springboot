@@ -58,6 +58,10 @@
                     </li>
                     <li><strong>JVM:</strong> <span th:text="${jvmName}">-</span></li>
                     <li><strong>JVM versione:</strong> <span th:text="${jvmVersion}">-</span></li>
+                    <li><strong>Heap max:</strong> <span th:text="${heapMaxMb}">0</span> MB</li>
+                    <li><strong>Heap allocata:</strong> <span th:text="${heapTotalMb}">0</span> MB</li>
+                    <li><strong>Heap libera:</strong> <span th:text="${heapFreeMb}">0</span> MB</li>
+                    <li><strong>CPU:</strong> <span th:text="${uptime}">0</span> core</li>
                 </ul>
             </section>
 
@@ -68,15 +72,6 @@
                             th:text="${osVersion}">-</span></li>
                     <li><strong>Architettura:</strong> <span th:text="${osArch}">-</span></li>
                     <li><strong>CPU disponibili:</strong> <span th:text="${availableProcessors}">0</span></li>
-                </ul>
-            </section>
-
-            <section class="about-card">
-                <h2>Memoria JVM</h2>
-                <ul class="about-list">
-                    <li><strong>Heap max:</strong> <span th:text="${heapMaxMb}">0</span> MB</li>
-                    <li><strong>Heap allocata:</strong> <span th:text="${heapTotalMb}">0</span> MB</li>
-                    <li><strong>Heap libera:</strong> <span th:text="${heapFreeMb}">0</span> MB</li>
                 </ul>
             </section>
         </div>
