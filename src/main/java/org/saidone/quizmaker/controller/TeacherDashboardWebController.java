@@ -403,11 +403,12 @@ public class TeacherDashboardWebController {
     }
 
     private String formatUptime(long uptimeMillis) {
-        val totalSeconds = uptimeMillis / 1000;
-        val hours = totalSeconds / 3600;
-        val minutes = (totalSeconds % 3600) / 60;
-        val seconds = totalSeconds % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+        val totalMinutes = uptimeMillis / 1000 / 60;
+        val days = totalMinutes / (24 * 60);
+        val hours = (totalMinutes % (24 * 60)) / 60;
+        val minutes = totalMinutes % 60;
+
+        return String.format("%d giorni, %d ore, %d minuti", days, hours, minutes);
     }
 
     private String serializeQuestions(Object questions) {
