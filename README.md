@@ -11,7 +11,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 
-## Caratteristiche principali
+## ✨ Caratteristiche principali
 
 - Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
@@ -22,7 +22,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 - Backup schedulato database SQLite in produzione con retention configurabile.
 - Semplice dispiegamento in cloud o on premise.
 
-## Stack tecnologico
+## 🧰 Stack tecnologico
 
 - Java **21**
 - Spring Boot **4.0.x**
@@ -32,7 +32,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 - H2 (dev/docker) e SQLite (prod)
 - Jetty (embedded server)
 
-## Avvio rapido in sviluppo (profilo `dev`)
+## 🚀 Avvio rapido in sviluppo (`dev`)
 
 ```bash
 mvn spring-boot:run
@@ -44,6 +44,11 @@ Oppure con profilo esplicito:
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
+In alternativa puoi usare gli script inclusi nel progetto:
+
+- Avvio locale: `run.sh` (Linux/macOS) oppure `run.bat` (Windows)
+- Avvio con Docker: `quizmaker.sh` (Linux/macOS) oppure `quizmaker.bat` (Windows)
+
 Link utili in locale:
 
 - App: http://localhost:8080
@@ -54,7 +59,18 @@ Link utili in locale:
 - User H2: `sa`
 - Password H2: *(vuota)*
 
-## Credenziali iniziali
+## 🏗️ Build
+
+```bash
+mvn clean package
+```
+
+Oppure con gli script:
+
+- Build locale: `build.sh` (Linux/macOS) oppure `build.bat` (Windows)
+- Build con Docker: `build-docker.sh` (Linux/macOS) oppure `build-docker.bat` (Windows)
+
+## 🔐 Credenziali iniziali
 
 L'app crea un utente amministratore di default via configurazione:
 
@@ -73,7 +89,7 @@ export ADMIN_PASSWORD='$2a$12$...'
 
 > `ADMIN_PASSWORD` può essere una password in chiaro o un hash bcrypt (anche con prefisso `{bcrypt}`).
 
-## Profili runtime
+## 🎭 Profili runtime
 
 ### `dev`
 
@@ -106,7 +122,7 @@ java -jar target/quizmaker-*.jar --spring.profiles.active=prod
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-## Variabili d'ambiente principali
+## ⚙️ Variabili d'ambiente principali
 
 | Variabile                           | Default                           | Descrizione                                  |
 |-------------------------------------|-----------------------------------|----------------------------------------------|
@@ -128,7 +144,7 @@ docker compose -f docker/docker-compose.yml up --build
 | `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                      |
 | `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS                |
 
-## Backup schedulato database (SQLite)
+## 💾 Backup schedulato database (SQLite)
 
 ```bash
 export DB_BACKUP_ENABLED=true
@@ -137,7 +153,7 @@ export DB_BACKUP_DIRECTORY="./backups"
 export DB_BACKUP_RETENTION_COUNT=30
 ```
 
-## Funzionalità web
+## 🌐 Funzionalità web
 
 | URL                        | Accesso                      | Descrizione                            |
 |----------------------------|------------------------------|----------------------------------------|
@@ -156,7 +172,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 | `/teacher/system/teachers` | Amministratore               | Gestione insegnanti (ruoli, AI, stato) |
 | `/teacher/about`           | Amministratore               | Info build/runtime                     |
 
-## API principali
+## 🔌 API principali
 
 ### Quiz (`/api/quizzes`)
 
@@ -189,7 +205,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 - `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`system`, `light`, `dark`).
 
-## Sicurezza
+## 🛡️ Sicurezza
 
 - CSRF con cookie token (eccetto H2 console).
 - Login insegnante con blocco temporaneo dopo troppi tentativi falliti.
@@ -197,18 +213,18 @@ export DB_BACKUP_RETENTION_COUNT=30
 - Registrazione insegnante rate-limited con integrazione Turnstile (se abilitato).
 - Ruoli applicativi: `ROLE_STUDENT`, `ROLE_TEACHER`, `ROLE_ADMIN`.
 
-## Database e migration
+## 🗃️ Database e migration
 
 Le migration Liquibase sono in `src/main/resources/db/changelog/`.
 Aggiungi ogni modifica schema in un nuovo file XML e includilo in `db.changelog-master.xml`.
 
-## Test
+## 🧪 Test
 
 ```bash
 mvn test
 ```
 
-## Licenza
+## 📜 Licenza
 
 Copyright (c) 2026 Miss Alice & Saidone
 

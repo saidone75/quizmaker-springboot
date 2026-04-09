@@ -1,0 +1,45 @@
+name: Security CI
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ main, dev ]
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  spotbugs:
+    name: SpotBugs (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: '21'
+          cache: maven
+
+      - name: Run SpotBugs scan
+        run: >-
+          mvn -B
+          com.github.spotbugs:spotbugs-maven-plugin:4.9.3.0:spotbugs
+          -Dspotbugs.failOnError=true
+          -Dspotbugs.xmlOutput=true
+          -Dspotbugs.outputFile=target/spotbugsXml.xml
+
+      - name: Upload SpotBugs report
+        if: ${{ always() && hashFiles('**/spotbugsXml.xml') != '' }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: spotbugs-report
+          path: '**/spotbugsXml.xml'
