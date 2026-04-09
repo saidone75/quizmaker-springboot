@@ -44,6 +44,11 @@ Oppure con profilo esplicito:
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
+In alternativa puoi usare anche gli script inclusi nel progetto:
+
+- Avvio locale: `run.sh` (Linux/macOS) oppure `run.bat` (Windows)
+- Avvio con Docker: `quizmaker.sh` (Linux/macOS) oppure `quizmaker.bat` (Windows)
+
 Link utili in locale:
 
 - App: http://localhost:8080
@@ -53,6 +58,19 @@ Link utili in locale:
 - JDBC URL H2: `jdbc:h2:mem:quizmakerdb`
 - User H2: `sa`
 - Password H2: *(vuota)*
+
+## Build
+
+La build del progetto può essere eseguita con Maven:
+
+```bash
+mvn clean package
+```
+
+Oppure con gli script:
+
+- Build locale: `build.sh` (Linux/macOS) oppure `build.bat` (Windows)
+- Build con Docker: `build-docker.sh` (Linux/macOS) oppure `build-docker.bat` (Windows)
 
 ## Credenziali iniziali
 
