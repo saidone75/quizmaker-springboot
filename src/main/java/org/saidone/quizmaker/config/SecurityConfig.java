@@ -84,7 +84,9 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/teacher/logout")
                         .logoutSuccessUrl("/teacher/login?logout=true")
-                        .invalidateHttpSession(false)
+                        .invalidateHttpSession(true)
+                        .clearAuthentication(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
                 .csrf(csrf -> csrf

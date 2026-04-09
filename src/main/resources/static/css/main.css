@@ -74,6 +74,7 @@
     --archive-bg-hover: #FFE5A1;
     --restore-bg: #E3F6EC;
     --restore-bg-hover: #C7EBD9;
+    --restore-text: #0F6E56;
     --publish-bg-hover: #BFE7DA;
     --overlay-bg: rgba(0,0,0,0.4);
     --loading-overlay-bg: rgba(255,255,255,0.85);
@@ -127,6 +128,9 @@ body[data-theme="dark"] {
     --share-bg-hover: #4A3A6D;
     --archive-bg: #4A3B24;
     --archive-bg-hover: #5A492F;
+    --restore-bg: #1D3A33;
+    --restore-bg-hover: #275246;
+    --restore-text: #8CE5C7;
     --blue-light-hover: #2A4F71;
     --loading-overlay-bg: rgba(30, 40, 40, 0.78);
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
@@ -169,6 +173,9 @@ body[data-theme="zenburn"] {
     --share-bg-hover: #4D4060;
     --archive-bg: var(--amber-light);
     --archive-bg-hover: #5C5132;
+    --restore-bg: #2D4334;
+    --restore-bg-hover: #3A5641;
+    --restore-text: #C8E3C8;
     --blue-light-hover: #3E5E60;
     --loading-overlay-bg: rgba(35, 35, 35, 0.80);
     --log-console-bg: #1C1C1C;
@@ -727,7 +734,7 @@ body[data-theme="dark"] .quiz-pick-item.is-locked .quiz-pick-name { color: var(-
 .btn-delete-quiz:hover { background: var(--red-light-hover); }
 .btn-archive-quiz { background: var(--archive-bg); color: var(--archive-text); }
 .btn-archive-quiz:hover { background: var(--archive-bg-hover); }
-.btn-restore-quiz { background: var(--restore-bg); color: var(--green-dark); }
+.btn-restore-quiz { background: var(--restore-bg); color: var(--restore-text); }
 .btn-restore-quiz:hover { background: var(--restore-bg-hover); }
 body[data-theme="dark"] .btn-archive-quiz { background: var(--alert-bg); color: var(--amber-text); }
 body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-hover); }
