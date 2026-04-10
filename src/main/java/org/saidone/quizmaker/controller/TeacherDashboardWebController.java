@@ -398,10 +398,10 @@ public class TeacherDashboardWebController {
     }
 
     private String formatUptime(long uptimeMillis) {
-        val totalMinutes = uptimeMillis / 1000 / 60;
-        val days = totalMinutes / (24 * 60);
-        val hours = (totalMinutes % (24 * 60)) / 60;
-        val minutes = totalMinutes % 60;
+        int totalMinutes = Math.toIntExact(uptimeMillis / 1000 / 60);
+        int days = totalMinutes / (24 * 60);
+        int hours = (totalMinutes % (24 * 60)) / 60;
+        int minutes = totalMinutes % 60;
 
         return String.format("%d giorni, %d ore, %d minuti", days, hours, minutes);
     }
