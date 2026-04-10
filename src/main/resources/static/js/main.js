@@ -109,10 +109,10 @@ function showToast(msg) {
 // ===== HTML ESCAPE =====
 function escHtml(str) {
     return (str || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
 }
 
 // ===== API HELPERS =====
