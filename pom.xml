@@ -40,6 +40,7 @@
         <org.mapstruct.version>1.6.3</org.mapstruct.version>
         <sonar.organization>saidone75</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.sources>src/main/java,src/main/resources</sonar.sources>
     </properties>
 
     <dependencies>
