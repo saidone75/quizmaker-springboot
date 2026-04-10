@@ -35,8 +35,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @RequiredArgsConstructor
@@ -114,10 +117,37 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         try {
             val root = objectMapper.readTree(responseBody);
             val rawJson = root.path("choices").path(0).path("message").path("content").asText();
-            return objectMapper.readValue(rawJson, QuizDto.Request.class);
+            val generatedQuiz = objectMapper.readValue(rawJson, QuizDto.Request.class);
+            randomizeAnswerPositions(generatedQuiz);
+            return generatedQuiz;
         } catch (Exception e) {
             log.error("Risposta OpenAI non valida: {}", responseBody, e);
             throw new IllegalStateException("La risposta di OpenAI non è valida o è incompleta.");
+        }
+    }
+
+    void randomizeAnswerPositions(QuizDto.Request quiz) {
+        randomizeAnswerPositions(quiz, ThreadLocalRandom.current());
+    }
+
+    void randomizeAnswerPositions(QuizDto.Request quiz, Random random) {
+        if (quiz == null || quiz.getQuestions() == null) {
+            return;
+        }
+
+        for (val question : quiz.getQuestions()) {
+            if (question == null || question.getOptions() == null || question.getOptions().size() != 4) {
+                continue;
+            }
+            if (question.getAnswer() == null || question.getAnswer() < 0 || question.getAnswer() >= question.getOptions().size()) {
+                continue;
+            }
+
+            val options = question.getOptions();
+            val correctOption = options.get(question.getAnswer());
+
+            Collections.shuffle(options, random);
+            question.setAnswer(options.indexOf(correctOption));
         }
     }
 
