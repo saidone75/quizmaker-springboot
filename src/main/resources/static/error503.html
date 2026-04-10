@@ -1,0 +1,151 @@
+<!--
+  ~ QuizMaker - fun quizzes for curious minds
+  ~ Copyright (C) 2026 Saidone
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~  This program is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU General Public License for more details.
+  ~
+  ~  You should have received a copy of the GNU General Public License
+  ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Servizio temporaneamente non disponibile</title>
+    <style>
+        :root {
+            --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --green: #1D9E75;
+            --green-dark: #0F6E56;
+            --green-light: #E1F5EE;
+            --gray-bg: #F7F6F2;
+            --gray-border: #D3D1C7;
+            --text: #2C2C2A;
+            --text-light: #5F5E5A;
+            --white: #FFFFFF;
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.10);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 1rem;
+            font-family: var(--font-sans);
+            color: var(--text);
+            background: var(--gray-bg);
+            display: grid;
+            place-items: center;
+        }
+
+        .panel {
+            width: min(94vw, 760px);
+            background: var(--white);
+            border: 1px solid var(--gray-border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: clamp(1.2rem, 3vw, 2rem);
+            text-align: center;
+        }
+
+        .icon {
+            font-size: clamp(2rem, 6vw, 3.2rem);
+            line-height: 1;
+            margin-bottom: .45rem;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.45rem, 4vw, 2.3rem);
+            color: var(--green-dark);
+            line-height: 1.15;
+            text-wrap: balance;
+        }
+
+        p {
+            margin: .85rem auto;
+            max-width: 62ch;
+            font-size: clamp(1rem, 2.5vw, 1.1rem);
+            color: var(--text-light);
+        }
+
+        .quote {
+            margin-top: .2rem;
+            font-style: italic;
+            color: var(--text);
+        }
+
+        .status {
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            padding: .5rem .9rem;
+            border-radius: 999px;
+            border: 1px solid #BDE5D7;
+            background: var(--green-light);
+            color: var(--green-dark);
+            font-weight: 700;
+            font-size: .92rem;
+        }
+
+        .dot {
+            width: .58rem;
+            height: .58rem;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.7);
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.65);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(29, 158, 117, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(29, 158, 117, 0);
+            }
+        }
+
+        .code {
+            margin-top: 1rem;
+            color: var(--text);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-weight: 600;
+            letter-spacing: .03em;
+            font-size: .95rem;
+        }
+    </style>
+</head>
+<body>
+<main class="panel" role="main" aria-labelledby="title">
+    <h1 id="title">🐇 Il Bianconiglio è in ritardo…<br>torniamo subito!</h1>
+    <p>Il servizio è temporaneamente <strong>non disponibile</strong>. Stiamo facendo manutenzione per riportare tutto
+        in perfetto ordine.</p>
+    <p class="quote">"We're only doing whatever makes us happy"</p>
+
+    <div class="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        Cappellaio &amp; team tecnico al lavoro
+    </div>
+
+    <p class="code">HTTP 503 • Service Unavailable</p>
+</main>
+</body>
+</html>
