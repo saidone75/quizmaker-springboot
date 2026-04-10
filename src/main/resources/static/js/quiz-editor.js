@@ -233,7 +233,7 @@ async function saveQuiz() {
         const filledOpts = q.options.filter(o => o.trim());
         const answerText = q.options[q.answer];
         const newAnswerIdx = filledOpts.indexOf(answerText);
-        return { ...q, options: filledOpts, answer: newAnswerIdx >= 0 ? newAnswerIdx : 0 };
+        return { ...q, options: filledOpts, answer: Math.max(0, newAnswerIdx) };
     });
 
     msgEl.style.display = 'none';

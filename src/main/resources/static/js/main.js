@@ -39,8 +39,8 @@ function resolveInitialTheme() {
 
 function applyTheme(theme) {
     const nextTheme = theme === 'dark' || theme === 'zenburn' || theme === 'true-summer' ? theme : 'light';
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    document.body.setAttribute('data-theme', nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    document.body.dataset.theme = nextTheme;
     localStorage.setItem(QUIZMAKER_THEME_KEY, nextTheme);
 
     const toggle = document.getElementById('theme-toggle');
@@ -68,7 +68,7 @@ function setupThemeToggle() {
     const toggle = document.getElementById('theme-toggle');
     if (!toggle) return;
     toggle.addEventListener('click', () => {
-        const currentTheme = document.body.getAttribute('data-theme') || 'light';
+        const currentTheme = document.body.dataset.theme || 'light';
         applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
     });
 }
