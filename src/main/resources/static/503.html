@@ -49,22 +49,17 @@
             background: var(--gray-bg);
             display: grid;
             place-items: center;
+            overflow-x: hidden;
         }
 
         .panel {
-            width: min(94vw, 760px);
+            width: min(100%, 760px);
             background: var(--white);
             border: 1px solid var(--gray-border);
             border-radius: 16px;
             box-shadow: var(--shadow);
             padding: clamp(1.2rem, 3vw, 2rem);
             text-align: center;
-        }
-
-        .icon {
-            font-size: clamp(2rem, 6vw, 3.2rem);
-            line-height: 1;
-            margin-bottom: .45rem;
         }
 
         h1 {
@@ -80,35 +75,6 @@
             max-width: 62ch;
             font-size: clamp(1rem, 2.5vw, 1.1rem);
             color: var(--text-light);
-        }
-
-        .quote {
-            margin-top: .2rem;
-            font-style: italic;
-            color: var(--text);
-        }
-
-        .status {
-            margin-top: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: .55rem;
-            padding: .5rem .9rem;
-            border-radius: 999px;
-            border: 1px solid #BDE5D7;
-            background: var(--green-light);
-            color: var(--green-dark);
-            font-weight: 700;
-            font-size: .92rem;
-        }
-
-        .dot {
-            width: .58rem;
-            height: .58rem;
-            border-radius: 50%;
-            background: var(--green);
-            box-shadow: 0 0 0 0 rgba(29, 158, 117, 0.7);
-            animation: pulse 1.8s infinite;
         }
 
         @keyframes pulse {
@@ -136,13 +102,11 @@
 <body>
 <main class="panel" role="main" aria-labelledby="title">
     <h1 id="title">🐇 Bianconiglio in ritardo…</h1>
-    <p>Il servizio è temporaneamente <strong>non disponibile</strong>. Stiamo facendo manutenzione per riportare tutto
-        in perfetto ordine.</p>
 
-    <div class="status" aria-live="polite">
-        <span class="dot" aria-hidden="true"></span>
-        Il cappellaio e altri tecnici ci stanno lavorando
-    </div>
+    <p>
+        Il cappellaio e altri tecnici stanno lavorando per riportare tutto
+        in perfetto ordine.
+    </p>
 
     <p class="code">HTTP 503 • Service Unavailable</p>
 </main>
