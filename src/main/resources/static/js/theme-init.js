@@ -18,16 +18,9 @@
 
 (function () {
     const profilePreference = document.querySelector('meta[name="quizmaker-theme-preference"]')?.content || '';
-    let savedTheme = '';
-    try {
-        savedTheme = localStorage.getItem('quizmaker-theme') || '';
-    } catch (error) {
-        savedTheme = '';
-    }
-
     const theme = profilePreference === 'light' || profilePreference === 'dark' || profilePreference === 'zenburn' || profilePreference === 'true-summer'
         ? profilePreference
-        : (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'zenburn' || savedTheme === 'true-summer' ? savedTheme : 'light');
+        : 'light';
 
     const preloadBackground = theme === 'dark'
         ? '#2F3939'
