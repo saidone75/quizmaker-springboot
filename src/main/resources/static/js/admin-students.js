@@ -103,11 +103,10 @@
             const res = await apiFetch('/api/students/' + studentId + '/regenerate-password', {
                 method: 'POST'
             });
+            const payload = await res.json();
             if (!res.ok) {
-                const payload = await res.json();
                 throw new Error(payload.message || 'Errore server');
             }
-            const payload = await res.json();
             showToast('Nuova parola chiave: ' + payload.loginKeyword);
             setTimeout(() => location.reload(), 900);
         } catch (e) {
