@@ -56,7 +56,7 @@ function startQuizFromCard(el) {
     const title = el.querySelector('.quiz-pick-name').textContent;
     const emoji = el.querySelector('.quiz-pick-icon').textContent;
 
-    const questionsFromPage = window.QUIZ_DATA_BY_ID?.[id]?.questions;
+    const questionsFromPage = globalThis.QUIZ_DATA_BY_ID?.[id]?.questions;
     if (Array.isArray(questionsFromPage)) {
         startQuiz({ id, title, emoji, questions: questionsFromPage });
         return;
@@ -101,7 +101,7 @@ function refreshLockedQuizCards() {
     const cards = document.querySelectorAll('.quiz-picker .quiz-pick-item');
     for (let i = 0; i < cards.length; i++) {
         const card = cards[i];
-        if (window.LOCKED_QUIZ_IDS?.has(String(card.dataset.id)) || card.dataset.locked === 'true') {
+        if (globalThis.LOCKED_QUIZ_IDS?.has(String(card.dataset.id)) || card.dataset.locked === 'true') {
             markQuizCardAsLocked(card.dataset.id);
         }
     }
