@@ -111,6 +111,7 @@ function syncField(qIdx, field, value) {
     currentQuestions[qIdx][field] = value;
     if (field === 'imageUrl') {
         currentQuestions[qIdx].imageId = '';
+        updateQuestionImagePreview(qIdx);
     }
     if (field === 'text') {
         const preview = document.getElementById('qpreview-' + qIdx);
@@ -162,11 +163,24 @@ function renderQuestions() {
                            data-action="sync-field"
                            data-question-index="${i}"
                            data-field="imageUrl">
+                    <div class="quiz-media-box" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
+                        <img
+                            id="qimage-preview-img-${i}"
+                            class="quiz-media-img"
+                            src="${escHtml(q.imageUrl || '')}"
+                            alt="Anteprima immagine domanda ${i + 1}">
+                    </div>
+                    <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}">
+                        Anteprima non disponibile. Inserisci un URL immagine valido o carica un file.
+                    </div>
                     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-                        <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="max-width:320px">
-                        <button type="button" class="btn-add-question" data-action="upload-image" data-question-index="${i}">
-                            📤 Carica immagine
-                        </button>
+                        <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
+                        <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
+                            🖼️ Scegli immagine
+                        </label>
+                        <span class="correct-hint" id="image-file-name-${i}" style="margin-top:0;">
+                            Nessun file selezionato
+                        </span>
                     </div>
                     <div class="correct-hint">
                         ${q.imageId ? `Immagine caricata (id: <span>${escHtml(q.imageId)}</span>)` : 'Nessuna immagine caricata per questa domanda'}
@@ -237,11 +251,55 @@ function renderQuestions() {
         });
     });
 
-    list.querySelectorAll('[data-action="upload-image"]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            await uploadQuestionImage(Number(button.dataset.questionIndex));
+    list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
+        fileInput.addEventListener('change', async () => {
+            const qIdx = Number(fileInput.id.replace('image-file-', ''));
+            const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
+            const selectedFile = fileInput.files?.[0];
+            if (fileNameLabel) {
+                fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato';
+            }
+            if (selectedFile) {
+                await uploadQuestionImage(qIdx);
+            }
         });
     });
+
+    currentQuestions.forEach((question, index) => {
+        if (question.imageUrl) {
+            updateQuestionImagePreview(index);
+        }
+    });
+}
+
+function updateQuestionImagePreview(qIdx) {
+    const wrapper = document.getElementById('qimage-preview-' + qIdx);
+    const image = document.getElementById('qimage-preview-img-' + qIdx);
+    const emptyState = document.getElementById('qimage-preview-empty-' + qIdx);
+    if (!wrapper || !image || !emptyState) return;
+
+    const imageUrl = (currentQuestions[qIdx].imageUrl || '').trim();
+    if (!imageUrl) {
+        wrapper.style.display = 'none';
+        image.removeAttribute('src');
+        image.style.display = 'block';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    wrapper.style.display = 'flex';
+    emptyState.style.display = 'none';
+    image.style.display = 'block';
+    image.src = imageUrl;
+
+    image.onload = () => {
+        image.style.display = 'block';
+        emptyState.style.display = 'none';
+    };
+    image.onerror = () => {
+        image.style.display = 'none';
+        emptyState.style.display = 'block';
+    };
 }
 
 async function uploadQuestionImage(qIdx) {
