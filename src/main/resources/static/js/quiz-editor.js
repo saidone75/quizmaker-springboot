@@ -42,6 +42,7 @@ function emptyQuestion() {
     return {
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length] || '❓',
+        imageUrl: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -59,6 +60,7 @@ function addQuestion() {
     currentQuestions.push({
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length],
+        imageUrl: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -147,6 +149,14 @@ function renderQuestions() {
                            data-action="sync-field"
                            data-question-index="${i}"
                            data-field="emoji">
+                </div>
+                <div class="q-row">
+                    <div class="q-row-label">Immagine domanda (URL, opzionale)</div>
+                    <input type="url" class="input-field" placeholder="https://..."
+                           value="${escHtml(q.imageUrl || '')}"
+                           data-action="sync-field"
+                           data-question-index="${i}"
+                           data-field="imageUrl">
                 </div>
                 <div class="q-row">
                     <div class="q-row-label">Risposte — clicca la lettera per segnare quella corretta</div>
@@ -285,6 +295,7 @@ function applyGeneratedQuiz(quiz) {
     currentQuestions = (quiz.questions || []).map((q, idx) => ({
         text: q.text || '',
         emoji: q.emoji || EDITOR_EMOJIS[idx % EDITOR_EMOJIS.length],
+        imageUrl: q.imageUrl || '',
         options: Array.isArray(q.options) ? q.options.slice(0, 4) : ['', '', '', ''],
         answer: Number.isInteger(q.answer) ? q.answer : 0,
         feedback: q.feedback || ''

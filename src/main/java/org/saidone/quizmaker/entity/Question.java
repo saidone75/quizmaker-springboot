@@ -26,6 +26,7 @@ import java.util.List;
 public class Question {
     private String text;
     private String emoji;
+    private String imageUrl;
     private List<String> options;
     private Integer answer;
     private String feedback;

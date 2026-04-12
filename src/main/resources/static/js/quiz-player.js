@@ -147,11 +147,17 @@ function renderPlay() {
 
     const q = quiz.questions[current];
     playState.answered = false;
+    const mediaBlock = q.imageUrl ? `
+            <div class="quiz-media-box">
+                <img src="${escHtml(q.imageUrl)}" alt="Immagine domanda" class="quiz-media-img" loading="lazy" referrerpolicy="no-referrer">
+            </div>
+    ` : '';
 
     document.getElementById('play-area').innerHTML = `
         <div class="quiz-card">
             <span class="quiz-emoji">${q.emoji || '❓'}</span>
             <p class="quiz-question">${escHtml(q.text)}</p>
+            ${mediaBlock}
             <div class="quiz-options">
                 ${q.options.map((opt, i) => `
                     <button class="quiz-opt" data-answer-index="${i}">
