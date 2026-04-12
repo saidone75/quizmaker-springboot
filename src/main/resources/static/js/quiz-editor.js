@@ -18,6 +18,7 @@
 
 const EDITOR_LETTERS = ['A', 'B', 'C', 'D'];
 const EDITOR_EMOJIS = ['❓','🦕','🔥','🌍','🎨','📚','🧪','🧠','🏆','🌟','🦴','🌿'];
+const IMAGE_UPLOAD_ENABLED = document.querySelector('meta[name="quizmaker-image-upload-enabled"]')?.content === 'true';
 let currentQuestions = [];
 let quizId = null;
 
@@ -156,36 +157,38 @@ function renderQuestions() {
                            data-question-index="${i}"
                            data-field="emoji">
                 </div>
-                <div class="q-row">
-                    <div class="q-row-label">Immagine domanda (URL, opzionale)</div>
-                    <input type="url" class="input-field" placeholder="https://..."
-                           value="${escHtml(q.imageUrl || '')}"
-                           data-action="sync-field"
-                           data-question-index="${i}"
-                           data-field="imageUrl">
-                    <div class="quiz-media-box" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
-                        <img
-                            id="qimage-preview-img-${i}"
-                            class="quiz-media-img"
-                            src="${escHtml(q.imageUrl || '')}"
-                            alt="Anteprima immagine domanda ${i + 1}">
+                ${IMAGE_UPLOAD_ENABLED ? `
+                    <div class="q-row">
+                        <div class="q-row-label">Immagine domanda (URL, opzionale)</div>
+                        <input type="url" class="input-field" placeholder="https://..."
+                               value="${escHtml(q.imageUrl || '')}"
+                               data-action="sync-field"
+                               data-question-index="${i}"
+                               data-field="imageUrl">
+                        <div class="quiz-media-box" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
+                            <img
+                                id="qimage-preview-img-${i}"
+                                class="quiz-media-img"
+                                src="${escHtml(q.imageUrl || '')}"
+                                alt="Anteprima immagine domanda ${i + 1}">
+                        </div>
+                        <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}">
+                            Anteprima non disponibile. Inserisci un URL immagine valido o carica un file.
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                            <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
+                            <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
+                                🖼️ Scegli immagine
+                            </label>
+                            <span class="correct-hint" id="image-file-name-${i}" style="margin-top:0;">
+                                Nessun file selezionato
+                            </span>
+                        </div>
+                        <div class="correct-hint">
+                            ${q.imageId ? `Immagine caricata (id: <span>${escHtml(q.imageId)}</span>)` : 'Nessuna immagine caricata per questa domanda'}
+                        </div>
                     </div>
-                    <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}">
-                        Anteprima non disponibile. Inserisci un URL immagine valido o carica un file.
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-                        <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
-                        <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
-                            🖼️ Scegli immagine
-                        </label>
-                        <span class="correct-hint" id="image-file-name-${i}" style="margin-top:0;">
-                            Nessun file selezionato
-                        </span>
-                    </div>
-                    <div class="correct-hint">
-                        ${q.imageId ? `Immagine caricata (id: <span>${escHtml(q.imageId)}</span>)` : 'Nessuna immagine caricata per questa domanda'}
-                    </div>
-                </div>
+                ` : ''}
                 <div class="q-row">
                     <div class="q-row-label">Risposte — clicca la lettera per segnare quella corretta</div>
                     <div class="options-editor">
@@ -251,25 +254,27 @@ function renderQuestions() {
         });
     });
 
-    list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
-        fileInput.addEventListener('change', async () => {
-            const qIdx = Number(fileInput.id.replace('image-file-', ''));
-            const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
-            const selectedFile = fileInput.files?.[0];
-            if (fileNameLabel) {
-                fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato';
-            }
-            if (selectedFile) {
-                await uploadQuestionImage(qIdx);
+    if (IMAGE_UPLOAD_ENABLED) {
+        list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
+            fileInput.addEventListener('change', async () => {
+                const qIdx = Number(fileInput.id.replace('image-file-', ''));
+                const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
+                const selectedFile = fileInput.files?.[0];
+                if (fileNameLabel) {
+                    fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato';
+                }
+                if (selectedFile) {
+                    await uploadQuestionImage(qIdx);
+                }
+            });
+        });
+
+        currentQuestions.forEach((question, index) => {
+            if (question.imageUrl) {
+                updateQuestionImagePreview(index);
             }
         });
-    });
-
-    currentQuestions.forEach((question, index) => {
-        if (question.imageUrl) {
-            updateQuestionImagePreview(index);
-        }
-    });
+    }
 }
 
 function updateQuestionImagePreview(qIdx) {

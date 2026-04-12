@@ -105,7 +105,10 @@ public class QuizApiController {
 
     @PostMapping(value = "/images", consumes = {"multipart/form-data"})
     public ResponseEntity<QuestionImageUploadDto> uploadQuestionImage(@RequestParam("file") MultipartFile file) {
-        teacherAuthenticationService.getCurrentTeacher();
+        val teacher = teacherAuthenticationService.getCurrentTeacher();
+        if (!teacher.isImageUploadEnabled()) {
+            throw new IllegalStateException("Caricamento immagini disabilitato nel profilo insegnante.");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(questionImageStorageService.store(file));
     }
 

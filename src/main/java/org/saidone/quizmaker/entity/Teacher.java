@@ -69,6 +69,10 @@ public class Teacher implements Serializable {
     @Column(name = "theme_preference", length = 16)
     private String themePreference;
 
+    @Default
+    @Column(name = "image_upload_enabled", nullable = false)
+    private boolean imageUploadEnabled = true;
+
     @CreationTimestamp
     @Convert(converter = LocalDateTimeColumnConverter.class)
     @Column(name = "created_at", nullable = false, updatable = false)

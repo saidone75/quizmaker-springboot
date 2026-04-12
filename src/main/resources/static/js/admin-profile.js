@@ -17,9 +17,15 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('themePreferenceForm');
-    const select = document.getElementById('themePreference');
-    if (!form || !select) return;
+    const themeForm = document.getElementById('themePreferenceForm');
+    const themeSelect = document.getElementById('themePreference');
+    if (themeForm && themeSelect) {
+        themeSelect.addEventListener('change', () => themeForm.submit());
+    }
 
-    select.addEventListener('change', () => form.submit());
+    const imageUploadForm = document.getElementById('imageUploadPreferenceForm');
+    const imageUploadCheckbox = document.getElementById('imageUploadEnabled');
+    if (imageUploadForm && imageUploadCheckbox) {
+        imageUploadCheckbox.addEventListener('change', () => imageUploadForm.submit());
+    }
 });

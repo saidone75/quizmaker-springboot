@@ -22,6 +22,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="quizmaker-theme-preference" th:content="${teacherThemePreference}">
+    <meta name="quizmaker-image-upload-enabled" th:content="${teacherImageUploadEnabled}">
     <title th:text="${quiz != null ? 'Modifica Quiz' : 'Nuovo Quiz'} + ' — QuizMaker'">Quiz Editor</title>
     <script th:src="@{/js/theme-init.js}"></script>
     <link rel="stylesheet" th:href="@{/css/main.css}">
