@@ -23,8 +23,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.saidone.quizmaker.dto.QuestionImageUploadDto;
 import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.service.DocumentTextExtractorService;
+import org.saidone.quizmaker.service.QuestionImageStorageService;
 import org.saidone.quizmaker.service.WikipediaTextExtractorService;
 import org.saidone.quizmaker.service.ai.QuizGenerationApplicationService;
 import org.saidone.quizmaker.service.QuizService;
@@ -33,6 +35,7 @@ import org.saidone.quizmaker.service.QuizSubmissionService;
 import org.saidone.quizmaker.service.TeacherAuthenticationService;
 import org.saidone.quizmaker.service.StudentAuthenticationService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -49,6 +52,7 @@ public class QuizApiController {
     private final QuizSubmissionService quizSubmissionService;
     private final QuizGenerationApplicationService quizGenerationApplicationService;
     private final DocumentTextExtractorService documentTextExtractorService;
+    private final QuestionImageStorageService questionImageStorageService;
     private final WikipediaTextExtractorService wikipediaTextExtractorService;
     private final TeacherAuthenticationService teacherAuthenticationService;
     private final StudentAuthenticationService studentAuthenticationService;
@@ -97,6 +101,21 @@ public class QuizApiController {
             @PathVariable UUID id,
             @Valid @RequestBody QuizDto.Request request) {
         return ResponseEntity.ok(quizService.update(id, request, teacherAuthenticationService.getCurrentTeacher()));
+    }
+
+    @PostMapping(value = "/images", consumes = {"multipart/form-data"})
+    public ResponseEntity<QuestionImageUploadDto> uploadQuestionImage(@RequestParam("file") MultipartFile file) {
+        teacherAuthenticationService.getCurrentTeacher();
+        return ResponseEntity.status(HttpStatus.CREATED).body(questionImageStorageService.store(file));
+    }
+
+    @GetMapping("/images/{imageId}")
+    public ResponseEntity<?> getQuestionImage(@PathVariable UUID imageId) {
+        val mediaType = questionImageStorageService.resolveMediaType(imageId);
+        val resource = questionImageStorageService.load(imageId);
+        return ResponseEntity.ok()
+                .contentType(mediaType == null ? MediaType.APPLICATION_OCTET_STREAM : mediaType)
+                .body(resource);
     }
 
     @DeleteMapping("/{id}")

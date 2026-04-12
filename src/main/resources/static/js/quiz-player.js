@@ -147,9 +147,10 @@ function renderPlay() {
 
     const q = quiz.questions[current];
     playState.answered = false;
-    const mediaBlock = q.imageUrl ? `
+    const imageUrl = resolveQuestionImageUrl(q);
+    const mediaBlock = imageUrl ? `
             <div class="quiz-media-box">
-                <img src="${escHtml(q.imageUrl)}" alt="Immagine domanda" class="quiz-media-img" loading="lazy" referrerpolicy="no-referrer">
+                <img src="${escHtml(imageUrl)}" alt="Immagine domanda" class="quiz-media-img" loading="lazy" referrerpolicy="no-referrer">
             </div>
     ` : '';
 
@@ -180,6 +181,13 @@ function renderPlay() {
     });
 
     document.getElementById('play-next')?.addEventListener('click', nextQuestion);
+}
+
+function resolveQuestionImageUrl(question) {
+    if (!question) return '';
+    if (question.imageUrl && question.imageUrl.trim()) return question.imageUrl.trim();
+    if (question.imageId && question.imageId.trim()) return '/api/quizzes/images/' + question.imageId.trim();
+    return '';
 }
 
 function pickAnswer(idx) {

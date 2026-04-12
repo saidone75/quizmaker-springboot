@@ -23,17 +23,24 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <property name="uuid.type" value="UUID" dbms="h2"/>
-    <property name="uuid.type" value="UUID" dbms="postgresql"/>
-    <property name="uuid.type" value="TEXT" dbms="sqlite"/>
+    <changeSet id="004-question-images" author="quizmaker">
+        <preConditions onFail="MARK_RAN" onError="MARK_RAN">
+            <not>
+                <tableExists tableName="question_images"/>
+            </not>
+        </preConditions>
 
-    <property name="json.type" value="CLOB" dbms="h2"/>
-    <property name="json.type" value="JSONB" dbms="postgresql"/>
-    <property name="json.type" value="TEXT" dbms="sqlite"/>
+        <createTable tableName="question_images">
+            <column name="id" type="${uuid.type}">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="file_path" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
-    <include file="001-initial-schema.xml" relativeToChangelogFile="true"/>
-    <include file="002-quiz-archive-flag.xml" relativeToChangelogFile="true"/>
-    <include file="003-teacher-theme-preference.xml" relativeToChangelogFile="true"/>
-    <include file="004-question-images.xml" relativeToChangelogFile="true"/>
-
+        <rollback>
+            <dropTable tableName="question_images"/>
+        </rollback>
+    </changeSet>
 </databaseChangeLog>

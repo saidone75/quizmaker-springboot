@@ -43,6 +43,7 @@ function emptyQuestion() {
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length] || '❓',
         imageUrl: '',
+        imageId: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -61,6 +62,7 @@ function addQuestion() {
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length],
         imageUrl: '',
+        imageId: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -107,6 +109,9 @@ function setCorrect(qIdx, optIdx) {
 
 function syncField(qIdx, field, value) {
     currentQuestions[qIdx][field] = value;
+    if (field === 'imageUrl') {
+        currentQuestions[qIdx].imageId = '';
+    }
     if (field === 'text') {
         const preview = document.getElementById('qpreview-' + qIdx);
         if (preview) {
@@ -157,6 +162,15 @@ function renderQuestions() {
                            data-action="sync-field"
                            data-question-index="${i}"
                            data-field="imageUrl">
+                    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                        <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="max-width:320px">
+                        <button type="button" class="btn-add-question" data-action="upload-image" data-question-index="${i}">
+                            📤 Carica immagine
+                        </button>
+                    </div>
+                    <div class="correct-hint">
+                        ${q.imageId ? `Immagine caricata (id: <span>${escHtml(q.imageId)}</span>)` : 'Nessuna immagine caricata per questa domanda'}
+                    </div>
                 </div>
                 <div class="q-row">
                     <div class="q-row-label">Risposte — clicca la lettera per segnare quella corretta</div>
@@ -222,6 +236,49 @@ function renderQuestions() {
             syncOption(Number(input.dataset.questionIndex), Number(input.dataset.optionIndex), input.value);
         });
     });
+
+    list.querySelectorAll('[data-action="upload-image"]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            await uploadQuestionImage(Number(button.dataset.questionIndex));
+        });
+    });
+}
+
+async function uploadQuestionImage(qIdx) {
+    const fileInput = document.getElementById('image-file-' + qIdx);
+    if (!fileInput?.files || fileInput.files.length === 0) {
+        showValidation('Seleziona un file immagine da caricare.');
+        return;
+    }
+
+    const payload = new FormData();
+    payload.append('file', fileInput.files[0]);
+
+    showLoading('Caricamento immagine in corso...');
+    try {
+        const response = await apiFetch('/api/quizzes/images', {
+            method: 'POST',
+            body: payload
+        });
+        if (!response.ok) {
+            throw new Error(await response.text() || 'Errore durante il caricamento immagine.');
+        }
+        const data = await response.json();
+        currentQuestions[qIdx].imageId = data.id || '';
+        currentQuestions[qIdx].imageUrl = data.url || '';
+        showToast('Immagine caricata con successo');
+        renderQuestions();
+        setTimeout(() => {
+            const body = document.getElementById('qbody-' + qIdx);
+            const toggle = document.getElementById('qtoggle-' + qIdx);
+            if (body) body.classList.add('open');
+            if (toggle) toggle.classList.add('open');
+        }, 10);
+    } catch (error) {
+        showValidation(error.message || 'Errore durante il caricamento immagine.');
+    } finally {
+        hideLoading();
+    }
 }
 
 async function saveQuiz() {

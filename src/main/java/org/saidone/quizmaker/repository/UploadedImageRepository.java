@@ -16,19 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker.dto;
+package org.saidone.quizmaker.repository;
 
-import lombok.Data;
+import org.saidone.quizmaker.entity.UploadedImage;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import java.util.UUID;
 
-@Data
-public class QuestionDto {
-    private String text;
-    private String emoji;
-    private String imageUrl;
-    private String imageId;
-    private List<String> options;
-    private Integer answer;
-    private String feedback;
+public interface UploadedImageRepository extends JpaRepository<UploadedImage, UUID> {
 }

@@ -16,19 +16,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker.dto;
+package org.saidone.quizmaker.entity;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
 
-import java.util.List;
+import java.util.UUID;
 
+@Entity
+@Table(name = "question_images")
 @Data
-public class QuestionDto {
-    private String text;
-    private String emoji;
-    private String imageUrl;
-    private String imageId;
-    private List<String> options;
-    private Integer answer;
-    private String feedback;
+public class UploadedImage {
+
+    @Id
+    @Column(name = "id", nullable = false)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
+    private UUID id;
+
+    @Column(name = "file_path", nullable = false)
+    private String filePath;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
+    }
 }

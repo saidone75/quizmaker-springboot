@@ -27,6 +27,7 @@ public class Question {
     private String text;
     private String emoji;
     private String imageUrl;
+    private String imageId;
     private List<String> options;
     private Integer answer;
     private String feedback;

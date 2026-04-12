@@ -18,17 +18,18 @@
 
 package org.saidone.quizmaker.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.UUID;
 
 @Data
-public class QuestionDto {
-    private String text;
-    private String emoji;
-    private String imageUrl;
-    private String imageId;
-    private List<String> options;
-    private Integer answer;
-    private String feedback;
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class QuestionImageUploadDto {
+    private UUID id;
+    private String url;
 }
