@@ -32,6 +32,9 @@
 
     window.QUIZ_DATA_BY_ID = quizById;
     window.LOCKED_QUIZ_IDS = lockedQuizIds;
+    if (typeof window.resumeQuizIfNeeded === 'function') {
+        window.resumeQuizIfNeeded();
+    }
 
     document.getElementById('student-back-home-btn')?.addEventListener('click', () => {
         goTo('student');
