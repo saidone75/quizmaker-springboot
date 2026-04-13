@@ -16,16 +16,35 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const themeForm = document.getElementById('themePreferenceForm');
-    const themeSelect = document.getElementById('themePreference');
-    if (themeForm && themeSelect) {
-        themeSelect.addEventListener('change', () => themeForm.submit());
-    }
+package org.saidone.quizmaker.entity;
 
-    const imageUploadForm = document.getElementById('imageUploadPreferenceForm');
-    const imageUploadCheckbox = document.getElementById('imageUploadEnabled');
-    if (imageUploadForm && imageUploadCheckbox) {
-        imageUploadCheckbox.addEventListener('change', () => imageUploadForm.submit());
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.Data;
+import org.hibernate.annotations.JdbcTypeCode;
+
+import java.util.UUID;
+
+@Entity
+@Table(name = "question_images")
+@Data
+public class UploadedImage {
+
+    @Id
+    @Column(name = "id", nullable = false)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
+    private UUID id;
+
+    @Column(name = "file_path", nullable = false)
+    private String filePath;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID();
+        }
     }
-});
+}

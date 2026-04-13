@@ -17,8 +17,13 @@
  */
 
 const LETTERS = ['A', 'B', 'C', 'D'];
+const QUIZ_PROGRESS_STORAGE_KEY = 'quizmaker.activeQuizProgress';
 let playState = { quiz: null, current: 0, score: 0, wrong: 0, answered: false, answers: [] };
 let studentAlertTimer = null;
+let isQuizNavigationLocked = false;
+let quizPopstateHandler = null;
+let quizBeforeUnloadHandler = null;
+let quizKeydownHandler = null;
 
 function showStudentAlert(title, message) {
     const alertBox = document.getElementById('student-alert');
@@ -45,6 +50,138 @@ function showStudentAlert(title, message) {
         }, 220);
     }, 3200);
 }
+
+function enableQuizNavigationLock() {
+    if (isQuizNavigationLocked) return;
+    isQuizNavigationLocked = true;
+
+    history.pushState({ quizInProgress: true }, '', window.location.href);
+
+    quizPopstateHandler = function () {
+        if (!isQuizNavigationLocked) return;
+        history.pushState({ quizInProgress: true }, '', window.location.href);
+        showStudentAlert(
+            'Quiz in corso',
+            'Non puoi tornare indietro mentre stai facendo il quiz.'
+        );
+    };
+
+    quizBeforeUnloadHandler = function (event) {
+        if (!isQuizNavigationLocked) return;
+        event.preventDefault();
+        event.returnValue = '';
+    };
+
+    quizKeydownHandler = function (event) {
+        if (!isQuizNavigationLocked) return;
+        const isReloadKey = event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r');
+        if (!isReloadKey) return;
+        event.preventDefault();
+        showStudentAlert(
+            'Quiz in corso',
+            'Non puoi ricaricare la pagina mentre stai facendo il quiz.'
+        );
+    };
+
+    window.addEventListener('popstate', quizPopstateHandler);
+    window.addEventListener('beforeunload', quizBeforeUnloadHandler);
+    window.addEventListener('keydown', quizKeydownHandler);
+}
+
+function disableQuizNavigationLock() {
+    if (!isQuizNavigationLocked) return;
+    isQuizNavigationLocked = false;
+
+    if (quizPopstateHandler) {
+        window.removeEventListener('popstate', quizPopstateHandler);
+        quizPopstateHandler = null;
+    }
+    if (quizBeforeUnloadHandler) {
+        window.removeEventListener('beforeunload', quizBeforeUnloadHandler);
+        quizBeforeUnloadHandler = null;
+    }
+    if (quizKeydownHandler) {
+        window.removeEventListener('keydown', quizKeydownHandler);
+        quizKeydownHandler = null;
+    }
+}
+
+function persistQuizProgress() {
+    if (!playState?.quiz?.id) return;
+    sessionStorage.setItem(QUIZ_PROGRESS_STORAGE_KEY, JSON.stringify({
+        quiz: {
+            id: playState.quiz.id,
+            title: playState.quiz.title,
+            emoji: playState.quiz.emoji,
+            questions: Array.isArray(playState.quiz.questions) ? playState.quiz.questions : []
+        },
+        quizId: String(playState.quiz.id),
+        current: playState.current,
+        score: playState.score,
+        wrong: playState.wrong,
+        answers: playState.answers
+    }));
+}
+
+function clearQuizProgress() {
+    sessionStorage.removeItem(QUIZ_PROGRESS_STORAGE_KEY);
+}
+
+function recomputeScoreFromAnswers() {
+    if (!playState?.quiz?.questions) {
+        playState.score = 0;
+        playState.wrong = 0;
+        return;
+    }
+    let score = 0;
+    let wrong = 0;
+    for (let i = 0; i < playState.quiz.questions.length; i++) {
+        const answerIdx = playState.answers?.[i];
+        if (typeof answerIdx !== 'number') continue;
+        if (answerIdx === playState.quiz.questions[i].answer) score++;
+        else wrong++;
+    }
+    playState.score = score;
+    playState.wrong = wrong;
+}
+
+function resumeQuizIfNeeded() {
+    const raw = sessionStorage.getItem(QUIZ_PROGRESS_STORAGE_KEY);
+    if (!raw) return false;
+
+    try {
+        const progress = JSON.parse(raw);
+        const quizSnapshot = progress.quiz;
+        const quizId = String(progress.quizId || quizSnapshot?.id || '');
+        const quizFromPage = globalThis.QUIZ_DATA_BY_ID?.[quizId];
+        const quiz = (quizSnapshot && Array.isArray(quizSnapshot.questions) && quizSnapshot.questions.length > 0)
+            ? quizSnapshot
+            : quizFromPage;
+        if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length === 0) {
+            clearQuizProgress();
+            return false;
+        }
+
+        const maxCurrent = Math.max(0, Math.min(Number(progress.current) || 0, quiz.questions.length - 1));
+        playState = {
+            quiz: { id: quiz.id, title: quiz.title, emoji: quiz.emoji, questions: quiz.questions },
+            current: maxCurrent,
+            score: 0,
+            wrong: 0,
+            answered: false,
+            answers: Array.isArray(progress.answers) ? progress.answers : []
+        };
+        recomputeScoreFromAnswers();
+        enableQuizNavigationLock();
+        goTo('quiz');
+        renderPlay();
+        return true;
+    } catch (_) {
+        clearQuizProgress();
+        return false;
+    }
+}
+window.resumeQuizIfNeeded = resumeQuizIfNeeded;
 
 function startQuizFromCard(el) {
     const id = el.dataset.id;
@@ -125,11 +262,14 @@ if (document.readyState === 'loading') {
 
 function startQuiz(quiz) {
     playState = { quiz, current: 0, score: 0, wrong: 0, answered: false, answers: [] };
+    enableQuizNavigationLock();
+    persistQuizProgress();
     goTo('quiz');
     renderPlay();
 }
 
 function renderPlay() {
+    recomputeScoreFromAnswers();
     const { quiz, current, score } = playState;
     const total = quiz.questions.length;
     const pct = Math.round((current / total) * 100);
@@ -147,11 +287,18 @@ function renderPlay() {
 
     const q = quiz.questions[current];
     playState.answered = false;
+    const imageUrl = resolveQuestionImageUrl(q);
+    const mediaBlock = imageUrl ? `
+            <div class="quiz-media-box">
+                <img src="${escHtml(imageUrl)}" alt="Immagine domanda" class="quiz-media-img" loading="lazy" referrerpolicy="no-referrer">
+            </div>
+    ` : '';
 
     document.getElementById('play-area').innerHTML = `
         <div class="quiz-card">
             <span class="quiz-emoji">${q.emoji || '❓'}</span>
             <p class="quiz-question">${escHtml(q.text)}</p>
+            ${mediaBlock}
             <div class="quiz-options">
                 ${q.options.map((opt, i) => `
                     <button class="quiz-opt" data-answer-index="${i}">
@@ -174,13 +321,28 @@ function renderPlay() {
     });
 
     document.getElementById('play-next')?.addEventListener('click', nextQuestion);
+
+    const existingAnswer = playState.answers[current];
+    if (typeof existingAnswer === 'number') {
+        pickAnswer(existingAnswer, true);
+    }
 }
 
-function pickAnswer(idx) {
-    if (playState.answered) return;
-    playState.answered = true;
+function resolveQuestionImageUrl(question) {
+    if (!question) return '';
+    if (question.imageUrl && question.imageUrl.trim()) return question.imageUrl.trim();
+    if (question.imageId && question.imageId.trim()) return '/api/quizzes/images/' + question.imageId.trim();
+    return '';
+}
 
+function pickAnswer(idx, restoring) {
+    if (playState.answered) return;
     const q = playState.quiz.questions[playState.current];
+    if (typeof idx !== 'number' || idx < 0 || idx >= q.options.length) return;
+    if (typeof playState.answers[playState.current] === 'number' && !restoring) {
+        return;
+    }
+    playState.answered = true;
     const btns = document.querySelectorAll('.quiz-opt');
     btns.forEach(b => b.disabled = true);
     btns[q.answer].classList.add('correct');
@@ -188,20 +350,22 @@ function pickAnswer(idx) {
 
     const fb = document.getElementById('play-feedback');
     if (idx === q.answer) {
-        playState.score++;
+        recomputeScoreFromAnswers();
         document.getElementById('play-score').textContent = '⭐ ' + playState.score;
         fb.innerHTML = `<div class="quiz-feedback correct">✅ ${escHtml(q.feedback) || 'Esatto!'}</div>`;
     } else {
-        playState.wrong++;
+        recomputeScoreFromAnswers();
         btns[idx].classList.add('wrong');
         const correctText = q.options[q.answer];
         fb.innerHTML = `<div class="quiz-feedback wrong">❌ Risposta sbagliata! La risposta corretta era: <strong>${escHtml(correctText)}</strong>${q.feedback ? '. ' + escHtml(q.feedback) : '.'}</div>`;
     }
+    persistQuizProgress();
     document.getElementById('play-next').style.display = 'block';
 }
 
 function nextQuestion() {
     playState.current++;
+    persistQuizProgress();
     if (playState.current >= playState.quiz.questions.length) showResult();
     else renderPlay();
 }
@@ -226,9 +390,14 @@ async function showResult() {
         markQuizCardAsLocked(quiz.id);
     } catch (e) {
         showStudentAlert('Errore nel salvataggio', e.message);
+        clearQuizProgress();
+        disableQuizNavigationLock();
         goTo('student');
         return;
     }
+
+    clearQuizProgress();
+    disableQuizNavigationLock();
 
     const pct = score / total;
     let emoji, title, stars;

@@ -16,16 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const themeForm = document.getElementById('themePreferenceForm');
-    const themeSelect = document.getElementById('themePreference');
-    if (themeForm && themeSelect) {
-        themeSelect.addEventListener('change', () => themeForm.submit());
-    }
+package org.saidone.quizmaker.repository;
 
-    const imageUploadForm = document.getElementById('imageUploadPreferenceForm');
-    const imageUploadCheckbox = document.getElementById('imageUploadEnabled');
-    if (imageUploadForm && imageUploadCheckbox) {
-        imageUploadCheckbox.addEventListener('change', () => imageUploadForm.submit());
-    }
-});
+import org.saidone.quizmaker.entity.UploadedImage;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface UploadedImageRepository extends JpaRepository<UploadedImage, UUID> {
+}

@@ -17,7 +17,8 @@
  */
 
 const EDITOR_LETTERS = ['A', 'B', 'C', 'D'];
-const EDITOR_EMOJIS = ['❓','🦕','🔥','🌍','🎨','📚','🧪','🧠','🏆','🌟','🦴','🌿'];
+const EDITOR_EMOJIS = ['❓', '🦕', '🔥', '🌍', '🎨', '📚', '🧪', '🧠', '🏆', '🌟', '🦴', '🌿'];
+const IMAGE_UPLOAD_ENABLED = document.querySelector('meta[name="quizmaker-image-upload-enabled"]')?.content === 'true';
 let currentQuestions = [];
 let quizId = null;
 
@@ -28,7 +29,7 @@ function initEditor(id, questionsJson) {
             currentQuestions = Array.isArray(questionsJson)
                 ? questionsJson
                 : JSON.parse(questionsJson);
-        } catch(e) {
+        } catch (e) {
             console.error('Errore parsing domande:', e);
             currentQuestions = [emptyQuestion()];
         }
@@ -42,6 +43,8 @@ function emptyQuestion() {
     return {
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length] || '❓',
+        imageUrl: '',
+        imageId: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -59,6 +62,8 @@ function addQuestion() {
     currentQuestions.push({
         text: '',
         emoji: EDITOR_EMOJIS[currentQuestions.length % EDITOR_EMOJIS.length],
+        imageUrl: '',
+        imageId: '',
         options: ['', '', '', ''],
         answer: 0,
         feedback: ''
@@ -67,7 +72,7 @@ function addQuestion() {
     setTimeout(() => {
         const cards = document.querySelectorAll('.q-card');
         if (cards.length > 0) {
-            cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            cards[cards.length - 1].scrollIntoView({behavior: 'smooth', block: 'start'});
             toggleCard(currentQuestions.length - 1);
         }
     }, 50);
@@ -105,6 +110,10 @@ function setCorrect(qIdx, optIdx) {
 
 function syncField(qIdx, field, value) {
     currentQuestions[qIdx][field] = value;
+    if (field === 'imageUrl') {
+        currentQuestions[qIdx].imageId = '';
+        updateQuestionImagePreview(qIdx);
+    }
     if (field === 'text') {
         const preview = document.getElementById('qpreview-' + qIdx);
         if (preview) {
@@ -148,6 +157,36 @@ function renderQuestions() {
                            data-question-index="${i}"
                            data-field="emoji">
                 </div>
+                ${IMAGE_UPLOAD_ENABLED ? `
+                    <div class="q-row">
+                        <div class="q-row-label">Immagine domanda (Incolla un URL oppure carica un file, opzionale)</div>
+                        <input type="url" class="input-field" placeholder="https://..."
+                               value="${escHtml(q.imageUrl || '')}"
+                               data-action="sync-field"
+                               data-question-index="${i}"
+                               data-field="imageUrl">
+                        <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+                            <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
+                            <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
+                                🖼️ Carica immagine
+                            </label>
+                        </div>
+                        <div class="quiz-media-box quiz-media-box-editor" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
+                            <button type="button"
+                                    class="qimage-remove-btn"
+                                    title="Rimuovi anteprima"
+                                    aria-label="Rimuovi anteprima immagine"
+                                    data-action="remove-image-preview"
+                                    data-question-index="${i}">✕</button>
+                            <img
+                                id="qimage-preview-img-${i}"
+                                class="quiz-media-img"
+                                src="${escHtml(q.imageUrl || '')}"
+                                alt="Anteprima immagine domanda ${i + 1}">
+                        </div>
+                        <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}" />
+                    </div>
+                ` : ''}
                 <div class="q-row">
                     <div class="q-row-label">Risposte — clicca la lettera per segnare quella corretta</div>
                     <div class="options-editor">
@@ -212,6 +251,132 @@ function renderQuestions() {
             syncOption(Number(input.dataset.questionIndex), Number(input.dataset.optionIndex), input.value);
         });
     });
+
+    list.querySelectorAll('[data-action="remove-image-preview"]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            await removeQuestionImagePreview(Number(button.dataset.questionIndex));
+        });
+    });
+
+    if (IMAGE_UPLOAD_ENABLED) {
+        list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
+            fileInput.addEventListener('change', async () => {
+                const qIdx = Number(fileInput.id.replace('image-file-', ''));
+                const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
+                const selectedFile = fileInput.files?.[0];
+                if (fileNameLabel) {
+                    fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato (in alternativa puoi incollare un URL sopra)';
+                }
+                if (selectedFile) {
+                    await uploadQuestionImage(qIdx);
+                }
+            });
+        });
+
+        currentQuestions.forEach((question, index) => {
+            if (question.imageUrl) {
+                updateQuestionImagePreview(index);
+            }
+        });
+    }
+}
+
+async function removeQuestionImagePreview(qIdx) {
+    const question = currentQuestions[qIdx];
+    if (!question) return;
+
+    const uploadedImageId = (question.imageId || '').trim();
+    if (uploadedImageId) {
+        try {
+            const response = await apiFetch('/api/quizzes/images/' + uploadedImageId, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(await response.text() || 'Errore durante la rimozione immagine.');
+            }
+            showToast('Immagine rimossa con successo');
+        } catch (error) {
+            showValidation(error.message || 'Errore durante la rimozione immagine.');
+            return;
+        }
+    }
+
+    question.imageUrl = '';
+    question.imageId = '';
+
+    const imageUrlInput = document.querySelector(`input[data-action="sync-field"][data-question-index="${qIdx}"][data-field="imageUrl"]`);
+    if (imageUrlInput) {
+        imageUrlInput.value = '';
+    }
+
+    updateQuestionImagePreview(qIdx);
+}
+
+function updateQuestionImagePreview(qIdx) {
+    const wrapper = document.getElementById('qimage-preview-' + qIdx);
+    const image = document.getElementById('qimage-preview-img-' + qIdx);
+    const emptyState = document.getElementById('qimage-preview-empty-' + qIdx);
+    if (!wrapper || !image || !emptyState) return;
+
+    const imageUrl = (currentQuestions[qIdx].imageUrl || '').trim();
+    if (!imageUrl) {
+        wrapper.style.display = 'none';
+        image.removeAttribute('src');
+        image.style.display = 'block';
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    wrapper.style.display = 'flex';
+    emptyState.style.display = 'none';
+    image.style.display = 'block';
+    image.src = imageUrl;
+
+    image.onload = () => {
+        image.style.display = 'block';
+        emptyState.style.display = 'none';
+    };
+    image.onerror = () => {
+        image.style.display = 'none';
+        emptyState.style.display = 'block';
+    };
+}
+
+async function uploadQuestionImage(qIdx) {
+    const fileInput = document.getElementById('image-file-' + qIdx);
+    if (!fileInput?.files || fileInput.files.length === 0) {
+        showValidation('Seleziona un file immagine da caricare.');
+        return;
+    }
+
+    const payload = new FormData();
+    payload.append('file', fileInput.files[0]);
+
+    showLoading('Caricamento immagine in corso...');
+    try {
+        const response = await apiFetch('/api/quizzes/images', {
+            method: 'POST',
+            body: payload
+        });
+        if (!response.ok) {
+            throw new Error(await response.text() || 'Errore durante il caricamento immagine.');
+        }
+        const data = await response.json();
+        currentQuestions[qIdx].imageId = data.id || '';
+        currentQuestions[qIdx].imageUrl = data.url || '';
+        showToast('Immagine caricata con successo');
+        renderQuestions();
+        setTimeout(() => {
+            const body = document.getElementById('qbody-' + qIdx);
+            const toggle = document.getElementById('qtoggle-' + qIdx);
+            if (body) body.classList.add('open');
+            if (toggle) toggle.classList.add('open');
+        }, 10);
+    } catch (error) {
+        showValidation(error.message || 'Errore durante il caricamento immagine.');
+    } finally {
+        hideLoading();
+    }
 }
 
 async function saveQuiz() {
@@ -219,7 +384,10 @@ async function saveQuiz() {
     const emoji = document.getElementById('quiz-emoji-input').value.trim() || '❓';
     const msgEl = document.getElementById('validation-msg');
 
-    if (!title) { showValidation('Inserisci un nome per il quiz!'); return; }
+    if (!title) {
+        showValidation('Inserisci un nome per il quiz!');
+        return;
+    }
 
     const valid = currentQuestions.filter(q =>
         q.text.trim() && q.options.filter(o => o.trim()).length >= 2
@@ -233,7 +401,7 @@ async function saveQuiz() {
         const filledOpts = q.options.filter(o => o.trim());
         const answerText = q.options[q.answer];
         const newAnswerIdx = filledOpts.indexOf(answerText);
-        return { ...q, options: filledOpts, answer: Math.max(0, newAnswerIdx) };
+        return {...q, options: filledOpts, answer: Math.max(0, newAnswerIdx)};
     });
 
     msgEl.style.display = 'none';
@@ -262,9 +430,11 @@ async function saveQuiz() {
 
         hideLoading();
         showToast(quizId ? 'Quiz aggiornato!' : 'Quiz salvato!');
-        setTimeout(() => { window.location.href = '/teacher'; }, 1000);
+        setTimeout(() => {
+            window.location.href = '/teacher';
+        }, 1000);
 
-    } catch(e) {
+    } catch (e) {
         hideLoading();
         showValidation('Errore: ' + e.message);
     }
@@ -285,6 +455,7 @@ function applyGeneratedQuiz(quiz) {
     currentQuestions = (quiz.questions || []).map((q, idx) => ({
         text: q.text || '',
         emoji: q.emoji || EDITOR_EMOJIS[idx % EDITOR_EMOJIS.length],
+        imageUrl: q.imageUrl || '',
         options: Array.isArray(q.options) ? q.options.slice(0, 4) : ['', '', '', ''],
         answer: Number.isInteger(q.answer) ? q.answer : 0,
         feedback: q.feedback || ''

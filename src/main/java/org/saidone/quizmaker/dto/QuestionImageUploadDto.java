@@ -16,16 +16,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const themeForm = document.getElementById('themePreferenceForm');
-    const themeSelect = document.getElementById('themePreference');
-    if (themeForm && themeSelect) {
-        themeSelect.addEventListener('change', () => themeForm.submit());
-    }
+package org.saidone.quizmaker.dto;
 
-    const imageUploadForm = document.getElementById('imageUploadPreferenceForm');
-    const imageUploadCheckbox = document.getElementById('imageUploadEnabled');
-    if (imageUploadForm && imageUploadCheckbox) {
-        imageUploadCheckbox.addEventListener('change', () => imageUploadForm.submit());
-    }
-});
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.UUID;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class QuestionImageUploadDto {
+    private UUID id;
+    private String url;
+}

@@ -31,6 +31,8 @@ server:
 app:
   db-backup:
     enabled: ${DB_BACKUP_ENABLED:true}
+  image-cleanup:
+    enabled: ${IMAGE_CLEANUP_ENABLED:true}
 
 logging:
   level:

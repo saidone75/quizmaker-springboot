@@ -84,6 +84,7 @@ public class TeacherAuthenticationService implements UserDetailsService {
                 .admin(false)
                 .aiEnabled(false)
                 .enabled(true)
+                .imageUploadEnabled(false)
                 .build());
     }
 
@@ -128,12 +129,21 @@ public class TeacherAuthenticationService implements UserDetailsService {
             throw new IllegalArgumentException("Insegnante non valido");
         }
 
-        String normalizedTheme = themePreference == null ? "" : themePreference.trim().toLowerCase();
+        val normalizedTheme = themePreference == null ? "" : themePreference.trim().toLowerCase();
         switch (normalizedTheme) {
             case "light", "dark", "zenburn", "true-summer" -> teacher.setThemePreference(normalizedTheme);
             case "" -> teacher.setThemePreference(null);
             default -> throw new IllegalArgumentException("Tema non valido");
         }
+        teacherRepository.save(teacher);
+    }
+
+    @Transactional
+    public void updateImageUploadPreference(Teacher teacher, boolean imageUploadEnabled) {
+        if (teacher == null) {
+            throw new IllegalArgumentException("Insegnante non valido");
+        }
+        teacher.setImageUploadEnabled(imageUploadEnabled);
         teacherRepository.save(teacher);
     }
 

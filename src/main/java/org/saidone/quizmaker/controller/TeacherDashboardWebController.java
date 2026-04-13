@@ -71,6 +71,11 @@ public class TeacherDashboardWebController {
         return preference == null || preference.isBlank() ? "light" : preference;
     }
 
+    @ModelAttribute("teacherImageUploadEnabled")
+    public boolean teacherImageUploadEnabled() {
+        return teacherAuthenticationService.getCurrentTeacher().isImageUploadEnabled();
+    }
+
     @GetMapping("/teacher")
     public String adminDashboard(Model model) {
         val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
@@ -272,6 +277,12 @@ public class TeacherDashboardWebController {
             redirectAttributes.addFlashAttribute("profileError", ex.getMessage());
             return "redirect:/teacher/profile";
         }
+    }
+
+    @PostMapping("/teacher/profile/image-upload")
+    public String updateTeacherImageUploadPreference(@RequestParam(value = "imageUploadEnabled", defaultValue = "false") boolean imageUploadEnabled) {
+        teacherAuthenticationService.updateImageUploadPreference(teacherAuthenticationService.getCurrentTeacher(), imageUploadEnabled);
+        return "redirect:/teacher/profile";
     }
 
     @GetMapping("/teacher/quiz/new")
