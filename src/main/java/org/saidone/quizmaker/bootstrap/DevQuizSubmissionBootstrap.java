@@ -37,6 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Component
 @DependsOn({"devQuizBootstrap", "devStudentBootstrap"})
@@ -112,14 +114,14 @@ public class DevQuizSubmissionBootstrap {
             return List.of();
         }
 
-        int minCorrectAnswers = (int) Math.ceil(totalQuestions * 0.6d);
+        int minCorrectAnswers = (int) Math.ceil(totalQuestions * 0.5d);
         int correctAnswersToGenerate = ThreadLocalRandom.current().nextInt(minCorrectAnswers, totalQuestions + 1);
 
         val answers = quiz.getQuestions().stream()
                 .map(question -> ThreadLocalRandom.current().nextInt(question.getOptions().size()))
-                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
 
-        val questionIndexes = java.util.stream.IntStream.range(0, totalQuestions)
+        val questionIndexes = IntStream.range(0, totalQuestions)
                 .boxed()
                 .collect(java.util.stream.Collectors.toList());
         Collections.shuffle(questionIndexes);
