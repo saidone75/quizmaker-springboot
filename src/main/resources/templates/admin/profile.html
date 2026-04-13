@@ -68,7 +68,7 @@
             <form th:action="@{/teacher/profile/image-upload}" method="post" id="imageUploadPreferenceForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-                <label class="form-label" for="imageUploadEnabled" style="display:flex;gap:10px;align-items:center;font-weight:700;">
+                <label class="teacher-ai-toggle-label" for="imageUploadEnabled">
                     <input type="checkbox" id="imageUploadEnabled" name="imageUploadEnabled" th:checked="${teacherImageUploadEnabled}">
                     Abilita campi immagine nell'editor quiz
                 </label>
