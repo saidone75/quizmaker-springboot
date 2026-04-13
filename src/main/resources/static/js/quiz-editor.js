@@ -171,7 +171,13 @@ function renderQuestions() {
                                 🖼️ Carica immagine
                             </label>
                         </div>
-                        <div class="quiz-media-box" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
+                        <div class="quiz-media-box quiz-media-box-editor" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
+                            <button type="button"
+                                    class="qimage-remove-btn"
+                                    title="Rimuovi anteprima"
+                                    aria-label="Rimuovi anteprima immagine"
+                                    data-action="remove-image-preview"
+                                    data-question-index="${i}">✕</button>
                             <img
                                 id="qimage-preview-img-${i}"
                                 class="quiz-media-img"
@@ -248,6 +254,12 @@ function renderQuestions() {
         });
     });
 
+    list.querySelectorAll('[data-action="remove-image-preview"]').forEach((button) => {
+        button.addEventListener('click', () => {
+            removeQuestionImagePreview(Number(button.dataset.questionIndex));
+        });
+    });
+
     if (IMAGE_UPLOAD_ENABLED) {
         list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
             fileInput.addEventListener('change', async () => {
@@ -269,6 +281,21 @@ function renderQuestions() {
             }
         });
     }
+}
+
+function removeQuestionImagePreview(qIdx) {
+    const question = currentQuestions[qIdx];
+    if (!question) return;
+
+    question.imageUrl = '';
+    question.imageId = '';
+
+    const imageUrlInput = document.querySelector(`input[data-action="sync-field"][data-question-index="${qIdx}"][data-field="imageUrl"]`);
+    if (imageUrlInput) {
+        imageUrlInput.value = '';
+    }
+
+    updateQuestionImagePreview(qIdx);
 }
 
 function updateQuestionImagePreview(qIdx) {

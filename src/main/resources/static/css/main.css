@@ -582,6 +582,31 @@ body[data-theme="dark"] .quiz-pick-item.is-locked .quiz-pick-name { color: var(-
     border-radius: inherit;
     display: block;
 }
+.quiz-media-box-editor {
+    position: relative;
+}
+.qimage-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.72);
+    color: #fff;
+    font-size: 16px;
+    line-height: 1;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.qimage-remove-btn:hover {
+    background: rgba(0, 0, 0, 0.86);
+}
 .quiz-options { display: grid; gap: 10px; }
 .quiz-opt {
     display: flex; align-items: center; gap: 12px; padding: 13px 16px;
