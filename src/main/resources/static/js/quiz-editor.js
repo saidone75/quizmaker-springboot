@@ -17,7 +17,7 @@
  */
 
 const EDITOR_LETTERS = ['A', 'B', 'C', 'D'];
-const EDITOR_EMOJIS = ['❓','🦕','🔥','🌍','🎨','📚','🧪','🧠','🏆','🌟','🦴','🌿'];
+const EDITOR_EMOJIS = ['❓', '🦕', '🔥', '🌍', '🎨', '📚', '🧪', '🧠', '🏆', '🌟', '🦴', '🌿'];
 const IMAGE_UPLOAD_ENABLED = document.querySelector('meta[name="quizmaker-image-upload-enabled"]')?.content === 'true';
 let currentQuestions = [];
 let quizId = null;
@@ -29,7 +29,7 @@ function initEditor(id, questionsJson) {
             currentQuestions = Array.isArray(questionsJson)
                 ? questionsJson
                 : JSON.parse(questionsJson);
-        } catch(e) {
+        } catch (e) {
             console.error('Errore parsing domande:', e);
             currentQuestions = [emptyQuestion()];
         }
@@ -72,7 +72,7 @@ function addQuestion() {
     setTimeout(() => {
         const cards = document.querySelectorAll('.q-card');
         if (cards.length > 0) {
-            cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            cards[cards.length - 1].scrollIntoView({behavior: 'smooth', block: 'start'});
             toggleCard(currentQuestions.length - 1);
         }
     }, 50);
@@ -159,12 +159,18 @@ function renderQuestions() {
                 </div>
                 ${IMAGE_UPLOAD_ENABLED ? `
                     <div class="q-row">
-                        <div class="q-row-label">Immagine domanda (URL, opzionale)</div>
+                        <div class="q-row-label">Immagine domanda (Incolla un URL oppure carica un file, opzionale)</div>
                         <input type="url" class="input-field" placeholder="https://..."
                                value="${escHtml(q.imageUrl || '')}"
                                data-action="sync-field"
                                data-question-index="${i}"
                                data-field="imageUrl">
+                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                            <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
+                            <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
+                                🖼️ Carica immagine
+                            </label>
+                        </div>
                         <div class="quiz-media-box" id="qimage-preview-${i}" style="${q.imageUrl ? '' : 'display:none;'}">
                             <img
                                 id="qimage-preview-img-${i}"
@@ -173,19 +179,7 @@ function renderQuestions() {
                                 alt="Anteprima immagine domanda ${i + 1}">
                         </div>
                         <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}">
-                            Anteprima non disponibile. Inserisci un URL immagine valido o carica un file.
-                        </div>
-                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
-                            <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
-                            <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
-                                🖼️ Scegli immagine
-                            </label>
-                            <span class="correct-hint" id="image-file-name-${i}" style="margin-top:0;">
-                                Nessun file selezionato
-                            </span>
-                        </div>
-                        <div class="correct-hint">
-                            ${q.imageId ? `Immagine caricata (id: <span>${escHtml(q.imageId)}</span>)` : 'Nessuna immagine caricata per questa domanda'}
+                            Immagine non presente.
                         </div>
                     </div>
                 ` : ''}
@@ -261,7 +255,7 @@ function renderQuestions() {
                 const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
                 const selectedFile = fileInput.files?.[0];
                 if (fileNameLabel) {
-                    fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato';
+                    fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato (in alternativa puoi incollare un URL sopra)';
                 }
                 if (selectedFile) {
                     await uploadQuestionImage(qIdx);
@@ -349,7 +343,10 @@ async function saveQuiz() {
     const emoji = document.getElementById('quiz-emoji-input').value.trim() || '❓';
     const msgEl = document.getElementById('validation-msg');
 
-    if (!title) { showValidation('Inserisci un nome per il quiz!'); return; }
+    if (!title) {
+        showValidation('Inserisci un nome per il quiz!');
+        return;
+    }
 
     const valid = currentQuestions.filter(q =>
         q.text.trim() && q.options.filter(o => o.trim()).length >= 2
@@ -363,7 +360,7 @@ async function saveQuiz() {
         const filledOpts = q.options.filter(o => o.trim());
         const answerText = q.options[q.answer];
         const newAnswerIdx = filledOpts.indexOf(answerText);
-        return { ...q, options: filledOpts, answer: Math.max(0, newAnswerIdx) };
+        return {...q, options: filledOpts, answer: Math.max(0, newAnswerIdx)};
     });
 
     msgEl.style.display = 'none';
@@ -392,9 +389,11 @@ async function saveQuiz() {
 
         hideLoading();
         showToast(quizId ? 'Quiz aggiornato!' : 'Quiz salvato!');
-        setTimeout(() => { window.location.href = '/teacher'; }, 1000);
+        setTimeout(() => {
+            window.location.href = '/teacher';
+        }, 1000);
 
-    } catch(e) {
+    } catch (e) {
         hideLoading();
         showValidation('Errore: ' + e.message);
     }
