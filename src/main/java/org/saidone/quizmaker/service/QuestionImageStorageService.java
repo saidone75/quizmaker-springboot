@@ -119,6 +119,20 @@ public class QuestionImageStorageService {
         }
     }
 
+    @Transactional
+    public void delete(UUID imageId) {
+        val image = uploadedImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Immagine non trovata: " + imageId));
+
+        try {
+            Files.deleteIfExists(Path.of(image.getFilePath()));
+        } catch (IOException exception) {
+            throw new IllegalStateException("Errore durante la rimozione del file immagine.", exception);
+        }
+
+        uploadedImageRepository.delete(image);
+    }
+
     public String imageUrl(UUID imageId) {
         return "/api/quizzes/images/" + imageId;
     }

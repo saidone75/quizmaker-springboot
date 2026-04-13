@@ -121,6 +121,12 @@ public class QuizApiController {
                 .body(resource);
     }
 
+    @DeleteMapping("/images/{imageId}")
+    public ResponseEntity<Void> deleteQuestionImage(@PathVariable UUID imageId) {
+        questionImageStorageService.delete(imageId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         quizService.delete(id, teacherAuthenticationService.getCurrentTeacher());
