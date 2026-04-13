@@ -37,6 +37,9 @@ app:
     cron: ${DB_BACKUP_CRON:0 0 2 * * *}
     directory: ${DB_BACKUP_DIRECTORY:./backups}
     retention-count: ${DB_BACKUP_RETENTION_COUNT:30}
+  image-cleanup:
+    enabled: ${IMAGE_CLEANUP_ENABLED:true}
+    cron: ${IMAGE_CLEANUP_CRON:0 0 3 * * *}
   turnstile:
     enabled: ${TURNSTILE_ENABLED:false}
     site-key: ${TURNSTILE_SITE_KEY:}
