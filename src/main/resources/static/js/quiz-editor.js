@@ -165,7 +165,7 @@ function renderQuestions() {
                                data-action="sync-field"
                                data-question-index="${i}"
                                data-field="imageUrl">
-                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+                        <div style="display:flex;gap:8px;margin-top:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
                             <input type="file" class="input-field" id="image-file-${i}" accept="image/*" style="display:none">
                             <label for="image-file-${i}" class="btn-add-question" style="width:auto;padding:10px 14px;border-style:solid;">
                                 🖼️ Carica immagine
