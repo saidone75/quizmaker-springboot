@@ -71,7 +71,7 @@ public class Teacher implements Serializable {
 
     @Default
     @Column(name = "image_upload_enabled", nullable = false)
-    private boolean imageUploadEnabled = true;
+    private boolean imageUploadEnabled = false;
 
     @CreationTimestamp
     @Convert(converter = LocalDateTimeColumnConverter.class)

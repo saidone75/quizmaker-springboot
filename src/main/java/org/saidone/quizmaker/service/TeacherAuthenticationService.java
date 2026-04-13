@@ -84,6 +84,7 @@ public class TeacherAuthenticationService implements UserDetailsService {
                 .admin(false)
                 .aiEnabled(false)
                 .enabled(true)
+                .imageUploadEnabled(false)
                 .build());
     }
 
