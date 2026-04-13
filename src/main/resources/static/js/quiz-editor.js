@@ -184,9 +184,7 @@ function renderQuestions() {
                                 src="${escHtml(q.imageUrl || '')}"
                                 alt="Anteprima immagine domanda ${i + 1}">
                         </div>
-                        <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}">
-                            Immagine non presente.
-                        </div>
+                        <div class="correct-hint" id="qimage-preview-empty-${i}" style="${q.imageUrl ? 'display:none;' : ''}" />
                     </div>
                 ` : ''}
                 <div class="q-row">
