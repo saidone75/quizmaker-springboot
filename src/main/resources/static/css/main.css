@@ -737,10 +737,36 @@ body[data-theme="dark"] .quiz-pick-item.is-locked .quiz-pick-name { color: var(-
     cursor: pointer;
 }
 .teacher-ai-toggle-label input[type="checkbox"] {
-    width: 15px;
-    height: 15px;
-    accent-color: var(--green);
+    width: 16px;
+    height: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--publish-checkbox-bg);
+    border: 2px solid var(--publish-checkbox-accent);
+    border-radius: 4px;
+    display: inline-grid;
+    place-content: center;
     cursor: pointer;
+}
+.teacher-ai-toggle-label input[type="checkbox"]::before {
+    content: "";
+    width: 4px;
+    height: 8px;
+    border-right: 2px solid var(--text-on-accent);
+    border-bottom: 2px solid var(--text-on-accent);
+    transform: rotate(45deg) scale(0);
+    transform-origin: center;
+    transition: transform 0.08s ease-in-out;
+}
+.teacher-ai-toggle-label input[type="checkbox"]:checked {
+    background: var(--publish-checkbox-accent);
+}
+.teacher-ai-toggle-label input[type="checkbox"]:checked::before {
+    transform: rotate(45deg) scale(1);
+}
+.teacher-ai-toggle-label input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--publish-checkbox-accent);
+    outline-offset: 1px;
 }
 .btn-teacher-action {
     height: 36px;
