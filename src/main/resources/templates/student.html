@@ -119,7 +119,7 @@
 <meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
 <meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
 <div id="student-page-data"
-     th:attr="data-quizzes-json=${quizzesJson},data-locked-quiz-ids-json=${lockedQuizIdsJson}"
+     th:attr="data-quizzes-json=${quizzesJson},data-locked-quiz-ids-json=${lockedQuizIdsJson},data-student-id=${studentId},data-student-name=${studentName}"
      hidden></div>
 <script th:src="@{/js/main.js}"></script>
 <script th:src="@{/js/quiz-player.js}"></script>

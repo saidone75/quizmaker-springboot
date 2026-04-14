@@ -145,9 +145,30 @@ function disableQuizNavigationLock() {
     }
 }
 
+function getActiveStudentContext() {
+    const student = window.ACTIVE_STUDENT_CONTEXT || {};
+    return {
+        id: String(student.id || '').trim(),
+        name: String(student.name || '').trim()
+    };
+}
+
+function isStoredProgressForActiveStudent(progress) {
+    const activeStudent = getActiveStudentContext();
+    const progressStudent = progress?.student || {};
+    const storedId = String(progressStudent.id || '').trim();
+    const storedName = String(progressStudent.name || '').trim();
+
+    if (!activeStudent.id && !activeStudent.name) return true;
+    if (storedId && activeStudent.id) return storedId === activeStudent.id;
+    if (storedName && activeStudent.name) return storedName === activeStudent.name;
+    return false;
+}
+
 function persistQuizProgress() {
     if (!playState?.quiz?.id) return;
     sessionStorage.setItem(QUIZ_PROGRESS_STORAGE_KEY, JSON.stringify({
+        student: getActiveStudentContext(),
         quiz: {
             id: playState.quiz.id,
             title: playState.quiz.title,
@@ -190,6 +211,10 @@ function resumeQuizIfNeeded() {
 
     try {
         const progress = JSON.parse(raw);
+        if (!isStoredProgressForActiveStudent(progress)) {
+            clearQuizProgress();
+            return false;
+        }
         const quizSnapshot = progress.quiz;
         const quizId = String(progress.quizId || quizSnapshot?.id || '');
         const quizFromPage = globalThis.QUIZ_DATA_BY_ID?.[quizId];
