@@ -25,9 +25,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.saidone.quizmaker.service.WikimediaResolver;
+import org.saidone.quizmaker.service.WikimediaSearcher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,7 +47,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
-    private final WikimediaResolver wikimediaResolver;
+    private final WikimediaSearcher wikimediaSearcher;
 
     @Value("${app.openai.api-key:}")
     private String apiKey;
@@ -117,11 +119,34 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             val root = objectMapper.readTree(responseBody);
             val rawJson = root.path("choices").path(0).path("message").path("content").asText();
             val generatedQuiz = objectMapper.readValue(rawJson, QuizDto.Request.class);
+            checkGeneratedImageUrls(generatedQuiz, Boolean.TRUE.equals(request.getIncludeAiImages()));
             randomizeAnswerPositions(generatedQuiz);
             return generatedQuiz;
         } catch (Exception e) {
             log.error("Risposta OpenAI non valida: {}", responseBody, e);
             throw new IllegalStateException("La risposta di OpenAI non è valida o è incompleta.");
+        }
+    }
+
+    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages) {
+        if (quiz == null || quiz.getQuestions() == null) {
+            return;
+        }
+        for (val question : quiz.getQuestions()) {
+            if (question == null) {
+                continue;
+            }
+            if (!includeAiImages) {
+                question.setImageUrl(Strings.EMPTY);
+                continue;
+            }
+
+            var resolvedUrl = Strings.EMPTY;
+            if (StringUtils.hasText(question.getImageUrl())) {
+                resolvedUrl = wikimediaResolver.getValidImageUrl(question.getImageUrl().trim());
+            }
+
+            question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
         }
     }
 
@@ -176,7 +201,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 request.getDifficulty(),
                 request.getTone(),
                 Boolean.TRUE.equals(request.getIncludeAiImages())
-                        ? "Per ogni domanda assegna imageUrl solo se esiste davvero su Wikimedia Commons. Usa ESCLUSIVAMENTE il formato https://commons.wikimedia.org/wiki/Special:FilePath/Nome_file.estensione (niente pagine /wiki/File:, niente miniature, niente parametri query). Se non sei sicuro che il file esista, imposta imageUrl a stringa vuota."
+                        ? "Per ogni domanda assegna imageUrl usando esclusivamente Wikimedia Commons. Preferisci URL diretti su upload.wikimedia.org o URL validi di File/ Special:FilePath su commons.wikimedia.org."
                         : "Imposta imageUrl sempre come stringa vuota.",
                 StringUtils.hasText(attachmentText) ? attachmentText : "N/A"
         );

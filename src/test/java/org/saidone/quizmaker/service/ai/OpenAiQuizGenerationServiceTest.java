@@ -33,7 +33,7 @@ class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldShuffleOptionsAndKeepCorrectAnswerConsistent() {
-        val service = new OpenAiQuizGenerationService(null, null);
+        val service = new OpenAiQuizGenerationService(null, null, null);
 
         val question = new QuestionDto();
         question.setText("Qual è il pianeta rosso?");
