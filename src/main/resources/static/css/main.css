@@ -1115,9 +1115,21 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     display: none; flex-direction: column; align-items: center; justify-content: center;
     z-index: 9999; font-family: var(--font-sans); gap: 12px;
 }
-#loading-overlay .loading-icon { font-size: 40px; animation: spin 1s linear infinite; }
+#loading-overlay .loading-icon {
+    font-size: 44px;
+    transform-origin: 50% 80%;
+    animation: wonderland-hop 1.25s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
 #loading-overlay p { font-size: 16px; font-weight: 700; color: var(--green-dark); }
-@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+@keyframes wonderland-hop {
+    0% { transform: translateY(0) rotate(0deg) scale(1); }
+    12% { transform: translateY(-10px) rotate(-8deg) scale(1.06); }
+    25% { transform: translateY(0) rotate(0deg) scale(1); }
+    45% { transform: translateY(-18px) rotate(180deg) scale(1.1); }
+    62% { transform: translateY(0) rotate(360deg) scale(1); }
+    78% { transform: translateY(-8px) rotate(-10deg) scale(1.04); }
+    100% { transform: translateY(0) rotate(0deg) scale(1); }
+}
 @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 @keyframes float { from { transform: translateY(0); } to { transform: translateY(-8px); } }
 

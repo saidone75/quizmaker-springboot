@@ -28,6 +28,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +59,7 @@ public class WikimediaSearcher {
         log.debug("Ricerca immagine per: {}", String.join(", ", keywords));
 
         try {
-            // 1) Cerca il primo file immagine su Wikimedia Commons
+            // 1) Cerca i file candidati su Wikimedia Commons
             val queryTerms = String.join(" OR ", normalizedKeywords);
             val searchRoot = wikimediaRestClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -66,7 +68,7 @@ public class WikimediaSearcher {
                             .queryParam("srsearch", queryTerms)
                             .queryParam("srnamespace", "6")
                             .queryParam("format", "json")
-                            .queryParam("srlimit", "1")
+                            .queryParam("srlimit", "10")
                             .build())
                     .retrieve()
                     .body(String.class);
@@ -78,39 +80,73 @@ public class WikimediaSearcher {
                 return null;
             }
 
-            val fileTitle = searchResults.get(0).path("title").asText();
+            // 2) Scorre i risultati e restituisce il primo URL di tipo immagine (esclude PDF e altri file)
+            for (val result : searchResults) {
+                val fileTitle = result.path("title").asText();
+                if (!StringUtils.hasText(fileTitle)) {
+                    continue;
+                }
 
-            // 2) Recupera i dettagli (URL) dell'immagine trovata
-            val infoRoot = wikimediaRestClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .queryParam("action", "query")
-                            .queryParam("titles", fileTitle)
-                            .queryParam("prop", "imageinfo")
-                            .queryParam("iiprop", "url")
-                            .queryParam("format", "json")
-                            .build())
-                    .retrieve()
-                    .body(String.class);
+                val infoRoot = wikimediaRestClient.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .queryParam("action", "query")
+                                .queryParam("titles", fileTitle)
+                                .queryParam("prop", "imageinfo")
+                                .queryParam("iiprop", "url|mime")
+                                .queryParam("format", "json")
+                                .build())
+                        .retrieve()
+                        .body(String.class);
 
-            val infoRootNode = objectMapper.readTree(infoRoot);
-            val pages = infoRootNode.path("query").path("pages");
+                val infoRootNode = objectMapper.readTree(infoRoot);
+                val pages = infoRootNode.path("query").path("pages");
 
-            if (pages.isEmpty()) {
-                return null;
+                if (pages.isEmpty()) {
+                    continue;
+                }
+
+                Iterator<com.fasterxml.jackson.databind.JsonNode> pageIterator = pages.elements();
+                if (!pageIterator.hasNext()) {
+                    continue;
+                }
+
+                val firstPage = pageIterator.next();
+                val imageInfo = firstPage.path("imageinfo");
+                if (imageInfo.isEmpty()) {
+                    continue;
+                }
+
+                val firstImageInfo = imageInfo.get(0);
+                val mimeType = firstImageInfo.path("mime").asText("");
+                val imageUrl = firstImageInfo.path("url").asText("");
+                if (isWebImage(mimeType, imageUrl)) {
+                    return imageUrl;
+                }
             }
 
-            val firstPage = pages.elements().next();
-            val imageInfo = firstPage.path("imageinfo");
-
-            if (imageInfo.isEmpty()) {
-                return null;
-            }
-
-            return imageInfo.get(0).path("url").asText();
+            return null;
         } catch (Exception e) {
             log.warn("Errore durante la ricerca immagine su Wikimedia: {}", e.getMessage());
             return null;
         }
+    }
+
+    private boolean isWebImage(String mimeType, String imageUrl) {
+        if (!StringUtils.hasText(imageUrl)) {
+            return false;
+        }
+
+        if (StringUtils.hasText(mimeType)) {
+            return mimeType.toLowerCase(Locale.ROOT).startsWith("image/");
+        }
+
+        val normalizedUrl = imageUrl.toLowerCase(Locale.ROOT);
+        return normalizedUrl.endsWith(".jpg")
+                || normalizedUrl.endsWith(".jpeg")
+                || normalizedUrl.endsWith(".png")
+                || normalizedUrl.endsWith(".gif")
+                || normalizedUrl.endsWith(".webp")
+                || normalizedUrl.endsWith(".svg");
     }
 
 }
