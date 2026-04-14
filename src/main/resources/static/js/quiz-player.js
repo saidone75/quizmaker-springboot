@@ -249,7 +249,7 @@ globalThis.resumeQuizIfNeeded = resumeQuizIfNeeded;
 
 function startQuizFromCard(el) {
     const id = el.dataset.id;
-    if ((globalThis.LOCKED_QUIZ_IDS && globalThis.LOCKED_QUIZ_IDS.has(String(id))) || el.dataset.locked === 'true') {
+    if (globalThis.LOCKED_QUIZ_IDS?.has(String(id)) || el.dataset.locked === 'true') {
         showStudentAlert();
         return;
     }
@@ -396,8 +396,8 @@ function renderPlay() {
 
 function resolveQuestionImageUrl(question) {
     if (!question) return '';
-    if (question.imageUrl && question.imageUrl.trim()) return question.imageUrl.trim();
-    if (question.imageId && question.imageId.trim()) return '/api/quizzes/images/' + question.imageId.trim();
+    if (question.imageUrl?.trim()) return question.imageUrl.trim();
+    if (question.imageId?.trim()) return '/api/quizzes/images/' + question.imageId.trim();
     return '';
 }
 

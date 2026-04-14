@@ -38,6 +38,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -113,7 +114,7 @@ public class QuizApiController {
     }
 
     @GetMapping("/images/{imageId}")
-    public ResponseEntity<?> getQuestionImage(@PathVariable UUID imageId) {
+    public ResponseEntity<Resource> getQuestionImage(@PathVariable UUID imageId) {
         val mediaType = questionImageStorageService.resolveMediaType(imageId);
         val resource = questionImageStorageService.load(imageId);
         return ResponseEntity.ok()
