@@ -22,18 +22,22 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.dto.QuizDto;
+import org.saidone.quizmaker.service.WikimediaSearcher;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldShuffleOptionsAndKeepCorrectAnswerConsistent() {
-        val service = new OpenAiQuizGenerationService(null, null);
+        val service = new OpenAiQuizGenerationService(null, null, null);
 
         val question = new QuestionDto();
         question.setText("Qual è il pianeta rosso?");
@@ -51,6 +55,26 @@ class OpenAiQuizGenerationServiceTest {
         assertThat(question.getOptions()).containsExactly("Mercurio", "Marte", "Venere", "Giove");
         assertThat(question.getAnswer()).isEqualTo(1);
         assertThat(question.getOptions().get(question.getAnswer())).isEqualTo("Marte");
+    }
+
+    @Test
+    void shouldResolveImageUrlFromEnglishKeywords() {
+        val wikimediaSearcher = mock(WikimediaSearcher.class);
+        when(wikimediaSearcher.searchImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        val service = new OpenAiQuizGenerationService(null, null, wikimediaSearcher);
+
+        val question = new QuestionDto();
+        question.setImageKeywords("red planet, mars astronomy");
+
+        val quiz = QuizDto.Request.builder()
+                .title("Spazio")
+                .emoji("🚀")
+                .questions(new ArrayList<>(List.of(question)))
+                .build();
+
+        service.checkGeneratedImageUrls(quiz, true);
+
+        assertThat(question.getImageUrl()).isEqualTo("https://upload.wikimedia.org/example.jpg");
     }
 
 }

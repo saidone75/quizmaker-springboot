@@ -1,0 +1,58 @@
+/*
+ * Alice's Simple Quiz Maker - fun quizzes for curious minds
+ * Copyright (C) 2026 Miss Alice & Saidone
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.saidone.quizmaker.service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
+import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class WikimediaSearcherTest {
+
+    private RestClient buildWikimediaClient() {
+        return RestClient.builder()
+                .baseUrl("https://commons.wikimedia.org/w/api.php")
+                .defaultHeader("User-Agent", "QuizMaker/1.0")
+                .defaultHeader("Accept", "application/json")
+                .build();
+    }
+
+    @Test
+    void shouldReturnRealImageUrlFromWikimedia() {
+        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
+
+        val imageUrl = searcher.searchImage(new String[]{"planet", "mars"});
+
+        assertThat(imageUrl)
+                .isNotBlank()
+                .startsWith("https://upload.wikimedia.org/");
+    }
+
+    @Test
+    void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
+        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
+
+        assertThat(searcher.searchImage(null)).isNull();
+        assertThat(searcher.searchImage(new String[]{})).isNull();
+        assertThat(searcher.searchImage(new String[]{" ", "\t"})).isNull();
+    }
+
+}

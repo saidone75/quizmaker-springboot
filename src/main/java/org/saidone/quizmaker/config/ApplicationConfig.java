@@ -52,4 +52,21 @@ public class ApplicationConfig {
                 .build();
     }
 
+    @Bean(name = "wikimediaRestTemplate")
+    public RestTemplate wikimediaRestTemplate() {
+        val requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
+        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+        return new RestTemplate(requestFactory);
+    }
+
+    @Bean(name = "wikimediaRestClient")
+    public RestClient wikimediaRestClient(@Qualifier("wikimediaRestTemplate") RestTemplate wikimediaRestTemplate) {
+        return RestClient.builder(wikimediaRestTemplate)
+                .baseUrl("https://commons.wikimedia.org/w/api.php")
+                .defaultHeader("User-Agent", "QuizMaker/1.0")
+                .defaultHeader("Accept", "application/json")
+                .build();
+    }
+
 }

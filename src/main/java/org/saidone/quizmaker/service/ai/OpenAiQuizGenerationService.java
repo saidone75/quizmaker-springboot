@@ -25,8 +25,10 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
+import org.saidone.quizmaker.service.WikimediaSearcher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -44,6 +46,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
+    private final WikimediaSearcher wikimediaSearcher;
 
     @Value("${app.openai.api-key:}")
     private String apiKey;
@@ -67,10 +70,11 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                   "items": {
                     "type": "object",
                     "additionalProperties": false,
-                    "required": ["text", "emoji", "imageUrl", "options", "answer", "feedback"],
+                    "required": ["text", "emoji", "imageKeywords", "imageUrl", "options", "answer", "feedback"],
                     "properties": {
                       "text": { "type": "string" },
                       "emoji": { "type": "string" },
+                      "imageKeywords": { "type": "string" },
                       "imageUrl": { "type": "string" },
                       "options": {
                         "type": "array",
@@ -115,11 +119,42 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             val root = objectMapper.readTree(responseBody);
             val rawJson = root.path("choices").path(0).path("message").path("content").asText();
             val generatedQuiz = objectMapper.readValue(rawJson, QuizDto.Request.class);
+            checkGeneratedImageUrls(generatedQuiz, Boolean.TRUE.equals(request.getIncludeAiImages()));
             randomizeAnswerPositions(generatedQuiz);
             return generatedQuiz;
         } catch (Exception e) {
             log.error("Risposta OpenAI non valida: {}", responseBody, e);
             throw new IllegalStateException("La risposta di OpenAI non è valida o è incompleta.");
+        }
+    }
+
+    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages) {
+        if (quiz == null || quiz.getQuestions() == null) {
+            return;
+        }
+        for (val question : quiz.getQuestions()) {
+            if (question == null) {
+                continue;
+            }
+            if (!includeAiImages) {
+                question.setImageKeywords(Strings.EMPTY);
+                question.setImageUrl(Strings.EMPTY);
+                continue;
+            }
+
+            var resolvedUrl = Strings.EMPTY;
+            if (StringUtils.hasText(question.getImageKeywords())) {
+                val keywords = Arrays.stream(question.getImageKeywords().split("[,\\s]+"))
+                        .map(String::trim)
+                        .filter(StringUtils::hasText)
+                        .distinct()
+                        .toArray(String[]::new);
+                if (keywords.length > 0) {
+                    resolvedUrl = wikimediaSearcher.searchImage(keywords);
+                }
+            }
+
+            question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
         }
     }
 
@@ -152,8 +187,9 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         val userPrompt = """
                 Crea un quiz in italiano e rispondi SOLO con JSON valido compatibile con QuizDto.Request.
                 Campi obbligatori: title (string), emoji (string), questions (array).
-                Ogni question deve avere: text, emoji, options (4 risposte), answer (indice corretto 0-3), feedback.
-                Ogni question può avere anche imageUrl (stringa URL assoluta).
+                Ogni question deve avere: text, emoji, imageKeywords, imageUrl, options (4 risposte), answer (indice corretto 0-3), feedback.
+                imageKeywords deve contenere 2-6 keyword in inglese, separate da spazio o virgola, pensate per cercare immagini su Wikimedia Commons.
+                imageUrl deve essere sempre stringa vuota: verrà valorizzato dal backend.
                 
                 Vincoli:
                 - Argomento: %s
@@ -174,8 +210,8 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 request.getDifficulty(),
                 request.getTone(),
                 Boolean.TRUE.equals(request.getIncludeAiImages())
-                        ? "Per ogni domanda assegna imageUrl solo se esiste davvero su Wikimedia Commons. Usa ESCLUSIVAMENTE il formato https://commons.wikimedia.org/wiki/Special:FilePath/Nome_file.estensione (niente pagine /wiki/File:, niente miniature, niente parametri query). Se non sei sicuro che il file esista, imposta imageUrl a stringa vuota."
-                        : "Imposta imageUrl sempre come stringa vuota.",
+                        ? "Per ogni domanda imposta imageKeywords in inglese, evitando URL e frasi lunghe. Imposta sempre imageUrl a stringa vuota."
+                        : "Imposta imageKeywords sempre come stringa vuota e imageUrl sempre come stringa vuota.",
                 StringUtils.hasText(attachmentText) ? attachmentText : "N/A"
         );
 
