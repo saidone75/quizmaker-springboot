@@ -1048,6 +1048,28 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 .btn-modal-confirm { background: var(--red); color: var(--text-on-accent); }
 .btn-modal-share { background: var(--green); color: var(--text-on-accent); }
 .modal-box-share { max-width: 460px; }
+.student-exit-modal-box {
+    max-width: 620px;
+    text-align: left;
+}
+.student-exit-modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+.btn-modal-student-exit {
+    background: var(--blue-dark);
+    color: #fff;
+    border: 2px solid #fff;
+    box-shadow: inset 0 0 0 2px var(--blue-dark);
+    min-width: 110px;
+}
+.btn-modal-student-cancel {
+    background: #bfd1f1;
+    color: #0b2a57;
+    border: none;
+    min-width: 110px;
+}
 .share-grid {
     text-align: left;
     margin-bottom: 1.25rem;

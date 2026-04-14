@@ -105,6 +105,17 @@
     </div>
 </div>
 
+<div id="student-exit-modal" class="modal-overlay" style="display:none" aria-hidden="true">
+    <div class="modal-box student-exit-modal-box">
+        <p class="modal-title">Vuoi uscire dal sito?</p>
+        <p class="modal-sub">Le modifiche apportate potrebbero non essere salvate.</p>
+        <div class="modal-btns student-exit-modal-btns">
+            <button class="btn-modal btn-modal-student-exit" id="student-exit-confirm-btn" type="button">Esci</button>
+            <button class="btn-modal btn-modal-student-cancel" id="student-exit-cancel-btn" type="button">Annulla</button>
+        </div>
+    </div>
+</div>
+
 <meta name="quizmaker-csrf-token" th:content="${_csrf.token}">
 <meta name="quizmaker-csrf-header" th:content="${_csrf.headerName}">
 <div id="student-page-data"

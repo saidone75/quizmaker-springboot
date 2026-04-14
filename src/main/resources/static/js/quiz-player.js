@@ -24,6 +24,45 @@ let isQuizNavigationLocked = false;
 let quizPopstateHandler = null;
 let quizBeforeUnloadHandler = null;
 let quizKeydownHandler = null;
+let skipLogoutConfirmation = false;
+
+function bindStudentLogoutConfirmation() {
+    const logoutForm = document.querySelector('form[action="/student/logout"]');
+    const exitModal = document.getElementById('student-exit-modal');
+    const confirmBtn = document.getElementById('student-exit-confirm-btn');
+    const cancelBtn = document.getElementById('student-exit-cancel-btn');
+    if (!logoutForm || !exitModal || !confirmBtn || !cancelBtn) return;
+
+    const closeExitModal = function () {
+        exitModal.style.display = 'none';
+        exitModal.setAttribute('aria-hidden', 'true');
+    };
+
+    const openExitModal = function () {
+        exitModal.style.display = 'flex';
+        exitModal.setAttribute('aria-hidden', 'false');
+    };
+
+    logoutForm.addEventListener('submit', function (event) {
+        if (skipLogoutConfirmation || !isQuizNavigationLocked) {
+            return;
+        }
+        event.preventDefault();
+        openExitModal();
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        skipLogoutConfirmation = true;
+        disableQuizNavigationLock();
+        closeExitModal();
+        logoutForm.submit();
+    });
+
+    cancelBtn.addEventListener('click', closeExitModal);
+    exitModal.addEventListener('click', function (event) {
+        if (event.target === exitModal) closeExitModal();
+    });
+}
 
 function showStudentAlert(title, message) {
     const alertBox = document.getElementById('student-alert');
@@ -256,8 +295,10 @@ function bindQuizPickerCards() {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindQuizPickerCards);
+    document.addEventListener('DOMContentLoaded', bindStudentLogoutConfirmation);
 } else {
     bindQuizPickerCards();
+    bindStudentLogoutConfirmation();
 }
 
 function startQuiz(quiz) {
