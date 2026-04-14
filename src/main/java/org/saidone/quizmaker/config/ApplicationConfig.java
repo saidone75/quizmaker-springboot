@@ -55,8 +55,8 @@ public class ApplicationConfig {
     @Bean(name = "wikimediaRestTemplate")
     public RestTemplate wikimediaRestTemplate() {
         val requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout((int) Duration.ofSeconds(5).toMillis());
-        requestFactory.setReadTimeout((int) Duration.ofSeconds(5).toMillis());
+        requestFactory.setConnectTimeout((int) Duration.ofSeconds(15).toMillis());
+        requestFactory.setReadTimeout((int) Duration.ofSeconds(30).toMillis());
         return new RestTemplate(requestFactory);
     }
 
