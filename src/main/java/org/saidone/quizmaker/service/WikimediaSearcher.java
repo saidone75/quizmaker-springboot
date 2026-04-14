@@ -19,69 +19,97 @@
 package org.saidone.quizmaker.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class WikimediaSearcher {
 
-    private static final String API_ENDPOINT = "https://commons.wikimedia.org/w/api.php";
-    private static final String USER_AGENT = "QuizMaker/1.0";
+    private final RestClient wikimediaRestClient;
 
-    private final ObjectMapper objectMapper;
+    public WikimediaSearcher(@Qualifier("wikimediaRestClient") RestClient wikimediaRestClient) {
+        this.wikimediaRestClient = wikimediaRestClient;
+    }
 
     public String searchImage(String[] keywords) {
-        log.debug("Ricerca immagine per: {}", String.join(", ", keywords));
+        if (keywords == null || keywords.length == 0) {
+            return null;
+        }
+
+        val normalizedKeywords = Arrays.stream(keywords)
+                .filter(keyword -> keyword != null && !keyword.isBlank())
+                .map(String::trim)
+                .toArray(String[]::new);
+
+        if (normalizedKeywords.length == 0) {
+            return null;
+        }
+
+        log.debug("Ricerca immagine per: {}", String.join(", ", normalizedKeywords));
+
         try {
-            val queryTerms = String.join(" OR ", keywords);
-            val searchUrl = String.format("%s?action=query&list=search&srsearch=%s&srnamespace=6&format=json&srlimit=1",
-                    API_ENDPOINT,
-                    URLEncoder.encode(queryTerms, StandardCharsets.UTF_8));
-            val searchRoot = fetchData(searchUrl);
+            // 1) Cerco un file su Wikimedia Commons che combaci con le keyword.
+            val queryTerms = String.join(" OR ", normalizedKeywords);
+            val searchRoot = fetchData(buildSearchQuery(queryTerms));
             val searchResults = searchRoot.path("query").path("search");
+
             if (searchResults.isEmpty()) {
                 return null;
             }
+
+            // 2) Dal primo risultato estraggo il titolo del file e chiedo l'URL dell'immagine.
             val fileTitle = searchResults.get(0).path("title").asText();
-            val infoUrl = String.format("%s?action=query&titles=%s&prop=imageinfo&iiprop=url&format=json",
-                    API_ENDPOINT,
-                    URLEncoder.encode(fileTitle, StandardCharsets.UTF_8));
-            val infoRoot = fetchData(infoUrl);
+            val infoRoot = fetchData(buildImageInfoQuery(fileTitle));
             val pages = infoRoot.path("query").path("pages");
+
             if (pages.isEmpty()) {
                 return null;
             }
+
             val firstPage = pages.elements().next();
             val imageInfo = firstPage.path("imageinfo");
+
             if (imageInfo.isEmpty()) {
                 return null;
             }
+
             return imageInfo.get(0).path("url").asText();
         } catch (Exception e) {
-            System.err.println("Errore durante la ricerca: " + e.getMessage());
+            log.warn("Errore durante la ricerca dell'immagine Wikimedia", e);
             return null;
         }
     }
 
-    private JsonNode fetchData(String urlString) throws IOException {
-        val url = new URL(urlString);
-        val conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("User-Agent", USER_AGENT);
-        conn.setRequestProperty("Accept", "application/json");
-        return objectMapper.readTree(conn.getInputStream());
+    private String buildSearchQuery(String queryTerms) {
+        return String.format(
+                "?action=query&list=search&srsearch=%s&srnamespace=6&format=json&srlimit=1",
+                URLEncoder.encode(queryTerms, StandardCharsets.UTF_8)
+        );
+    }
+
+    private String buildImageInfoQuery(String fileTitle) {
+        return String.format(
+                "?action=query&titles=%s&prop=imageinfo&iiprop=url&format=json",
+                URLEncoder.encode(fileTitle, StandardCharsets.UTF_8)
+        );
+    }
+
+    private JsonNode fetchData(String queryString) {
+        val response = wikimediaRestClient.get()
+                .uri(queryString)
+                .retrieve()
+                .body(JsonNode.class);
+
+        return response != null ? response : JsonNodeFactory.instance.objectNode();
     }
 
 }
-
