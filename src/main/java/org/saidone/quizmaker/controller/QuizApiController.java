@@ -23,7 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
-import org.saidone.quizmaker.dto.QuestionImageImportRequestDto;
 import org.saidone.quizmaker.dto.QuestionImageUploadDto;
 import org.saidone.quizmaker.dto.QuizSubmissionDto;
 import org.saidone.quizmaker.service.DocumentTextExtractorService;
@@ -111,16 +110,6 @@ public class QuizApiController {
             throw new IllegalStateException("Caricamento immagini disabilitato nel profilo insegnante.");
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(questionImageStorageService.store(file));
-    }
-
-    @PostMapping(value = "/images/import", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<QuestionImageUploadDto> importQuestionImageFromUrl(
-            @Valid @RequestBody QuestionImageImportRequestDto request) {
-        val teacher = teacherAuthenticationService.getCurrentTeacher();
-        if (!teacher.isImageUploadEnabled()) {
-            throw new IllegalStateException("Caricamento immagini disabilitato nel profilo insegnante.");
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(questionImageStorageService.storeFromUrl(request.getImageUrl()));
     }
 
     @GetMapping("/images/{imageId}")

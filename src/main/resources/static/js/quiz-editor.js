@@ -22,7 +22,6 @@ const IMAGE_UPLOAD_ENABLED = document.querySelector('meta[name="quizmaker-image-
 let currentQuestions = [];
 let quizId = null;
 let editorEventBindingsInitialized = false;
-const imageUrlImportDebounceMap = new Map();
 
 function initEditor(id, questionsJson) {
     quizId = id;
@@ -283,29 +282,13 @@ function initializeEditorListEvents(list) {
         list.addEventListener('change', async (event) => {
             const target = event.target;
             if (!(target instanceof HTMLInputElement)) return;
+            if (target.type !== 'file' || !target.id.startsWith('image-file-')) return;
 
-            if (target.type === 'file' && target.id.startsWith('image-file-')) {
-                const qIdx = Number(target.id.replace('image-file-', ''));
-                const selectedFile = target.files?.[0];
-                if (selectedFile) {
-                    await uploadQuestionImage(qIdx);
-                }
-                return;
+            const qIdx = Number(target.id.replace('image-file-', ''));
+            const selectedFile = target.files?.[0];
+            if (selectedFile) {
+                await uploadQuestionImage(qIdx);
             }
-
-            if (target.dataset.action === 'sync-field' && target.dataset.field === 'imageUrl') {
-                queueImageUrlImport(Number(target.dataset.questionIndex), target.value);
-            }
-        });
-
-        list.addEventListener('paste', (event) => {
-            const target = event.target;
-            if (!(target instanceof HTMLInputElement)) return;
-            if (target.dataset.action !== 'sync-field' || target.dataset.field !== 'imageUrl') return;
-
-            setTimeout(() => {
-                queueImageUrlImport(Number(target.dataset.questionIndex), target.value);
-            }, 0);
         });
     }
 
@@ -371,75 +354,6 @@ function updateQuestionImagePreview(qIdx) {
         image.style.display = 'none';
         emptyState.style.display = 'block';
     };
-}
-
-
-async function importQuestionImageFromUrl(qIdx, rawUrl) {
-    const imageUrl = (rawUrl || '').trim();
-    if (!imageUrl || imageUrl.startsWith('/api/quizzes/images/')) {
-        return;
-    }
-
-    let parsedUrl;
-    try {
-        parsedUrl = new URL(imageUrl);
-    } catch (error) {
-        return;
-    }
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-        return;
-    }
-
-    showLoading('Download immagine in corso...');
-    try {
-        const response = await apiFetch('/api/quizzes/images/import', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({imageUrl})
-        });
-        if (!response.ok) {
-            throw new Error(await response.text() || 'Errore durante il download immagine.');
-        }
-
-        const data = await response.json();
-        currentQuestions[qIdx].imageId = data.id || '';
-        currentQuestions[qIdx].imageUrl = data.url || imageUrl;
-
-        const imageUrlInput = document.querySelector(`input[data-action="sync-field"][data-question-index="${qIdx}"][data-field="imageUrl"]`);
-        if (imageUrlInput) {
-            imageUrlInput.value = currentQuestions[qIdx].imageUrl;
-        }
-
-        showToast('Immagine importata con successo');
-        renderQuestions();
-        setTimeout(() => {
-            const body = document.getElementById('qbody-' + qIdx);
-            const toggle = document.getElementById('qtoggle-' + qIdx);
-            if (body) body.classList.add('open');
-            if (toggle) toggle.classList.add('open');
-        }, 10);
-    } catch (error) {
-        showValidation(error.message || 'Errore durante il download immagine.');
-    } finally {
-        hideLoading();
-    }
-}
-
-function queueImageUrlImport(qIdx, imageUrl) {
-    const pending = imageUrlImportDebounceMap.get(qIdx);
-    if (pending) {
-        clearTimeout(pending);
-    }
-
-    const timeoutId = setTimeout(() => {
-        imageUrlImportDebounceMap.delete(qIdx);
-        importQuestionImageFromUrl(qIdx, imageUrl);
-    }, 250);
-
-    imageUrlImportDebounceMap.set(qIdx, timeoutId);
 }
 
 async function uploadQuestionImage(qIdx) {
