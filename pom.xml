@@ -31,7 +31,7 @@
 
     <groupId>com.quizmaker</groupId>
     <artifactId>quizmaker</artifactId>
-    <version>1.0.0-beta.14</version>
+    <version>1.0.0-beta.16</version>
     <name>Alice's Simple Quiz Maker</name>
     <description>Alice's Simple Quiz Maker - App per quiz scolastici</description>
 
