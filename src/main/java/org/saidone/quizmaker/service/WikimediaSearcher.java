@@ -39,20 +39,25 @@ public class WikimediaSearcher {
     private final ObjectMapper objectMapper;
 
     public String searchImage(String[] keywords) {
+        // Nessuna keyword => nessuna ricerca
         if (keywords == null || keywords.length == 0) {
             return null;
         }
 
+        // Normalizza l'input eliminando valori vuoti e spazi superflui
         val normalizedKeywords = Arrays.stream(keywords)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
                 .toArray(String[]::new);
+
         if (normalizedKeywords.length == 0) {
             return null;
         }
 
         log.debug("Ricerca immagine per: {}", String.join(", ", keywords));
+
         try {
+            // 1) Cerca il primo file immagine su Wikimedia Commons
             val queryTerms = String.join(" OR ", normalizedKeywords);
             val searchRoot = wikimediaRestClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -65,12 +70,17 @@ public class WikimediaSearcher {
                             .build())
                     .retrieve()
                     .body(String.class);
+
             val searchRootNode = objectMapper.readTree(searchRoot);
             val searchResults = searchRootNode.path("query").path("search");
+
             if (searchResults.isEmpty()) {
                 return null;
             }
+
             val fileTitle = searchResults.get(0).path("title").asText();
+
+            // 2) Recupera i dettagli (URL) dell'immagine trovata
             val infoRoot = wikimediaRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .queryParam("action", "query")
@@ -81,16 +91,21 @@ public class WikimediaSearcher {
                             .build())
                     .retrieve()
                     .body(String.class);
+
             val infoRootNode = objectMapper.readTree(infoRoot);
             val pages = infoRootNode.path("query").path("pages");
+
             if (pages.isEmpty()) {
                 return null;
             }
+
             val firstPage = pages.elements().next();
             val imageInfo = firstPage.path("imageinfo");
+
             if (imageInfo.isEmpty()) {
                 return null;
             }
+
             return imageInfo.get(0).path("url").asText();
         } catch (Exception e) {
             log.warn("Errore durante la ricerca immagine su Wikimedia: {}", e.getMessage());
