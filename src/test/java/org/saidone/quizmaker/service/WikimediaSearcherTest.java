@@ -18,62 +18,28 @@
 
 package org.saidone.quizmaker.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.val;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class WikimediaSearcherTest {
 
     @Test
-    void shouldReturnImageUrlWhenWikimediaReturnsSearchAndImageInfo() {
-        var wikimediaRestClient = mock(RestClient.class, RETURNS_DEEP_STUBS);
-        var searcher = new WikimediaSearcher(wikimediaRestClient);
+    void shouldReturnRealImageUrlFromWikimedia() {
+        val searcher = new WikimediaSearcher(new ObjectMapper());
 
-        var searchResponse = """
-                {
-                  "query": {
-                    "search": [
-                      {
-                        "title": "File:Mars Valles Marineris.jpeg"
-                      }
-                    ]
-                  }
-                }
-                """;
+        val imageUrl = searcher.searchImage(new String[]{"car", "red"});
 
-        var imageInfoResponse = """
-                {
-                  "query": {
-                    "pages": {
-                      "123": {
-                        "imageinfo": [
-                          {
-                            "url": "https://upload.wikimedia.org/example.jpg"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-                """;
-
-        when(wikimediaRestClient.get().uri(anyString()).retrieve().body(String.class))
-                .thenReturn(searchResponse, imageInfoResponse);
-
-        var imageUrl = searcher.searchImage(new String[]{"mars", "planet"});
-
-        assertThat(imageUrl).isEqualTo("https://upload.wikimedia.org/example.jpg");
+        assertThat(imageUrl)
+                .isNotBlank()
+                .startsWith("https://upload.wikimedia.org/");
     }
 
     @Test
     void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
-        var wikimediaRestClient = mock(RestClient.class, RETURNS_DEEP_STUBS);
-        var searcher = new WikimediaSearcher(wikimediaRestClient);
+        val searcher = new WikimediaSearcher(new ObjectMapper());
 
         assertThat(searcher.searchImage(null)).isNull();
         assertThat(searcher.searchImage(new String[]{})).isNull();
