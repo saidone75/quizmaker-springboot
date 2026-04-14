@@ -42,6 +42,7 @@ public class WikimediaSearcher {
     private final ObjectMapper objectMapper;
 
     public String searchImage(String[] keywords) {
+        log.debug("Ricerca immagine per: {}", String.join(", ", keywords));
         try {
             val queryTerms = String.join(" OR ", keywords);
             val searchUrl = String.format("%s?action=query&list=search&srsearch=%s&srnamespace=6&format=json&srlimit=1",
@@ -53,27 +54,20 @@ public class WikimediaSearcher {
                 return null;
             }
             val fileTitle = searchResults.get(0).path("title").asText();
-
             val infoUrl = String.format("%s?action=query&titles=%s&prop=imageinfo&iiprop=url&format=json",
                     API_ENDPOINT,
                     URLEncoder.encode(fileTitle, StandardCharsets.UTF_8));
-
             val infoRoot = fetchData(infoUrl);
-
             val pages = infoRoot.path("query").path("pages");
             if (pages.isEmpty()) {
                 return null;
             }
-
             val firstPage = pages.elements().next();
             val imageInfo = firstPage.path("imageinfo");
-
             if (imageInfo.isEmpty()) {
                 return null;
             }
-
             return imageInfo.get(0).path("url").asText();
-
         } catch (Exception e) {
             System.err.println("Errore durante la ricerca: " + e.getMessage());
             return null;
@@ -86,8 +80,6 @@ public class WikimediaSearcher {
         conn.setRequestMethod("GET");
         conn.setRequestProperty("User-Agent", USER_AGENT);
         conn.setRequestProperty("Accept", "application/json");
-
-        // ObjectMapper può leggere direttamente dall'InputStream
         return objectMapper.readTree(conn.getInputStream());
     }
 
