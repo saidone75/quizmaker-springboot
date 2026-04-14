@@ -19,6 +19,7 @@
 package org.saidone.quizmaker.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -33,6 +34,8 @@ import java.util.Arrays;
 @Service
 @Slf4j
 public class WikimediaSearcher {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final RestClient wikimediaRestClient;
 
@@ -104,12 +107,21 @@ public class WikimediaSearcher {
     }
 
     private JsonNode fetchData(String queryString) {
-        val response = wikimediaRestClient.get()
+        val responseBody = wikimediaRestClient.get()
                 .uri(queryString)
                 .retrieve()
-                .body(JsonNode.class);
+                .body(String.class);
 
-        return response != null ? response : JsonNodeFactory.instance.objectNode();
+        if (responseBody == null || responseBody.isBlank()) {
+            return JsonNodeFactory.instance.objectNode();
+        }
+
+        try {
+            return OBJECT_MAPPER.readTree(responseBody);
+        } catch (Exception e) {
+            log.warn("Impossibile leggere la risposta JSON Wikimedia", e);
+            return JsonNodeFactory.instance.objectNode();
+        }
     }
 
 }
