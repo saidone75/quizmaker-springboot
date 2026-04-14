@@ -28,7 +28,6 @@ import lombok.val;
 import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
-import org.saidone.quizmaker.service.WikimediaResolver;
 import org.saidone.quizmaker.service.WikimediaSearcher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -143,7 +142,8 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
             var resolvedUrl = Strings.EMPTY;
             if (StringUtils.hasText(question.getImageUrl())) {
-                resolvedUrl = wikimediaResolver.getValidImageUrl(question.getImageUrl().trim());
+                val keywords = question.getImageUrl().split(" ");
+                resolvedUrl = wikimediaSearcher.searchImage(keywords);
             }
 
             question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
