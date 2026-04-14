@@ -727,6 +727,14 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     color: var(--text);
     cursor: pointer;
 }
+.ai-image-toggle-label {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 42px;
+    padding: 10px 12px;
+    line-height: 1.35;
+}
 .teacher-ai-toggle-label input[type="checkbox"],
 .btn-publish-toggle input[type="checkbox"] {
     width: 16px;

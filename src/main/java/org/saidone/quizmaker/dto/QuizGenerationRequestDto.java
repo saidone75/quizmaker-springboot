@@ -36,4 +36,6 @@ public class QuizGenerationRequestDto {
 
     @NotBlank(message = "Il tono è obbligatorio")
     private String tone;
+
+    private Boolean includeAiImages = false;
 }
