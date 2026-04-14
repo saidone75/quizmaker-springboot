@@ -21,6 +21,7 @@ const EDITOR_EMOJIS = ['❓', '🦕', '🔥', '🌍', '🎨', '📚', '🧪', '�
 const IMAGE_UPLOAD_ENABLED = document.querySelector('meta[name="quizmaker-image-upload-enabled"]')?.content === 'true';
 let currentQuestions = [];
 let quizId = null;
+let editorEventBindingsInitialized = false;
 
 function initEditor(id, questionsJson) {
     quizId = id;
@@ -221,64 +222,77 @@ function renderQuestions() {
         </div>
     `).join('');
 
-    list.querySelectorAll('[data-action="toggle-card"]').forEach((header) => {
-        header.addEventListener('click', () => {
-            toggleCard(Number(header.dataset.questionIndex));
-        });
-    });
-
-    list.querySelectorAll('[data-action="delete-question"]').forEach((button) => {
-        button.addEventListener('click', (event) => {
-            event.stopPropagation();
-            deleteQuestion(Number(button.dataset.questionIndex));
-        });
-    });
-
-    list.querySelectorAll('[data-action="set-correct"]').forEach((optionLetter) => {
-        optionLetter.addEventListener('click', () => {
-            setCorrect(Number(optionLetter.dataset.questionIndex), Number(optionLetter.dataset.optionIndex));
-        });
-    });
-
-    list.querySelectorAll('[data-action="sync-field"]').forEach((input) => {
-        input.addEventListener('input', () => {
-            syncField(Number(input.dataset.questionIndex), input.dataset.field, input.value);
-        });
-    });
-
-    list.querySelectorAll('[data-action="sync-option"]').forEach((input) => {
-        input.addEventListener('input', () => {
-            syncOption(Number(input.dataset.questionIndex), Number(input.dataset.optionIndex), input.value);
-        });
-    });
-
-    list.querySelectorAll('[data-action="remove-image-preview"]').forEach((button) => {
-        button.addEventListener('click', async () => {
-            await removeQuestionImagePreview(Number(button.dataset.questionIndex));
-        });
-    });
+    initializeEditorListEvents(list);
 
     if (IMAGE_UPLOAD_ENABLED) {
-        list.querySelectorAll('input[type="file"][id^="image-file-"]').forEach((fileInput) => {
-            fileInput.addEventListener('change', async () => {
-                const qIdx = Number(fileInput.id.replace('image-file-', ''));
-                const fileNameLabel = document.getElementById('image-file-name-' + qIdx);
-                const selectedFile = fileInput.files?.[0];
-                if (fileNameLabel) {
-                    fileNameLabel.textContent = selectedFile ? selectedFile.name : 'Nessun file selezionato (in alternativa puoi incollare un URL sopra)';
-                }
-                if (selectedFile) {
-                    await uploadQuestionImage(qIdx);
-                }
-            });
-        });
-
         currentQuestions.forEach((question, index) => {
             if (question.imageUrl) {
                 updateQuestionImagePreview(index);
             }
         });
     }
+}
+
+function initializeEditorListEvents(list) {
+    if (editorEventBindingsInitialized) return;
+
+    list.addEventListener('click', async (event) => {
+        const target = event.target;
+        if (!(target instanceof Element)) return;
+
+        const deleteButton = target.closest('[data-action="delete-question"]');
+        if (deleteButton) {
+            event.stopPropagation();
+            deleteQuestion(Number(deleteButton.dataset.questionIndex));
+            return;
+        }
+
+        const removeImageButton = target.closest('[data-action="remove-image-preview"]');
+        if (removeImageButton) {
+            await removeQuestionImagePreview(Number(removeImageButton.dataset.questionIndex));
+            return;
+        }
+
+        const setCorrectButton = target.closest('[data-action="set-correct"]');
+        if (setCorrectButton) {
+            setCorrect(Number(setCorrectButton.dataset.questionIndex), Number(setCorrectButton.dataset.optionIndex));
+            return;
+        }
+
+        const header = target.closest('[data-action="toggle-card"]');
+        if (header) {
+            toggleCard(Number(header.dataset.questionIndex));
+        }
+    });
+
+    list.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement)) return;
+
+        if (target.dataset.action === 'sync-field') {
+            syncField(Number(target.dataset.questionIndex), target.dataset.field, target.value);
+            return;
+        }
+        if (target.dataset.action === 'sync-option') {
+            syncOption(Number(target.dataset.questionIndex), Number(target.dataset.optionIndex), target.value);
+        }
+    });
+
+    if (IMAGE_UPLOAD_ENABLED) {
+        list.addEventListener('change', async (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            if (target.type !== 'file' || !target.id.startsWith('image-file-')) return;
+
+            const qIdx = Number(target.id.replace('image-file-', ''));
+            const selectedFile = target.files?.[0];
+            if (selectedFile) {
+                await uploadQuestionImage(qIdx);
+            }
+        });
+    }
+
+    editorEventBindingsInitialized = true;
 }
 
 async function removeQuestionImagePreview(qIdx) {
