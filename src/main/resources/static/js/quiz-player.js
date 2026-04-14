@@ -94,11 +94,11 @@ function enableQuizNavigationLock() {
     if (isQuizNavigationLocked) return;
     isQuizNavigationLocked = true;
 
-    history.pushState({ quizInProgress: true }, '', window.location.href);
+    history.pushState({ quizInProgress: true }, '', globalThis.location.href);
 
     quizPopstateHandler = function () {
         if (!isQuizNavigationLocked) return;
-        history.pushState({ quizInProgress: true }, '', window.location.href);
+        history.pushState({ quizInProgress: true }, '', globalThis.location.href);
         showStudentAlert(
             'Quiz in corso',
             'Non puoi tornare indietro mentre stai facendo il quiz.'
@@ -122,9 +122,9 @@ function enableQuizNavigationLock() {
         );
     };
 
-    window.addEventListener('popstate', quizPopstateHandler);
-    window.addEventListener('beforeunload', quizBeforeUnloadHandler);
-    window.addEventListener('keydown', quizKeydownHandler);
+    globalThis.addEventListener('popstate', quizPopstateHandler);
+    globalThis.addEventListener('beforeunload', quizBeforeUnloadHandler);
+    globalThis.addEventListener('keydown', quizKeydownHandler);
 }
 
 function disableQuizNavigationLock() {
@@ -132,21 +132,21 @@ function disableQuizNavigationLock() {
     isQuizNavigationLocked = false;
 
     if (quizPopstateHandler) {
-        window.removeEventListener('popstate', quizPopstateHandler);
+        globalThis.removeEventListener('popstate', quizPopstateHandler);
         quizPopstateHandler = null;
     }
     if (quizBeforeUnloadHandler) {
-        window.removeEventListener('beforeunload', quizBeforeUnloadHandler);
+        globalThis.removeEventListener('beforeunload', quizBeforeUnloadHandler);
         quizBeforeUnloadHandler = null;
     }
     if (quizKeydownHandler) {
-        window.removeEventListener('keydown', quizKeydownHandler);
+        globalThis.removeEventListener('keydown', quizKeydownHandler);
         quizKeydownHandler = null;
     }
 }
 
 function getActiveStudentContext() {
-    const student = window.ACTIVE_STUDENT_CONTEXT || {};
+    const student = globalThis.ACTIVE_STUDENT_CONTEXT || {};
     return {
         id: String(student.id || '').trim(),
         name: String(student.name || '').trim()
@@ -245,11 +245,11 @@ function resumeQuizIfNeeded() {
         return false;
     }
 }
-window.resumeQuizIfNeeded = resumeQuizIfNeeded;
+globalThis.resumeQuizIfNeeded = resumeQuizIfNeeded;
 
 function startQuizFromCard(el) {
     const id = el.dataset.id;
-    if ((window.LOCKED_QUIZ_IDS && window.LOCKED_QUIZ_IDS.has(String(id))) || el.dataset.locked === 'true') {
+    if ((globalThis.LOCKED_QUIZ_IDS && globalThis.LOCKED_QUIZ_IDS.has(String(id))) || el.dataset.locked === 'true') {
         showStudentAlert();
         return;
     }
@@ -286,7 +286,7 @@ function startQuizFromCard(el) {
         });
 }
 
-window.startQuizFromCard = startQuizFromCard;
+globalThis.startQuizFromCard = startQuizFromCard;
 
 
 function markQuizCardAsLocked(quizId) {
@@ -450,8 +450,8 @@ async function showResult() {
         if (!res.ok) {
             throw new Error(payload.message || 'Errore nel salvataggio');
         }
-        if (window.LOCKED_QUIZ_IDS) {
-            window.LOCKED_QUIZ_IDS.add(String(quiz.id));
+        if (globalThis.LOCKED_QUIZ_IDS) {
+            globalThis.LOCKED_QUIZ_IDS.add(String(quiz.id));
         }
         markQuizCardAsLocked(quiz.id);
     } catch (e) {
