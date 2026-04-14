@@ -162,6 +162,7 @@ public class QuizApiController {
         if (!currentTeacher.isAiEnabled()) {
             throw new IllegalStateException("Generazione AI disabilitata per questo insegnante.");
         }
+        request.setIncludeAiImages(currentTeacher.isImageUploadEnabled() && Boolean.TRUE.equals(request.getIncludeAiImages()));
         val attachmentText = documentTextExtractorService.extractText(file);
         val wikipediaExtraction = wikipediaTextExtractorService.extractFromUrl(request.getTopic());
 

@@ -487,6 +487,7 @@ async function generateQuizWithAi() {
     const numberOfQuestions = document.getElementById('ai-number-input').value;
     const difficulty = document.getElementById('ai-difficulty-input').value;
     const tone = document.getElementById('ai-tone-input').value;
+    const includeAiImages = document.getElementById('ai-include-images-input')?.checked === true;
 
     if (!topic && (!fileInput.files || fileInput.files.length === 0)) {
         msgEl.textContent = 'Inserisci un argomento o carica un file.';
@@ -499,6 +500,7 @@ async function generateQuizWithAi() {
     formData.append('numberOfQuestions', numberOfQuestions);
     formData.append('difficulty', difficulty);
     formData.append('tone', tone);
+    formData.append('includeAiImages', includeAiImages ? 'true' : 'false');
     if (fileInput.files && fileInput.files.length > 0) {
         formData.append('file', fileInput.files[0]);
     }

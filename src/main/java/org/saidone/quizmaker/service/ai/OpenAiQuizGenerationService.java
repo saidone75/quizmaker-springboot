@@ -34,11 +34,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
-import java.util.HashMap;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
@@ -71,10 +67,11 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                   "items": {
                     "type": "object",
                     "additionalProperties": false,
-                    "required": ["text", "emoji", "options", "answer", "feedback"],
+                    "required": ["text", "emoji", "imageUrl", "options", "answer", "feedback"],
                     "properties": {
                       "text": { "type": "string" },
                       "emoji": { "type": "string" },
+                      "imageUrl": { "type": "string" },
                       "options": {
                         "type": "array",
                         "minItems": 4,
@@ -156,6 +153,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 Crea un quiz in italiano e rispondi SOLO con JSON valido compatibile con QuizDto.Request.
                 Campi obbligatori: title (string), emoji (string), questions (array).
                 Ogni question deve avere: text, emoji, options (4 risposte), answer (indice corretto 0-3), feedback.
+                Ogni question può avere anche imageUrl (stringa URL assoluta).
                 
                 Vincoli:
                 - Argomento: %s
@@ -166,6 +164,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 - Le risposte devono essere chiare e plausibili.
                 - answer deve sempre puntare a un indice valido
                 - feedback deve contenere una curiosità sulla risposta corretta
+                - %s
                 
                 Testo di riferimento allegato (se presente):
                 %s
@@ -174,6 +173,9 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 request.getNumberOfQuestions(),
                 request.getDifficulty(),
                 request.getTone(),
+                Boolean.TRUE.equals(request.getIncludeAiImages())
+                        ? "Per ogni domanda assegna imageUrl solo se esiste davvero su Wikimedia Commons. Usa ESCLUSIVAMENTE il formato https://commons.wikimedia.org/wiki/Special:FilePath/Nome_file.estensione (niente pagine /wiki/File:, niente miniature, niente parametri query). Se non sei sicuro che il file esista, imposta imageUrl a stringa vuota."
+                        : "Imposta imageUrl sempre come stringa vuota.",
                 StringUtils.hasText(attachmentText) ? attachmentText : "N/A"
         );
 
