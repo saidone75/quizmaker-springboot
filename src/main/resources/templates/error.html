@@ -27,44 +27,22 @@
 <body>
 <div class="login-screen">
     <div class="login-card error-card">
-        <div class="error-emoji" aria-hidden="true">⚠️</div>
+        <div class="error-emoji" aria-hidden="true"
+             th:text="${status == 404 ? '🦊' : status == 403 ? '🦉' : status >= 500 ? '🐲' : status >= 400 ? '🐛' : '🐞'}">🐞</div>
         <h1 class="login-title">Oops, qualcosa è andato storto</h1>
         <p class="login-sub">Non siamo riusciti a completare la richiesta.</p>
 
         <div class="alert alert-error error-status">
-            <strong th:text="${status}">500</strong>
-            <span th:text="${error}">Errore interno del server</span>
+            <strong>Codice errore:</strong>
+            <span th:text="${status}">500</span>
         </div>
 
-        <p class="error-main-message"
-           th:text="${message != null and !#strings.isEmpty(message)} ? ${message} : 'Si è verificato un errore inatteso.'">
-            Si è verificato un errore inatteso.
+        <p class="error-main-message">
+            Si è verificato un errore. Se il problema persiste, contatta il cappellaio indicando il codice.
         </p>
 
-        <details class="error-details-accordion"
-                 th:if="${(message != null and !#strings.isEmpty(message)) or (path != null and !#strings.isEmpty(path))}">
-            <summary>
-                <span>Mostra dettagli tecnici</span>
-                <span class="archived-accordion-icon">▼</span>
-            </summary>
-            <div class="error-details-body">
-                <p th:if="${message != null and !#strings.isEmpty(message)}">
-                    <strong>Messaggio:</strong>
-                    <span th:text="${message}">Dettaglio errore</span>
-                </p>
-                <p th:if="${path != null and !#strings.isEmpty(path)}">
-                    <strong>Percorso:</strong>
-                    <span th:text="${path}">/path</span>
-                </p>
-                <p th:if="${timestamp != null}">
-                    <strong>Timestamp:</strong>
-                    <span th:text="${timestamp}">2026-01-01T10:00:00Z</span>
-                </p>
-            </div>
-        </details>
-
         <div class="error-actions">
-            <a class="topbar-back" th:href="@{/}">← Torna alla home</a>
+            <a class="topbar-back" th:href="${homeUrl}">← Torna alla home</a>
             <a class="topbar-back" href="javascript:history.back()">↶ Torna indietro</a>
         </div>
     </div>
