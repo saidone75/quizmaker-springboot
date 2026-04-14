@@ -52,4 +52,5 @@ class OpenAiQuizGenerationServiceTest {
         assertThat(question.getAnswer()).isEqualTo(1);
         assertThat(question.getOptions().get(question.getAnswer())).isEqualTo("Marte");
     }
+
 }

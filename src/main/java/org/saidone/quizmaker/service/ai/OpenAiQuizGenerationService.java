@@ -174,7 +174,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 request.getDifficulty(),
                 request.getTone(),
                 Boolean.TRUE.equals(request.getIncludeAiImages())
-                        ? "Per ogni domanda assegna imageUrl usando esclusivamente Wikimedia Commons. Preferisci URL diretti su upload.wikimedia.org o URL validi di File/ Special:FilePath su commons.wikimedia.org."
+                        ? "Per ogni domanda assegna imageUrl solo se esiste davvero su Wikimedia Commons. Usa ESCLUSIVAMENTE il formato https://commons.wikimedia.org/wiki/Special:FilePath/Nome_file.estensione (niente pagine /wiki/File:, niente miniature, niente parametri query). Se non sei sicuro che il file esista, imposta imageUrl a stringa vuota."
                         : "Imposta imageUrl sempre come stringa vuota.",
                 StringUtils.hasText(attachmentText) ? attachmentText : "N/A"
         );
