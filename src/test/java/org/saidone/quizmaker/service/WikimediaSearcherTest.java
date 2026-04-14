@@ -21,16 +21,25 @@ package org.saidone.quizmaker.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WikimediaSearcherTest {
 
+    private RestClient buildWikimediaClient() {
+        return RestClient.builder()
+                .baseUrl("https://commons.wikimedia.org/w/api.php")
+                .defaultHeader("User-Agent", "QuizMaker/1.0")
+                .defaultHeader("Accept", "application/json")
+                .build();
+    }
+
     @Test
     void shouldReturnRealImageUrlFromWikimedia() {
-        val searcher = new WikimediaSearcher(new ObjectMapper());
+        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
 
-        val imageUrl = searcher.searchImage(new String[]{"car", "red"});
+        val imageUrl = searcher.searchImage(new String[]{"planet", "mars"});
 
         assertThat(imageUrl)
                 .isNotBlank()
@@ -39,7 +48,7 @@ class WikimediaSearcherTest {
 
     @Test
     void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
-        val searcher = new WikimediaSearcher(new ObjectMapper());
+        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
 
         assertThat(searcher.searchImage(null)).isNull();
         assertThat(searcher.searchImage(new String[]{})).isNull();
