@@ -21,6 +21,9 @@
     const quizzesJson = dataEl?.dataset.quizzesJson || '[]';
     const lockedQuizIdsJson = dataEl?.dataset.lockedQuizIdsJson || '[]';
 
+    const studentId = (dataEl?.dataset.studentId || '').trim();
+    const studentName = (dataEl?.dataset.studentName || '').trim();
+
     const quizData = JSON.parse(quizzesJson);
     const lockedQuizIds = new Set(JSON.parse(lockedQuizIdsJson).map(String));
     const quizById = {};
@@ -32,6 +35,10 @@
 
     window.QUIZ_DATA_BY_ID = quizById;
     window.LOCKED_QUIZ_IDS = lockedQuizIds;
+    window.ACTIVE_STUDENT_CONTEXT = {
+        id: studentId,
+        name: studentName
+    };
     if (typeof window.resumeQuizIfNeeded === 'function') {
         window.resumeQuizIfNeeded();
     }

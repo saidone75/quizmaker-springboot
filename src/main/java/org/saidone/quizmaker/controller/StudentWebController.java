@@ -60,6 +60,7 @@ public class StudentWebController {
         val lockedQuizIds = quizSubmissionService.findLockedQuizIdsForStudent(maybeStudent.get());
 
         model.addAttribute("studentName", maybeStudent.get().getFullName());
+        model.addAttribute("studentId", maybeStudent.get().getId());
         model.addAttribute("quizzes", quizzes);
         model.addAttribute("lockedQuizIds", lockedQuizIds);
         try {

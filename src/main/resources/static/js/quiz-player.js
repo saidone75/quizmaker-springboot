@@ -24,6 +24,45 @@ let isQuizNavigationLocked = false;
 let quizPopstateHandler = null;
 let quizBeforeUnloadHandler = null;
 let quizKeydownHandler = null;
+let skipLogoutConfirmation = false;
+
+function bindStudentLogoutConfirmation() {
+    const logoutForm = document.querySelector('form[action="/student/logout"]');
+    const exitModal = document.getElementById('student-exit-modal');
+    const confirmBtn = document.getElementById('student-exit-confirm-btn');
+    const cancelBtn = document.getElementById('student-exit-cancel-btn');
+    if (!logoutForm || !exitModal || !confirmBtn || !cancelBtn) return;
+
+    const closeExitModal = function () {
+        exitModal.style.display = 'none';
+        exitModal.setAttribute('aria-hidden', 'true');
+    };
+
+    const openExitModal = function () {
+        exitModal.style.display = 'flex';
+        exitModal.setAttribute('aria-hidden', 'false');
+    };
+
+    logoutForm.addEventListener('submit', function (event) {
+        if (skipLogoutConfirmation || !isQuizNavigationLocked) {
+            return;
+        }
+        event.preventDefault();
+        openExitModal();
+    });
+
+    confirmBtn.addEventListener('click', function () {
+        skipLogoutConfirmation = true;
+        disableQuizNavigationLock();
+        closeExitModal();
+        logoutForm.submit();
+    });
+
+    cancelBtn.addEventListener('click', closeExitModal);
+    exitModal.addEventListener('click', function (event) {
+        if (event.target === exitModal) closeExitModal();
+    });
+}
 
 function showStudentAlert(title, message) {
     const alertBox = document.getElementById('student-alert');
@@ -106,9 +145,30 @@ function disableQuizNavigationLock() {
     }
 }
 
+function getActiveStudentContext() {
+    const student = window.ACTIVE_STUDENT_CONTEXT || {};
+    return {
+        id: String(student.id || '').trim(),
+        name: String(student.name || '').trim()
+    };
+}
+
+function isStoredProgressForActiveStudent(progress) {
+    const activeStudent = getActiveStudentContext();
+    const progressStudent = progress?.student || {};
+    const storedId = String(progressStudent.id || '').trim();
+    const storedName = String(progressStudent.name || '').trim();
+
+    if (!activeStudent.id && !activeStudent.name) return true;
+    if (storedId && activeStudent.id) return storedId === activeStudent.id;
+    if (storedName && activeStudent.name) return storedName === activeStudent.name;
+    return false;
+}
+
 function persistQuizProgress() {
     if (!playState?.quiz?.id) return;
     sessionStorage.setItem(QUIZ_PROGRESS_STORAGE_KEY, JSON.stringify({
+        student: getActiveStudentContext(),
         quiz: {
             id: playState.quiz.id,
             title: playState.quiz.title,
@@ -151,6 +211,10 @@ function resumeQuizIfNeeded() {
 
     try {
         const progress = JSON.parse(raw);
+        if (!isStoredProgressForActiveStudent(progress)) {
+            clearQuizProgress();
+            return false;
+        }
         const quizSnapshot = progress.quiz;
         const quizId = String(progress.quizId || quizSnapshot?.id || '');
         const quizFromPage = globalThis.QUIZ_DATA_BY_ID?.[quizId];
@@ -256,8 +320,10 @@ function bindQuizPickerCards() {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', bindQuizPickerCards);
+    document.addEventListener('DOMContentLoaded', bindStudentLogoutConfirmation);
 } else {
     bindQuizPickerCards();
+    bindStudentLogoutConfirmation();
 }
 
 function startQuiz(quiz) {

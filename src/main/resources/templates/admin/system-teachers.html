@@ -62,7 +62,7 @@
                             </label>
                         </form>
                         <span th:text="${teacher.username}">username</span>
-                        <span th:if="${teacher.id == currentTeacherId}" style="font-size:12px;color:#2f4f9d;margin-left:6px;">(tu)</span>
+                        <span th:if="${teacher.id == currentTeacherId}" style="font-size:12px;color:var(--blue-text);margin-left:6px;">(tu)</span>
                     </div>
                     <div class="manage-card-meta">
                         Ruolo: <strong th:text="${teacher.admin ? 'Admin' : 'Teacher'}">Teacher</strong> · Registrato il

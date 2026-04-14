@@ -43,7 +43,7 @@
             </div>
             <button class="quiz-next" style="display:block">Entra</button>
         </form>
-        <p th:if="${loginError}" th:text="${loginError}" style="margin-top:12px;color:#dc2626;font-weight:700"></p>
+        <p th:if="${loginError}" th:text="${loginError}" style="margin-top:12px;color:var(--red);font-weight:700"></p>
     </div>
 </div>
 <script th:src="@{/js/student-login.js}"></script>
