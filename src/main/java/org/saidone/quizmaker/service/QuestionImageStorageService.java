@@ -30,13 +30,14 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -59,31 +60,47 @@ public class QuestionImageStorageService {
         }
 
         try {
-            val baseDir = Path.of(uploadDirectory).toAbsolutePath().normalize();
-            Files.createDirectories(baseDir);
-
-            val imageId = UUID.randomUUID();
             val extension = extractExtension(file.getOriginalFilename());
-            val fileName = imageId + extension;
-            val destination = baseDir.resolve(fileName).normalize();
-
-            if (!destination.startsWith(baseDir)) {
-                throw new IllegalStateException("Percorso di destinazione non valido.");
-            }
-
-            Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-
-            val image = new UploadedImage();
-            image.setId(imageId);
-            image.setFilePath(destination.toString());
-            uploadedImageRepository.save(image);
-
-            return QuestionImageUploadDto.builder()
-                    .id(imageId)
-                    .url(imageUrl(imageId))
-                    .build();
+            return storeBytes(file.getInputStream().readAllBytes(), extension);
         } catch (IOException exception) {
             throw new IllegalStateException("Errore durante il salvataggio del file immagine.", exception);
+        }
+    }
+
+
+    @Transactional
+    public QuestionImageUploadDto storeFromUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new IllegalArgumentException("Inserisci un URL immagine valido.");
+        }
+
+        val normalizedUrl = imageUrl.trim();
+        val imageUri = URI.create(normalizedUrl);
+        val scheme = imageUri.getScheme();
+        if (scheme == null || (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https"))) {
+            throw new IllegalArgumentException("Sono accettati solo URL http/https.");
+        }
+
+        try {
+            val response = RestClient.create()
+                    .get()
+                    .uri(imageUri)
+                    .retrieve()
+                    .toEntity(byte[].class);
+
+            val imageBytes = response.getBody();
+            if (imageBytes == null || imageBytes.length == 0) {
+                throw new IllegalArgumentException("Impossibile scaricare l'immagine indicata.");
+            }
+
+            val contentType = response.getHeaders().getContentType();
+            if (contentType == null || !contentType.getType().equalsIgnoreCase("image")) {
+                throw new IllegalArgumentException("L'URL fornito non punta a un'immagine valida.");
+            }
+            val extension = extensionFromContentType(contentType.toString());
+            return storeBytes(imageBytes, extension);
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("Errore durante il download dell'immagine da URL.", exception);
         }
     }
 
@@ -135,6 +152,53 @@ public class QuestionImageStorageService {
 
     public String imageUrl(UUID imageId) {
         return "/api/quizzes/images/" + imageId;
+    }
+
+
+    private QuestionImageUploadDto storeBytes(byte[] imageBytes, String extension) {
+        try {
+            val baseDir = Path.of(uploadDirectory).toAbsolutePath().normalize();
+            Files.createDirectories(baseDir);
+
+            val imageId = UUID.randomUUID();
+            val sanitizedExtension = (extension == null || extension.isBlank()) ? ".img" : extension;
+            val fileName = imageId + sanitizedExtension;
+            val destination = baseDir.resolve(fileName).normalize();
+
+            if (!destination.startsWith(baseDir)) {
+                throw new IllegalStateException("Percorso di destinazione non valido.");
+            }
+
+            Files.write(destination, imageBytes);
+
+            val image = new UploadedImage();
+            image.setId(imageId);
+            image.setFilePath(destination.toString());
+            uploadedImageRepository.save(image);
+
+            return QuestionImageUploadDto.builder()
+                    .id(imageId)
+                    .url(imageUrl(imageId))
+                    .build();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Errore durante il salvataggio del file immagine.", exception);
+        }
+    }
+
+    private String extensionFromContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return ".img";
+        }
+        val normalized = contentType.toLowerCase(Locale.ROOT).split(";")[0].trim();
+        return switch (normalized) {
+            case "image/png" -> ".png";
+            case "image/jpeg" -> ".jpg";
+            case "image/gif" -> ".gif";
+            case "image/webp" -> ".webp";
+            case "image/bmp" -> ".bmp";
+            case "image/svg+xml" -> ".svg";
+            default -> ".img";
+        };
     }
 
     private boolean isImage(MultipartFile file) {
