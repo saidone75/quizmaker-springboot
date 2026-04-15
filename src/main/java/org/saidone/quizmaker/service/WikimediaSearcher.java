@@ -37,6 +37,21 @@ import java.util.*;
 public class WikimediaSearcher {
 
     private static final int MAX_KEYWORDS = 4;
+    private static final Set<String> ALLOWED_WEB_IMAGE_MIME_TYPES = Set.of(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/webp",
+            "image/svg+xml"
+    );
+    private static final Set<String> ALLOWED_WEB_IMAGE_EXTENSIONS = Set.of(
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp",
+            ".svg"
+    );
 
     @Qualifier("wikimediaRestClient")
     private final RestClient wikimediaRestClient;
@@ -138,16 +153,12 @@ public class WikimediaSearcher {
         }
 
         if (StringUtils.hasText(mimeType)) {
-            return mimeType.toLowerCase(Locale.ROOT).startsWith("image/");
+            return ALLOWED_WEB_IMAGE_MIME_TYPES.contains(mimeType.toLowerCase(Locale.ROOT));
         }
 
         val normalizedUrl = imageUrl.toLowerCase(Locale.ROOT);
-        return normalizedUrl.endsWith(".jpg")
-                || normalizedUrl.endsWith(".jpeg")
-                || normalizedUrl.endsWith(".png")
-                || normalizedUrl.endsWith(".gif")
-                || normalizedUrl.endsWith(".webp")
-                || normalizedUrl.endsWith(".svg");
+        return ALLOWED_WEB_IMAGE_EXTENSIONS.stream()
+                .anyMatch(normalizedUrl::endsWith);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
