@@ -84,7 +84,7 @@ function hideLoading() {
     if (el) el.style.display = 'none';
 }
 
-if (typeof globalThis.window !== 'undefined') {
+if (globalThis.window !== undefined) {
     globalThis.window.showLoading = showLoading;
     globalThis.window.hideLoading = hideLoading;
 }
