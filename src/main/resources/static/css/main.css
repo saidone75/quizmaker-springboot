@@ -976,8 +976,6 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 .alert-error { background: var(--red-light); color: var(--red-text); }
 .alert-success { background: var(--green-light); color: var(--green-text); }
 
-
-
 /* ===== ERROR PAGE ===== */
 .error-card {
     max-width: 560px;
