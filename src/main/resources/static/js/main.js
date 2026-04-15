@@ -72,7 +72,7 @@ function showLoading(msg) {
     if (!el) {
         el = document.createElement('div');
         el.id = 'loading-overlay';
-        el.innerHTML = '<div class="loading-icon">⏳</div><p></p>';
+        el.innerHTML = '<div class="loading-icon" aria-hidden="true">🐇</div><p></p>';
         document.body.appendChild(el);
     }
     el.querySelector('p').textContent = msg || 'Caricamento...';

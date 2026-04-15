@@ -144,18 +144,27 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
             var resolvedUrl = Strings.EMPTY;
             if (StringUtils.hasText(question.getImageKeywords())) {
-                val keywords = Arrays.stream(question.getImageKeywords().split("[,\\s]+"))
-                        .map(String::trim)
-                        .filter(StringUtils::hasText)
-                        .distinct()
-                        .toArray(String[]::new);
+                val keywords = parseImageKeywords(question.getImageKeywords());
                 if (keywords.length > 0) {
+                    question.setImageKeywords(String.join(", ", keywords));
                     resolvedUrl = wikimediaSearcher.searchImage(keywords);
                 }
             }
 
             question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
         }
+    }
+
+    private String[] parseImageKeywords(String imageKeywords) {
+        if (!StringUtils.hasText(imageKeywords)) {
+            return new String[0];
+        }
+
+        return Arrays.stream(imageKeywords.trim().split("\\s*,\\s*"))
+                .map(String::trim)
+                .filter(StringUtils::hasText)
+                .distinct()
+                .toArray(String[]::new);
     }
 
     void randomizeAnswerPositions(QuizDto.Request quiz) {
