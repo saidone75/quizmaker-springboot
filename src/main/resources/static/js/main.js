@@ -84,6 +84,11 @@ function hideLoading() {
     if (el) el.style.display = 'none';
 }
 
+if (typeof window !== 'undefined') {
+    window.showLoading = showLoading;
+    window.hideLoading = hideLoading;
+}
+
 // ===== TOAST =====
 function showToast(msg) {
     let t = document.getElementById('toast');
