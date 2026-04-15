@@ -29,15 +29,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class WikimediaSearcher {
+
+    private static final int MAX_KEYWORDS = 4;
 
     @Qualifier("wikimediaRestClient")
     private final RestClient wikimediaRestClient;
@@ -53,6 +52,8 @@ public class WikimediaSearcher {
         val normalizedKeywords = Arrays.stream(keywords)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
+                .distinct()
+                .limit(MAX_KEYWORDS)
                 .toArray(String[]::new);
 
         if (normalizedKeywords.length == 0) {
@@ -63,52 +64,53 @@ public class WikimediaSearcher {
 
         try {
             // 1) Cerca i file candidati su Wikimedia Commons
-            val queryTerms = String.join(" OR ", normalizedKeywords);
-            val searchRoot = wikimediaRestClient.get()
-                    .uri(uriBuilder -> uriBuilder
-                            .queryParam("action", "query")
-                            .queryParam("list", "search")
-                            .queryParam("srsearch", queryTerms)
-                            .queryParam("srnamespace", "6")
-                            .queryParam("format", "json")
-                            .queryParam("srlimit", "10")
-                            .build())
-                    .retrieve()
-                    .body(String.class);
-
-            val searchResponse = objectMapper.readValue(searchRoot, SearchApiResponse.class);
-            val searchResults = searchResponse.searchResults();
-            if (searchResults.isEmpty()) {
-                return null;
-            }
-
-            // 2) Scorre i risultati e restituisce il primo URL di tipo immagine (esclude PDF e altri file)
-            for (val result : searchResults) {
-                val fileTitle = result.title();
-                if (!StringUtils.hasText(fileTitle)) {
-                    continue;
-                }
-
-                val infoRoot = wikimediaRestClient.get()
+            for (val queryTerms : buildSearchQueries(normalizedKeywords)) {
+                val searchRoot = wikimediaRestClient.get()
                         .uri(uriBuilder -> uriBuilder
                                 .queryParam("action", "query")
-                                .queryParam("titles", fileTitle)
-                                .queryParam("prop", "imageinfo")
-                                .queryParam("iiprop", "url|mime")
+                                .queryParam("list", "search")
+                                .queryParam("srsearch", queryTerms)
+                                .queryParam("srnamespace", "6")
                                 .queryParam("format", "json")
+                                .queryParam("srlimit", "10")
                                 .build())
                         .retrieve()
                         .body(String.class);
 
-                val infoResponse = objectMapper.readValue(infoRoot, ImageInfoApiResponse.class);
-                val firstImageInfo = infoResponse.firstImageInfo();
-                if (firstImageInfo == null) {
+                val searchResponse = objectMapper.readValue(searchRoot, SearchApiResponse.class);
+                val searchResults = searchResponse.searchResults();
+                if (searchResults.isEmpty()) {
                     continue;
                 }
-                val mimeType = firstImageInfo.mime();
-                val imageUrl = firstImageInfo.url();
-                if (isWebImage(mimeType, imageUrl)) {
-                    return imageUrl;
+
+                // 2) Scorre i risultati e restituisce il primo URL di tipo immagine (esclude PDF e altri file)
+                for (val result : searchResults) {
+                    val fileTitle = result.title();
+                    if (!StringUtils.hasText(fileTitle)) {
+                        continue;
+                    }
+
+                    val infoRoot = wikimediaRestClient.get()
+                            .uri(uriBuilder -> uriBuilder
+                                    .queryParam("action", "query")
+                                    .queryParam("titles", fileTitle)
+                                    .queryParam("prop", "imageinfo")
+                                    .queryParam("iiprop", "url|mime")
+                                    .queryParam("format", "json")
+                                    .build())
+                            .retrieve()
+                            .body(String.class);
+
+                    val infoResponse = objectMapper.readValue(infoRoot, ImageInfoApiResponse.class);
+                    val firstImageInfo = infoResponse.firstImageInfo();
+                    if (firstImageInfo == null) {
+                        continue;
+                    }
+                    val mimeType = firstImageInfo.mime();
+                    val imageUrl = firstImageInfo.url();
+                    if (isWebImage(mimeType, imageUrl)) {
+                        return imageUrl;
+                    }
                 }
             }
 
@@ -117,6 +119,17 @@ public class WikimediaSearcher {
             log.warn("Errore durante la ricerca immagine su Wikimedia: {}", e.getMessage());
             return null;
         }
+    }
+
+    private List<String> buildSearchQueries(String[] normalizedKeywords) {
+        val rawQueries = new LinkedHashSet<String>();
+        val phraseQuery = String.join(" ", normalizedKeywords);
+        if (normalizedKeywords.length > 1) {
+            rawQueries.add("\"" + phraseQuery + "\"");
+            rawQueries.add(String.join(" AND ", normalizedKeywords));
+        }
+        rawQueries.add(String.join(" OR ", normalizedKeywords));
+        return List.copyOf(rawQueries);
     }
 
     private boolean isWebImage(String mimeType, String imageUrl) {
@@ -166,7 +179,7 @@ public class WikimediaSearcher {
                 if (page == null || page.imageInfo == null || page.imageInfo.isEmpty()) {
                     continue;
                 }
-                return page.imageInfo.get(0);
+                return page.imageInfo.getFirst();
             }
 
             return null;
