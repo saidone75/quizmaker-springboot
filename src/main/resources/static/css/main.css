@@ -99,6 +99,20 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+button,
+a,
+input,
+textarea,
+select,
+summary {
+    transition: outline-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:where(button, a, input, textarea, select, summary):focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
+
 :root[data-theme="dark"],
 body[data-theme="dark"] {
     --surface-soft: #2E3A3A;
@@ -779,7 +793,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     font-weight: 800;
     color: var(--blue-dark);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s, opacity 0.15s;
 }
 .btn-teacher-action:hover {
     background: var(--blue-light-hover);
@@ -832,7 +846,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     cursor: pointer;
     background: var(--blue-light);
     color: var(--blue-dark);
-    transition: all 0.15s;
+    transition: background-color 0.15s, color 0.15s, opacity 0.15s;
 }
 .btn-regenerate-password:hover { background: var(--blue-light-hover); }
 .btn-regenerate-icon-mobile {
@@ -1172,11 +1186,6 @@ body[data-theme="dark"] #toast {
     color: var(--toast-text-dark);
 }
 
-@media (max-width: 480px) {
-    .quiz-question { font-size: 17px; }
-    .result-score { font-size: 42px; }
-}
-
 @media (max-width: 768px) {
     .topbar {
         flex-wrap: wrap;
@@ -1217,6 +1226,9 @@ body[data-theme="dark"] #toast {
 }
 
 @media (max-width: 480px) {
+    .quiz-question { font-size: 17px; }
+    .result-score { font-size: 42px; }
+
     .topbar-back {
         padding: 6px 10px;
         font-size: 13px;
@@ -1303,6 +1315,17 @@ body[data-theme="dark"] #toast {
         display: inline;
         font-size: 16px;
         line-height: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
