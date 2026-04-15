@@ -89,6 +89,12 @@
     --log-console-bg: #121212;
     --log-console-text: #EDEDED;
     --log-console-border: #2A2A2A;
+    --icon-btn-overlay-bg: rgba(0, 0, 0, 0.72);
+    --icon-btn-overlay-bg-hover: rgba(0, 0, 0, 0.86);
+    --student-exit-btn-bg: var(--blue-dark);
+    --student-exit-btn-fg: var(--text-on-accent);
+    --student-cancel-btn-bg: #BFD1F1;
+    --student-cancel-btn-fg: #0B2A57;
 }
 
 body {
@@ -144,7 +150,7 @@ body[data-theme="dark"] {
     --share-bg: #3A2F55;
     --share-text: #D7C4FF;
     --share-bg-hover: #4A3A6D;
-    --archive-bg: #4A3B24;
+    --archive-bg: var(--alert-bg);
     --archive-bg-hover: #5A492F;
     --restore-bg: #1D3A33;
     --restore-bg-hover: #275246;
@@ -153,6 +159,8 @@ body[data-theme="dark"] {
     --loading-overlay-bg: rgba(30, 40, 40, 0.78);
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --student-cancel-btn-bg: #58709A;
+    --student-cancel-btn-fg: #EEF5FF;
 }
 
 :root[data-theme="zenburn"],
@@ -169,7 +177,7 @@ body[data-theme="zenburn"] {
     --red-light: #4A432C;
     --red-text: #F0D0D0;
     --amber: #D0BF8F;
-    --amber-light: #4A432C;
+    --amber-light: var(--red-light);
     --amber-text: #F2DFAF;
     --gray-bg: #2D2D2D;
     --gray-border: #5F5F5F;
@@ -189,7 +197,7 @@ body[data-theme="zenburn"] {
     --share-bg: #3B3347;
     --share-text: #D7C4FF;
     --share-bg-hover: #4D4060;
-    --archive-bg: var(--amber-light);
+    --archive-bg: var(--alert-bg);
     --archive-bg-hover: #5C5132;
     --restore-bg: #2D4334;
     --restore-bg-hover: #3A5641;
@@ -201,6 +209,8 @@ body[data-theme="zenburn"] {
     --log-console-border: #404040;
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --student-cancel-btn-bg: #5F6F8E;
+    --student-cancel-btn-fg: #EBF2FF;
 }
 
 :root[data-theme="true-summer"],
@@ -245,6 +255,8 @@ body[data-theme="true-summer"] {
     --loading-overlay-bg: rgba(234, 244, 251, 0.86);
     --shadow: 0 8px 24px rgba(70, 112, 145, 0.16);
     --shadow-lg: 0 10px 40px rgba(70, 112, 145, 0.2);
+    --student-cancel-btn-bg: #D2E2FA;
+    --student-cancel-btn-fg: #23456A;
 }
 
 /* ===== SCREENS ===== */
@@ -598,8 +610,8 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     height: 28px;
     border: 0;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.72);
-    color: #fff;
+    background: var(--icon-btn-overlay-bg);
+    color: var(--text-on-accent);
     font-size: 16px;
     line-height: 1;
     font-weight: 800;
@@ -609,7 +621,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     cursor: pointer;
 }
 .qimage-remove-btn:hover {
-    background: rgba(0, 0, 0, 0.86);
+    background: var(--icon-btn-overlay-bg-hover);
 }
 .quiz-options { display: grid; gap: 10px; }
 .quiz-opt {
@@ -1076,15 +1088,15 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     gap: 12px;
 }
 .btn-modal-student-exit {
-    background: var(--blue-dark);
-    color: #fff;
-    border: 2px solid #fff;
-    box-shadow: inset 0 0 0 2px var(--blue-dark);
+    background: var(--student-exit-btn-bg);
+    color: var(--student-exit-btn-fg);
+    border: 2px solid var(--student-exit-btn-fg);
+    box-shadow: inset 0 0 0 2px var(--student-exit-btn-bg);
     min-width: 110px;
 }
 .btn-modal-student-cancel {
-    background: #bfd1f1;
-    color: #0b2a57;
+    background: var(--student-cancel-btn-bg);
+    color: var(--student-cancel-btn-fg);
     border: none;
     min-width: 110px;
 }
