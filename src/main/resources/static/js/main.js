@@ -84,9 +84,9 @@ function hideLoading() {
     if (el) el.style.display = 'none';
 }
 
-if (typeof window !== 'undefined') {
-    window.showLoading = showLoading;
-    window.hideLoading = hideLoading;
+if (typeof globalThis.window !== 'undefined') {
+    globalThis.window.showLoading = showLoading;
+    globalThis.window.hideLoading = hideLoading;
 }
 
 // ===== TOAST =====
