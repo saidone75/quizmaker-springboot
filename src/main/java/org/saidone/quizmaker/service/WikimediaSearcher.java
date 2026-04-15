@@ -58,12 +58,10 @@ public class WikimediaSearcher {
     private final ObjectMapper objectMapper;
 
     public String searchImage(String[] keywords) {
-        // Nessuna keyword => nessuna ricerca
-        if (keywords == null || keywords.length == 0) {
+        if (!hasKeywords(keywords)) {
             return null;
         }
 
-        // Normalizza l'input eliminando valori vuoti e spazi superflui
         val normalizedKeywords = Arrays.stream(keywords)
                 .filter(StringUtils::hasText)
                 .map(String::trim)
@@ -78,62 +76,71 @@ public class WikimediaSearcher {
         log.debug("Ricerca immagine per: {}", String.join(", ", keywords));
 
         try {
-            // 1) Cerca i file candidati su Wikimedia Commons
             for (val queryTerms : buildSearchQueries(normalizedKeywords)) {
-                val searchRoot = wikimediaRestClient.get()
-                        .uri(uriBuilder -> uriBuilder
-                                .queryParam("action", "query")
-                                .queryParam("list", "search")
-                                .queryParam("srsearch", queryTerms)
-                                .queryParam("srnamespace", "6")
-                                .queryParam("format", "json")
-                                .queryParam("srlimit", "10")
-                                .build())
-                        .retrieve()
-                        .body(String.class);
-
-                val searchResponse = objectMapper.readValue(searchRoot, SearchApiResponse.class);
-                val searchResults = searchResponse.searchResults();
-                if (searchResults.isEmpty()) {
-                    continue;
-                }
-
-                // 2) Scorre i risultati e restituisce il primo URL di tipo immagine (esclude PDF e altri file)
-                for (val result : searchResults) {
-                    val fileTitle = result.title();
-                    if (!StringUtils.hasText(fileTitle)) {
-                        continue;
-                    }
-
-                    val infoRoot = wikimediaRestClient.get()
-                            .uri(uriBuilder -> uriBuilder
-                                    .queryParam("action", "query")
-                                    .queryParam("titles", fileTitle)
-                                    .queryParam("prop", "imageinfo")
-                                    .queryParam("iiprop", "url|mime")
-                                    .queryParam("format", "json")
-                                    .build())
-                            .retrieve()
-                            .body(String.class);
-
-                    val infoResponse = objectMapper.readValue(infoRoot, ImageInfoApiResponse.class);
-                    val firstImageInfo = infoResponse.firstImageInfo();
-                    if (firstImageInfo == null) {
-                        continue;
-                    }
-                    val mimeType = firstImageInfo.mime();
-                    val imageUrl = firstImageInfo.url();
-                    if (isWebImage(mimeType, imageUrl)) {
-                        return imageUrl;
-                    }
+                val imageUrl = searchFirstMatchingImageUrl(queryTerms);
+                if (imageUrl != null) {
+                    return imageUrl;
                 }
             }
-
             return null;
         } catch (Exception e) {
             log.warn("Errore durante la ricerca immagine su Wikimedia: {}", e.getMessage());
             return null;
         }
+    }
+
+    private boolean hasKeywords(String[] keywords) {
+        return keywords != null && keywords.length > 0;
+    }
+
+    private String searchFirstMatchingImageUrl(String queryTerms) throws Exception {
+        val searchRoot = wikimediaRestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .queryParam("action", "query")
+                        .queryParam("list", "search")
+                        .queryParam("srsearch", queryTerms)
+                        .queryParam("srnamespace", "6")
+                        .queryParam("format", "json")
+                        .queryParam("srlimit", "10")
+                        .build())
+                .retrieve()
+                .body(String.class);
+
+        val searchResponse = objectMapper.readValue(searchRoot, SearchApiResponse.class);
+        for (val result : searchResponse.searchResults()) {
+            val imageUrl = resolveImageUrl(result.title());
+            if (imageUrl != null) {
+                return imageUrl;
+            }
+        }
+        return null;
+    }
+
+    private String resolveImageUrl(String fileTitle) throws Exception {
+        if (!StringUtils.hasText(fileTitle)) {
+            return null;
+        }
+
+        val infoRoot = wikimediaRestClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .queryParam("action", "query")
+                        .queryParam("titles", fileTitle)
+                        .queryParam("prop", "imageinfo")
+                        .queryParam("iiprop", "url|mime")
+                        .queryParam("format", "json")
+                        .build())
+                .retrieve()
+                .body(String.class);
+
+        val infoResponse = objectMapper.readValue(infoRoot, ImageInfoApiResponse.class);
+        val firstImageInfo = infoResponse.firstImageInfo();
+        if (firstImageInfo == null) {
+            return null;
+        }
+
+        val mimeType = firstImageInfo.mime();
+        val imageUrl = firstImageInfo.url();
+        return isWebImage(mimeType, imageUrl) ? imageUrl : null;
     }
 
     private List<String> buildSearchQueries(String[] normalizedKeywords) {
