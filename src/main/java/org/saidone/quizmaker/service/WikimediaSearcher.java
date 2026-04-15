@@ -18,6 +18,8 @@
 
 package org.saidone.quizmaker.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +30,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.Arrays;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -73,16 +76,15 @@ public class WikimediaSearcher {
                     .retrieve()
                     .body(String.class);
 
-            val searchRootNode = objectMapper.readTree(searchRoot);
-            val searchResults = searchRootNode.path("query").path("search");
-
+            val searchResponse = objectMapper.readValue(searchRoot, SearchApiResponse.class);
+            val searchResults = searchResponse.searchResults();
             if (searchResults.isEmpty()) {
                 return null;
             }
 
             // 2) Scorre i risultati e restituisce il primo URL di tipo immagine (esclude PDF e altri file)
             for (val result : searchResults) {
-                val fileTitle = result.path("title").asText();
+                val fileTitle = result.title();
                 if (!StringUtils.hasText(fileTitle)) {
                     continue;
                 }
@@ -98,27 +100,13 @@ public class WikimediaSearcher {
                         .retrieve()
                         .body(String.class);
 
-                val infoRootNode = objectMapper.readTree(infoRoot);
-                val pages = infoRootNode.path("query").path("pages");
-
-                if (pages.isEmpty()) {
+                val infoResponse = objectMapper.readValue(infoRoot, ImageInfoApiResponse.class);
+                val firstImageInfo = infoResponse.firstImageInfo();
+                if (firstImageInfo == null) {
                     continue;
                 }
-
-                Iterator<com.fasterxml.jackson.databind.JsonNode> pageIterator = pages.elements();
-                if (!pageIterator.hasNext()) {
-                    continue;
-                }
-
-                val firstPage = pageIterator.next();
-                val imageInfo = firstPage.path("imageinfo");
-                if (imageInfo.isEmpty()) {
-                    continue;
-                }
-
-                val firstImageInfo = imageInfo.get(0);
-                val mimeType = firstImageInfo.path("mime").asText("");
-                val imageUrl = firstImageInfo.path("url").asText("");
+                val mimeType = firstImageInfo.mime();
+                val imageUrl = firstImageInfo.url();
                 if (isWebImage(mimeType, imageUrl)) {
                     return imageUrl;
                 }
@@ -147,6 +135,54 @@ public class WikimediaSearcher {
                 || normalizedUrl.endsWith(".gif")
                 || normalizedUrl.endsWith(".webp")
                 || normalizedUrl.endsWith(".svg");
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record SearchApiResponse(Query query) {
+        List<SearchResult> searchResults() {
+            if (query == null || query.search == null) {
+                return List.of();
+            }
+            return query.search;
+        }
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        private record Query(List<SearchResult> search) {
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record SearchResult(String title) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record ImageInfoApiResponse(Query query) {
+        ImageInfo firstImageInfo() {
+            if (query == null || query.pages == null || query.pages.isEmpty()) {
+                return null;
+            }
+
+            for (val page : query.pages.values()) {
+                if (page == null || page.imageInfo == null || page.imageInfo.isEmpty()) {
+                    continue;
+                }
+                return page.imageInfo.get(0);
+            }
+
+            return null;
+        }
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        private record Query(Map<String, Page> pages) {
+        }
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        private record Page(@JsonProperty("imageinfo") List<ImageInfo> imageInfo) {
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record ImageInfo(String url, String mime) {
     }
 
 }
