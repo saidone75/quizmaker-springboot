@@ -19,6 +19,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 - Generazione quiz con **OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
 - Condivisione quiz verso più insegnanti.
 - Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
+- Profilo insegnante con preferenze tema e gestione password.
 - Backup schedulato database SQLite in produzione con retention configurabile.
 - Semplice dispiegamento in cloud o on premise.
 
@@ -124,25 +125,28 @@ docker compose -f docker/docker-compose.yml up --build
 
 ## ⚙️ Variabili d'ambiente principali
 
-| Variabile                           | Default                           | Descrizione                                  |
-|-------------------------------------|-----------------------------------|----------------------------------------------|
-| `ADMIN_USERNAME`                    | `admin`                           | Username amministratore iniziale             |
-| `ADMIN_PASSWORD`                    | `changeme`                        | Password amministratore iniziale             |
-| `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                 |
-| `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                               |
-| `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                 |
-| `AI_GENERATION_MAX_QUESTIONS`       | `20`                              | Numero massimo domande generate              |
-| `AI_GENERATION_MAX_ATTACHMENT_CHARS`| `60000`                           | Max caratteri estratti da allegato           |
-| `AI_GENERATION_MAX_ATTEMPTS`        | `2`                               | Tentativi massimi di generazione/validazione |
-| `TURNSTILE_ENABLED`                 | `false` (`true` in dev)           | Abilita verifica CAPTCHA Turnstile           |
-| `TURNSTILE_SITE_KEY`                | vuota (o test key in dev)         | Site key Turnstile                           |
-| `TURNSTILE_SECRET_KEY`              | vuota (o test key in dev)         | Secret key Turnstile                         |
-| `TURNSTILE_VERIFY_URL`              | endpoint Cloudflare               | URL verifica Turnstile                       |
-| `DB_BACKUP_ENABLED`                 | `false` (`true` in prod)          | Abilita job backup SQLite                    |
-| `DB_BACKUP_CRON`                    | `0 0 2 * * *`                     | Pianificazione backup                        |
-| `DB_BACKUP_DIRECTORY`               | `./backups`                       | Directory output backup                      |
-| `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                      |
-| `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS                |
+| Variabile                           | Default                           | Descrizione                                   |
+|-------------------------------------|-----------------------------------|-----------------------------------------------|
+| `ADMIN_USERNAME`                    | `admin`                           | Username amministratore iniziale              |
+| `ADMIN_PASSWORD`                    | `changeme`                        | Password amministratore iniziale              |
+| `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                  |
+| `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                                |
+| `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                  |
+| `AI_GENERATION_MAX_QUESTIONS`       | `20`                              | Numero massimo domande generate               |
+| `AI_GENERATION_MAX_ATTACHMENT_CHARS`| `60000`                           | Max caratteri estratti da allegato            |
+| `AI_GENERATION_MAX_ATTEMPTS`        | `2`                               | Tentativi massimi di generazione/validazione  |
+| `UPLOAD_DIRECTORY`                  | `./upload`                        | Directory file upload immagini quiz           |
+| `TURNSTILE_ENABLED`                 | `false` (`true` in dev)           | Abilita verifica CAPTCHA Turnstile            |
+| `TURNSTILE_SITE_KEY`                | vuota (o test key in dev)         | Site key Turnstile                            |
+| `TURNSTILE_SECRET_KEY`              | vuota (o test key in dev)         | Secret key Turnstile                          |
+| `TURNSTILE_VERIFY_URL`              | endpoint Cloudflare               | URL verifica Turnstile                        |
+| `DB_BACKUP_ENABLED`                 | `false` (`true` in prod)          | Abilita job backup SQLite                     |
+| `DB_BACKUP_CRON`                    | `0 0 2 * * *`                     | Pianificazione backup                         |
+| `DB_BACKUP_DIRECTORY`               | `./backups`                       | Directory output backup                       |
+| `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                       |
+| `IMAGE_CLEANUP_ENABLED`             | `true`                            | Abilita job pulizia immagini non referenziate |
+| `IMAGE_CLEANUP_CRON`                | `0 0 3 * * *`                     | Pianificazione pulizia immagini               |
+| `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS                 |
 
 ## 💾 Backup schedulato database (SQLite)
 
@@ -155,22 +159,23 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ## 🌐 Funzionalità web
 
-| URL                        | Accesso                      | Descrizione                            |
-|----------------------------|------------------------------|----------------------------------------|
-| `/`                        | Pubblico / sessione studente | Login studente + pagina quiz           |
-| `/teacher/login`           | Pubblico                     | Login insegnante                       |
-| `/teacher/register`        | Pubblico                     | Registrazione insegnante               |
-| `/teacher`                 | Insegnante                   | Dashboard quiz                         |
-| `/teacher/students`        | Insegnante                   | Gestione studenti                      |
-| `/teacher/results`         | Insegnante                   | Risultati + analytics + sblocco quiz   |
-| `/teacher/logs`            | Amministratore               | Visualizzazione log applicativi        |
-| `/teacher/profile`         | Insegnante                   | Cambio password personale              |
-| `/teacher/profile/theme`   | Insegnante                   | Salvataggio preferenza tema (POST)     |
-| `/teacher/quiz/new`        | Insegnante                   | Editor nuovo quiz                      |
-| `/teacher/quiz/{id}/edit`  | Insegnante                   | Editor modifica quiz                   |
-| `/teacher/system`          | Amministratore               | Pannello sistema                       |
-| `/teacher/system/teachers` | Amministratore               | Gestione insegnanti (ruoli, AI, stato) |
-| `/teacher/about`           | Amministratore               | Info build/runtime                     |
+| URL                             | Accesso                       | Descrizione                            |
+|---------------------------------|-------------------------------|----------------------------------------|
+| `/`                             | Pubblico / sessione studente  | Login studente + pagina quiz           |
+| `/teacher/login`                | Pubblico                      | Login insegnante                       |
+| `/teacher/register`             | Pubblico                      | Registrazione insegnante               |
+| `/teacher`                      | Insegnante                    | Dashboard quiz                         |
+| `/teacher/students`             | Insegnante                    | Gestione studenti                      |
+| `/teacher/results`              | Insegnante                    | Risultati + analytics + sblocco quiz   |
+| `/teacher/logs`                 | Amministratore                | Visualizzazione log applicativi        |
+| `/teacher/profile`              | Insegnante                    | Cambio password personale              |
+| `/teacher/profile/theme`        | Insegnante                    | Salvataggio preferenza tema (POST)     |
+| `/teacher/profile/image-upload` | Insegnante                    | Abilitazione upload immagini (POST)    |
+| `/teacher/quiz/new`             | Insegnante                    | Editor nuovo quiz                      |
+| `/teacher/quiz/{id}/edit`       | Insegnante                    | Editor modifica quiz                   |
+| `/teacher/system`               | Amministratore                | Pannello sistema                       |
+| `/teacher/system/teachers`      | Amministratore                | Gestione insegnanti (ruoli, AI, stato) |
+| `/teacher/about`                | Amministratore                | Info build/runtime                     |
 
 ## 🔌 API principali
 
@@ -187,7 +192,10 @@ export DB_BACKUP_RETENTION_COUNT=30
 - `POST /api/quizzes/{id}/share` condivisione quiz a più insegnanti.
 - `POST /api/quizzes/{quizId}/unlock/{studentId}` sblocco tentativo singolo.
 - `POST /api/quizzes/{quizId}/unlock-all` sblocco massivo tentativi.
-- `POST /api/quizzes/generate` generazione quiz via AI (multipart, allegato opzionale).
+- `POST /api/quizzes/generate` generazione quiz via AI (multipart, allegato opzionale, topic anche da URL Wikipedia).
+- `POST /api/quizzes/images` upload immagine domanda (insegnante con upload abilitato).
+- `GET /api/quizzes/images/{imageId}` download immagine domanda.
+- `DELETE /api/quizzes/images/{imageId}` eliminazione immagine domanda.
 
 ### Studenti (`/api/students`)
 
@@ -203,7 +211,8 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ### Profilo insegnante (`/teacher/profile`)
 
-- `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`system`, `light`, `dark`).
+- `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`light`, `dark`, `true-summer`, `zenburn`).
+- `POST /teacher/profile/image-upload` abilita/disabilita i campi immagine nell'editor quiz.
 
 ## 🛡️ Sicurezza
 
