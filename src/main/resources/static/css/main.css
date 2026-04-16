@@ -47,34 +47,34 @@
     --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
     --surface-soft: #F1F1EF;
     --focus-ring: rgba(29, 158, 117, 0.18);
-    --editor-ai-border: #B8D8C8;
-    --editor-ai-bg: #F8FDFB;
-    --editor-manual-border: #C8D5E3;
-    --editor-manual-bg: #F9FCFF;
-    --red-light-hover: #F7C1C1;
+    --editor-ai-border: var(--green-light);
+    --editor-ai-bg: var(--white);
+    --editor-manual-border: var(--blue-light);
+    --editor-manual-bg: var(--white);
+    --red-light-hover: var(--red-light);
     --green-shadow: rgba(29,158,117,0.3);
     --green-shadow-soft: rgba(29,158,117,0.25);
     --green-shadow-hover: rgba(29,158,117,0.4);
-    --locked-bg: #F1F1EF;
-    --locked-border: #CFCFCB;
-    --locked-text: #66645F;
+    --locked-bg: var(--surface-soft);
+    --locked-border: var(--gray-border);
+    --locked-text: var(--text-light);
     --locked-opacity: 0.78;
-    --alert-border: #DCC8A3;
-    --alert-bg: #FFF7E8;
+    --alert-border: var(--gray-border);
+    --alert-bg: var(--amber-light);
     --progress-bg: rgba(255,255,255,0.5);
-    --blue-light-hover: #B5D4F4;
-    --danger-bg: #FFF0F0;
-    --danger-border: #EAA4A4;
-    --danger-text: #A22;
-    --danger-bg-hover: #FFDCDC;
-    --share-bg: #EFE8FF;
-    --share-text: #5A36A6;
-    --share-bg-hover: #DDD0FF;
-    --archive-bg: #FFF4D6;
-    --archive-text: #9C6A00;
-    --archive-bg-hover: #FFE5A1;
-    --restore-bg: #E3F6EC;
-    --restore-bg-hover: #C7EBD9;
+    --blue-light-hover: var(--blue-light);
+    --danger-bg: var(--red-light);
+    --danger-border: var(--red);
+    --danger-text: var(--red-text);
+    --danger-bg-hover: var(--red-light);
+    --share-bg: var(--blue-light);
+    --share-text: var(--blue-text);
+    --share-bg-hover: var(--blue-light);
+    --archive-bg: var(--amber-light);
+    --archive-text: var(--amber-text);
+    --archive-bg-hover: var(--amber-light);
+    --restore-bg: var(--green-light);
+    --restore-bg-hover: var(--green-light);
     --restore-text: #0F6E56;
     --publish-bg-hover: #BFE7DA;
     --publish-checkbox-accent: var(--green);
@@ -89,10 +89,16 @@
     --log-console-bg: #121212;
     --log-console-text: #EDEDED;
     --log-console-border: #2A2A2A;
+    --icon-btn-overlay-bg: rgba(0, 0, 0, 0.72);
+    --icon-btn-overlay-bg-hover: rgba(0, 0, 0, 0.86);
+    --student-exit-btn-bg: var(--blue-dark);
+    --student-exit-btn-fg: var(--text-on-accent);
+    --student-cancel-btn-bg: var(--blue-light);
+    --student-cancel-btn-fg: var(--blue-text);
 }
 
 body {
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     background: var(--gray-bg);
     min-height: 100vh;
     color: var(--text);
@@ -133,26 +139,28 @@ body[data-theme="dark"] {
     --red-text: #FFB7B7;
     --amber-light: #4A3B24;
     --amber-text: #FFDCA5;
-    --editor-ai-bg: #1D2C27;
-    --editor-manual-bg: #1D2833;
+    --editor-ai-bg: var(--white);
+    --editor-manual-bg: var(--white);
     --locked-bg: #343C3C;
     --locked-border: #505757;
     --locked-text: var(--gray-muted);
     --locked-opacity: 0.9;
-    --alert-bg: #4A3B24;
-    --alert-border: #6B5636;
-    --share-bg: #3A2F55;
+    --alert-bg: var(--amber-light);
+    --alert-border: var(--gray-border);
+    --share-bg: var(--blue-light);
     --share-text: #D7C4FF;
-    --share-bg-hover: #4A3A6D;
-    --archive-bg: #4A3B24;
-    --archive-bg-hover: #5A492F;
-    --restore-bg: #1D3A33;
-    --restore-bg-hover: #275246;
+    --share-bg-hover: var(--share-bg);
+    --archive-bg: var(--alert-bg);
+    --archive-bg-hover: var(--archive-bg);
+    --restore-bg: var(--green-light);
+    --restore-bg-hover: var(--restore-bg);
     --restore-text: #8CE5C7;
-    --blue-light-hover: #2A4F71;
+    --blue-light-hover: var(--blue-light);
     --loading-overlay-bg: rgba(30, 40, 40, 0.78);
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --student-cancel-btn-bg: var(--blue-light);
+    --student-cancel-btn-fg: var(--blue-text);
 }
 
 :root[data-theme="zenburn"],
@@ -166,10 +174,10 @@ body[data-theme="zenburn"] {
     --blue-light: #2A3436;
     --blue-text: #BFDCDC;
     --red: #CC9393;
-    --red-light: #4A432C;
+    --red-light: #463F34;
     --red-text: #F0D0D0;
     --amber: #D0BF8F;
-    --amber-light: #4A432C;
+    --amber-light: var(--red-light);
     --amber-text: #F2DFAF;
     --gray-bg: #2D2D2D;
     --gray-border: #5F5F5F;
@@ -179,30 +187,31 @@ body[data-theme="zenburn"] {
     --text-on-accent: #1F1F1F;
     --white: #3A3A3A;
     --surface-soft: var(--gray-bg);
-    --editor-ai-bg: #2C3B2C;
-    --editor-manual-bg: #2B3538;
+    --editor-ai-bg: var(--white);
+    --editor-manual-bg: var(--white);
     --locked-bg: var(--white);
     --locked-border: var(--gray-border);
     --locked-text: var(--text-light);
     --alert-bg: var(--amber-light);
-    --alert-border: #6A5F3A;
-    --share-bg: #3B3347;
+    --alert-border: var(--gray-border);
+    --share-bg: var(--blue-light);
     --share-text: #D7C4FF;
-    --share-bg-hover: #4D4060;
-    --archive-bg: var(--amber-light);
-    --archive-bg-hover: #5C5132;
-    --restore-bg: #2D4334;
-    --restore-bg-hover: #3A5641;
+    --share-bg-hover: var(--share-bg);
+    --archive-bg: var(--alert-bg);
+    --archive-bg-hover: var(--archive-bg);
+    --restore-bg: var(--green-light);
+    --restore-bg-hover: var(--restore-bg);
     --restore-text: #C8E3C8;
-    --blue-light-hover: #3E5E60;
+    --blue-light-hover: var(--blue-light);
     --loading-overlay-bg: rgba(35, 35, 35, 0.80);
     --log-console-bg: #1C1C1C;
     --log-console-text: #DCDCCC;
     --log-console-border: #404040;
     --shadow: 0 8px 24px rgba(0,0,0,0.35);
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.45);
+    --student-cancel-btn-bg: var(--blue-light);
+    --student-cancel-btn-fg: var(--blue-text);
 }
-
 
 :root[data-theme="true-summer"],
 body[data-theme="true-summer"] {
@@ -228,24 +237,26 @@ body[data-theme="true-summer"] {
     --text-on-accent: #FFFFFF;
     --white: #F7FBFF;
     --surface-soft: #F0F7FD;
-    --editor-ai-bg: #ECF8F8;
-    --editor-manual-bg: #EDF3FB;
+    --editor-ai-bg: var(--white);
+    --editor-manual-bg: var(--white);
     --locked-bg: #ECF2F8;
     --locked-border: #CFDBE6;
     --locked-text: #5E7283;
     --alert-bg: #F7F2E6;
-    --alert-border: #D8C8A9;
-    --share-bg: #E9EEFF;
-    --share-text: #4D5EA8;
-    --share-bg-hover: #DCE4FF;
-    --archive-bg: #F8F1DF;
-    --archive-bg-hover: #F1E5C4;
+    --alert-border: var(--gray-border);
+    --share-bg: var(--blue-light);
+    --share-text: var(--blue-text);
+    --share-bg-hover: var(--share-bg);
+    --archive-bg: var(--alert-bg);
+    --archive-bg-hover: var(--archive-bg);
     --publish-checkbox-accent: #7CBAC7;
     --publish-checkbox-bg: #F4FAFD;
-    --blue-light-hover: #CFE1F5;
+    --blue-light-hover: var(--blue-light);
     --loading-overlay-bg: rgba(234, 244, 251, 0.86);
     --shadow: 0 8px 24px rgba(70, 112, 145, 0.16);
     --shadow-lg: 0 10px 40px rgba(70, 112, 145, 0.2);
+    --student-cancel-btn-bg: var(--blue-light);
+    --student-cancel-btn-fg: var(--blue-text);
 }
 
 /* ===== SCREENS ===== */
@@ -264,7 +275,7 @@ body[data-theme="true-summer"] {
     background: var(--gray-bg); border: 1.5px solid var(--gray-border);
     border-radius: 8px; padding: 6px 12px;
     font-size: 14px; font-weight: 700; cursor: pointer;
-    font-family: var(--font-sans); color: var(--text);
+    font-family: var(--font-sans, sans-serif); color: var(--text);
     transition: background 0.1s; text-decoration: none; display: inline-block;
 }
 .topbar-back:hover { background: var(--gray-border); }
@@ -272,7 +283,7 @@ body[data-theme="true-summer"] {
 .topbar-badge {
     font-size: 12px; font-weight: 700; padding: 4px 10px;
     border-radius: 99px; background: var(--green-light); color: var(--green-text);
-    border: none; cursor: default; font-family: var(--font-sans);
+    border: none; cursor: default; font-family: var(--font-sans, sans-serif);
 }
 .topbar-actions {
     display: flex;
@@ -302,7 +313,7 @@ body[data-theme="true-summer"] {
     width: 100%; padding: 12px 14px;
     border: 1.5px solid var(--gray-border);
     border-radius: var(--radius-sm);
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-size: 15px; font-weight: 600;
     background: var(--white); color: var(--text);
     transition: border-color 0.15s; outline: none;
@@ -322,7 +333,7 @@ body[data-theme="true-summer"] {
     border-radius: 12px;
     background: var(--white);
     text-align: center;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-size: 1.5rem;
     font-weight: 900;
     text-transform: uppercase;
@@ -398,7 +409,7 @@ input[type="file"].input-field::-webkit-file-upload-button {
     border-radius: 9px;
     padding: 8px 12px;
     margin-right: 10px;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
@@ -461,7 +472,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .btn-add-question {
     width: 100%; padding: 14px;
     border: 2px dashed var(--gray-border); border-radius: var(--radius);
-    background: transparent; font-family: var(--font-sans);
+    background: transparent; font-family: var(--font-sans, sans-serif);
     font-size: 15px; font-weight: 800; color: var(--gray-muted); cursor: pointer;
     transition: all 0.15s;
 }
@@ -471,7 +482,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     width: 100%; padding: 16px;
     background: var(--green);
     border: none; border-radius: var(--radius);
-    font-family: var(--font-sans); font-size: 18px; font-weight: 900;
+    font-family: var(--font-sans, sans-serif); font-size: 18px; font-weight: 900;
     color: var(--text-on-accent); cursor: pointer;
     box-shadow: 0 4px 20px var(--green-shadow);
     transition: transform 0.15s, box-shadow 0.15s; margin-top: 1rem;
@@ -599,8 +610,8 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     height: 28px;
     border: 0;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.72);
-    color: #fff;
+    background: var(--icon-btn-overlay-bg);
+    color: var(--text-on-accent);
     font-size: 16px;
     line-height: 1;
     font-weight: 800;
@@ -610,13 +621,13 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     cursor: pointer;
 }
 .qimage-remove-btn:hover {
-    background: rgba(0, 0, 0, 0.86);
+    background: var(--icon-btn-overlay-bg-hover);
 }
 .quiz-options { display: grid; gap: 10px; }
 .quiz-opt {
     display: flex; align-items: center; gap: 12px; padding: 13px 16px;
     background: var(--gray-bg); border: 2px solid var(--gray-border); border-radius: 14px;
-    font-family: var(--font-sans); font-size: 16px; font-weight: 700;
+    font-family: var(--font-sans, sans-serif); font-size: 16px; font-weight: 700;
     color: var(--text); cursor: pointer; transition: all 0.15s; text-align: left; width: 100%;
 }
 .quiz-opt:hover:not(:disabled) { background: var(--green-light); border-color: var(--green); color: var(--green-text); transform: translateX(4px); }
@@ -640,7 +651,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .quiz-next {
     width: 100%; margin-top: 1rem; padding: 14px;
     background: var(--green);
-    border: none; border-radius: 14px; font-family: var(--font-sans);
+    border: none; border-radius: 14px; font-family: var(--font-sans, sans-serif);
     font-size: 17px; font-weight: 900; color: var(--text-on-accent); cursor: pointer;
     box-shadow: 0 4px 16px var(--green-shadow); transition: transform 0.15s;
 }
@@ -666,7 +677,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .result-btns { display: grid; gap: 10px; }
 .btn-retry {
     padding: 14px; border: none; border-radius: var(--radius);
-    font-family: var(--font-sans); font-size: 16px; font-weight: 800;
+    font-family: var(--font-sans, sans-serif); font-size: 16px; font-weight: 800;
     cursor: pointer; transition: transform 0.15s;
 }
 .btn-retry:hover { transform: translateY(-2px); }
@@ -788,7 +799,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     border: 1.5px solid var(--blue-light-hover);
     background: var(--blue-light);
     padding: 0 12px;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-size: 13px;
     font-weight: 800;
     color: var(--blue-dark);
@@ -813,7 +824,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
 .btn-icon-action {
     width: 36px; height: 36px; border-radius: 8px; border: none;
     font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s; font-family: var(--font-sans); text-decoration: none;
+    transition: all 0.15s; font-family: var(--font-sans, sans-serif); text-decoration: none;
 }
 .btn-edit-quiz { background: var(--blue-light); color: var(--blue-dark); }
 .btn-edit-quiz:hover { background: var(--blue-light-hover); }
@@ -840,7 +851,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
@@ -915,7 +926,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 .btn-hero {
     display: flex; align-items: center; gap: 14px;
     padding: 18px 24px; border: none; border-radius: var(--radius);
-    font-family: var(--font-sans); font-size: 17px; font-weight: 800;
+    font-family: var(--font-sans, sans-serif); font-size: 17px; font-weight: 800;
     cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; text-align: left;
 }
 .btn-hero:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
@@ -976,8 +987,6 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 }
 .alert-error { background: var(--red-light); color: var(--red-text); }
 .alert-success { background: var(--green-light); color: var(--green-text); }
-
-
 
 /* ===== ERROR PAGE ===== */
 .error-card {
@@ -1061,7 +1070,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .btn-modal {
     padding: 12px; border: none; border-radius: var(--radius-sm);
-    font-family: var(--font-sans); font-size: 15px; font-weight: 800;
+    font-family: var(--font-sans, sans-serif); font-size: 15px; font-weight: 800;
     cursor: pointer; transition: transform 0.1s;
 }
 .btn-modal:hover { transform: translateY(-1px); }
@@ -1079,15 +1088,15 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     gap: 12px;
 }
 .btn-modal-student-exit {
-    background: var(--blue-dark);
-    color: #fff;
-    border: 2px solid #fff;
-    box-shadow: inset 0 0 0 2px var(--blue-dark);
+    background: var(--student-exit-btn-bg);
+    color: var(--student-exit-btn-fg);
+    border: 2px solid var(--student-exit-btn-fg);
+    box-shadow: inset 0 0 0 2px var(--student-exit-btn-bg);
     min-width: 110px;
 }
 .btn-modal-student-cancel {
-    background: #bfd1f1;
-    color: #0b2a57;
+    background: var(--student-cancel-btn-bg);
+    color: var(--student-cancel-btn-fg);
     border: none;
     min-width: 110px;
 }
@@ -1133,7 +1142,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     align-items: center;
     justify-content: center;
     z-index: 9999;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     gap: 12px;
 }
 
@@ -1177,7 +1186,7 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
     position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
     background: var(--green-dark); color: var(--text-on-accent);
     padding: 12px 24px; border-radius: 99px;
-    font-family: var(--font-sans); font-size: 15px; font-weight: 800;
+    font-family: var(--font-sans, sans-serif); font-size: 15px; font-weight: 800;
     z-index: 9999; box-shadow: 0 4px 16px var(--toast-shadow);
     transition: opacity 0.3s; opacity: 0; pointer-events: none;
 }
@@ -1357,7 +1366,7 @@ body[data-theme="dark"] #toast {
 .btn-unlock-single {
     border: none;
     border-radius: 10px;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans, sans-serif);
     font-weight: 800;
     cursor: pointer;
     transition: all 0.15s;
