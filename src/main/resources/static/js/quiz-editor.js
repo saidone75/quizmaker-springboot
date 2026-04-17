@@ -445,7 +445,7 @@ async function saveQuiz() {
         hideLoading();
         showToast(quizId ? 'Quiz aggiornato!' : 'Quiz salvato!');
         setTimeout(() => {
-            window.location.href = '/teacher';
+            globalThis.location.href = '/teacher';
         }, 1000);
 
     } catch (e) {
