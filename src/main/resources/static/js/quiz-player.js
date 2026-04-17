@@ -300,8 +300,7 @@ function markQuizCardAsLocked(quizId) {
 
 function refreshLockedQuizCards() {
     const cards = document.querySelectorAll('.quiz-picker .quiz-pick-item');
-    for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
+    for (const card of cards) {
         if (globalThis.LOCKED_QUIZ_IDS?.has(String(card.dataset.id)) || card.dataset.locked === 'true') {
             markQuizCardAsLocked(card.dataset.id);
         }
@@ -310,8 +309,7 @@ function refreshLockedQuizCards() {
 function bindQuizPickerCards() {
     refreshLockedQuizCards();
     const cards = document.querySelectorAll('.quiz-picker .quiz-pick-item');
-    for (let i = 0; i < cards.length; i++) {
-        const card = cards[i];
+    for (const card of cards) {
         card.onclick = function() {
             startQuizFromCard(card);
         };
