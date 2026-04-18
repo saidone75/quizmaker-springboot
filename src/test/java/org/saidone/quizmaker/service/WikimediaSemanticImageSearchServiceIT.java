@@ -43,7 +43,7 @@ class WikimediaSemanticImageSearchServiceIT {
                 new ObjectMapper()
         );
 
-        val result = service.findMostRelevantImage(new String[]{"apollo", "rocket", "spacecraft"});
+        val result = service.findMostRelevantImage(new String[]{"apollo", "nasa", "spacecraft"});
 
         assertThat(result).isNotNull();
         assertThat(result).startsWith("https://upload.wikimedia.org/");
