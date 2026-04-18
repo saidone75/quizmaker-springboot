@@ -1,10 +1,29 @@
+/*
+ * Alice's Simple Quiz Maker - fun quizzes for curious minds
+ * Copyright (C) 2026 Miss Alice & Saidone
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package org.saidone.quizmaker.service;
 
-import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,6 +40,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class WikimediaImageFinderService {
 
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
@@ -38,10 +58,17 @@ public class WikimediaImageFinderService {
                 .build();
     }
 
-    public ImageResult findMostRelevantImage(String[] keywords)
+    public String findMostRelevantImage(String[] keywords)
             throws IOException, InterruptedException, TranslateException {
+        val result = findMostRelevantImageResult(keywords);
+        return result == null ? null : result.imageUrl;
+    }
 
-        List<String> cleanedKeywords = Arrays.stream(
+    private ImageResult findMostRelevantImageResult(String[] keywords)
+            throws IOException, InterruptedException, TranslateException {
+        long startedAt = System.nanoTime();
+
+        val cleanedKeywords = Arrays.stream(
                         Optional.ofNullable(keywords).orElse(new String[0]))
                 .filter(Objects::nonNull)
                 .map(String::trim)
@@ -54,34 +81,54 @@ public class WikimediaImageFinderService {
             throw new IllegalArgumentException("Nessuna keyword valida");
         }
 
-        List<String> searchQueries = buildSearchQueries(cleanedKeywords);
+        log.info("Avvio ricerca immagine Wikimedia | originalKeywords={} | cleanedKeywords={} | count={}",
+                Arrays.toString(Optional.ofNullable(keywords).orElse(new String[0])),
+                cleanedKeywords,
+                cleanedKeywords.size());
 
-        Map<String, Candidate> dedup = new LinkedHashMap<>();
-        for (String query : searchQueries) {
-            List<String> titles = searchFileTitles(query, 20);
-            List<Candidate> details = fetchImageDetails(titles);
-            for (Candidate c : details) {
+        val searchQueries = buildSearchQueries(cleanedKeywords);
+        log.debug("Strategie query (ordine esecuzione): {}",
+                searchQueries.stream()
+                        .map(q -> String.format("%s=%s", q.label, q.query))
+                        .toList());
+
+        val dedup = new LinkedHashMap<String, Candidate>();
+        for (int i = 0; i < searchQueries.size(); i++) {
+            val querySpec = searchQueries.get(i);
+            val queryStart = System.nanoTime();
+            log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
+            val titles = searchFileTitles(querySpec.query, 20);
+            log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
+                    querySpec.label, i + 1, searchQueries.size(), titles.size(), titles);
+            val details = fetchImageDetails(titles);
+            val dedupBefore = dedup.size();
+            for (val c : details) {
                 dedup.putIfAbsent(c.title, c);
             }
+            long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
+            log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
+                    querySpec.label, details.size(), dedup.size() - dedupBefore, dedup.size(), elapsedMs);
         }
 
         if (dedup.isEmpty()) {
+            log.info("Nessuna immagine candidata trovata per keyword: {}", cleanedKeywords);
             return null;
         }
 
-        List<Candidate> candidates = new ArrayList<>(dedup.values());
+        val candidates = new ArrayList<>(dedup.values());
 
-        for (Candidate c : candidates) {
+        for (val c : candidates) {
             c.lexicalScore = lexicalScore(c, cleanedKeywords);
         }
+        log.debug("Calcolato lexicalScore per {} candidati", candidates.size());
 
-        String queryText = String.join(" ", cleanedKeywords);
+        val queryText = String.join(" ", cleanedKeywords);
+        log.debug("Testo query per embedding: '{}'", queryText);
 
-        // Predictor creato per richiesta: più semplice e sicuro.
-        try (Predictor<String, float[]> predictor = embeddingModel.newPredictor()) {
+        // Predictor creato per richiesta: più semplice e sicuro
+        try (val predictor = embeddingModel.newPredictor()) {
             float[] queryEmbedding = predictor.predict(queryText);
-
-            for (Candidate c : candidates) {
+            for (val c : candidates) {
                 float[] candEmbedding = predictor.predict(c.semanticText);
                 c.semanticScore = cosineSimilarity(queryEmbedding, candEmbedding);
                 c.totalScore = 0.60 * c.lexicalScore + 0.40 * normalizeSemantic(c.semanticScore);
@@ -90,7 +137,23 @@ public class WikimediaImageFinderService {
         }
 
         candidates.sort(Comparator.comparingDouble((Candidate c) -> c.totalScore).reversed());
-        Candidate best = candidates.get(0);
+        val best = candidates.getFirst();
+        val topCandidates = candidates.stream()
+                .limit(3)
+                .map(c -> String.format(
+                        "%s [total=%s, lexical=%s, semantic=%s, mime=%s]",
+                        c.title,
+                        round(c.totalScore),
+                        round(c.lexicalScore),
+                        round(c.semanticScore),
+                        c.mime
+                ))
+                .toList();
+        val totalMs = Duration.ofNanos(System.nanoTime() - startedAt).toMillis();
+        log.info("Miglior immagine trovata | title={} | imageUrl={} | totalScore={} | elapsedMs={}",
+                best.title, best.imageUrl, round(best.totalScore), totalMs);
+        log.debug("Top 3 candidati: {}", topCandidates);
+        log.debug("Rationale migliore candidato: {}", best.rationale);
 
         return new ImageResult(
                 best.title,
@@ -105,39 +168,48 @@ public class WikimediaImageFinderService {
         );
     }
 
-    private List<String> buildSearchQueries(List<String> keywords) {
-        String joined = String.join(" ", keywords);
+    private List<SearchQuerySpec> buildSearchQueries(List<String> keywords) {
+        val joined = String.join(" ", keywords);
+        val andJoined = String.join(" AND ", keywords);
+        val orJoined = String.join(" OR ", keywords);
 
-        String titleBoost = keywords.stream()
-                .limit(2)
-                .map(k -> "intitle:" + quoteIfNeeded(k))
+        val titleOnly = keywords.stream()
+                .map(k -> String.format("intitle:%s", quoteIfNeeded(k)))
                 .collect(Collectors.joining(" "));
 
-        List<String> queries = new ArrayList<>();
-        queries.add("filemime:image " + titleBoost + " " + joined);
-        queries.add("filemime:image \"" + joined + "\"");
-        queries.add("filemime:image " + joined);
+        val titleBoost = keywords.stream()
+                .limit(2)
+                .map(k -> String.format("intitle:%s", quoteIfNeeded(k)))
+                .collect(Collectors.joining(" "));
+
+        val queries = new ArrayList<SearchQuerySpec>();
+        queries.add(new SearchQuerySpec("and", String.format("filemime:image %s", andJoined)));
+        queries.add(new SearchQuerySpec("title", String.format("filemime:image %s", titleOnly)));
+        queries.add(new SearchQuerySpec("title-boost", String.format("filemime:image %s %s", titleBoost, joined)));
+        queries.add(new SearchQuerySpec("or", String.format("filemime:image %s", orJoined)));
+        queries.add(new SearchQuerySpec("phrase", String.format("filemime:image \"%s\"", joined)));
+        queries.add(new SearchQuerySpec("plain", String.format("filemime:image %s", joined)));
         return queries;
     }
 
     private List<String> searchFileTitles(String srsearch, int limit)
             throws IOException, InterruptedException {
 
-        String url = COMMONS_API
-                + "?action=query"
-                + "&format=json"
-                + "&list=search"
-                + "&srnamespace=6"
-                + "&srlimit=" + limit
-                + "&srsearch=" + encode(srsearch);
+        val url = String.format(
+                "%s?action=query&format=json&list=search&srnamespace=6&srlimit=%s&srsearch=%s",
+                COMMONS_API,
+                limit,
+                encode(srsearch)
+        );
+        log.trace("Chiamata searchFileTitles URL: {}", url);
 
-        JsonNode root = getJson(url);
-        JsonNode results = root.path("query").path("search");
+        val root = getJson(url);
+        val results = root.path("query").path("search");
 
-        List<String> out = new ArrayList<>();
+        val out = new ArrayList<String>();
         if (results.isArray()) {
-            for (JsonNode node : results) {
-                String title = node.path("title").asText();
+            for (val node : results) {
+                val title = node.path("title").asText();
                 if (title.startsWith("File:")) {
                     out.add(title);
                 }
@@ -153,38 +225,38 @@ public class WikimediaImageFinderService {
             return List.of();
         }
 
-        String url = COMMONS_API
-                + "?action=query"
-                + "&format=json"
-                + "&prop=imageinfo%7Cinfo"
-                + "&inprop=url"
-                + "&titles=" + encode(String.join("|", titles))
-                + "&iiprop=url%7Cmime%7Cextmetadata"
-                + "&iiurlwidth=500";
+        val url = String.format(
+                "%s?action=query&format=json&prop=imageinfo%%7Cinfo&inprop=url&titles=%s&iiprop=url%%7Cmime%%7Cextmetadata&iiurlwidth=500",
+                COMMONS_API,
+                encode(String.join("|", titles))
+        );
+        log.trace("Chiamata fetchImageDetails URL: {}", url);
 
-        JsonNode root = getJson(url);
-        JsonNode pages = root.path("query").path("pages");
+        val root = getJson(url);
+        val pages = root.path("query").path("pages");
 
-        List<Candidate> out = new ArrayList<>();
-        Iterator<JsonNode> it = pages.elements();
+        val out = new ArrayList<Candidate>();
+        val it = pages.elements();
         while (it.hasNext()) {
-            JsonNode page = it.next();
-            JsonNode imageinfo = page.path("imageinfo");
+            val page = it.next();
+            val imageinfo = page.path("imageinfo");
             if (!imageinfo.isArray() || imageinfo.isEmpty()) {
                 continue;
             }
 
-            JsonNode ii = imageinfo.get(0);
-            JsonNode ext = ii.path("extmetadata");
+            val ii = imageinfo.get(0);
+            val ext = ii.path("extmetadata");
 
-            Candidate c = new Candidate();
+            val c = new Candidate();
             c.title = page.path("title").asText();
-            c.pageUrl = page.path("fullurl").asText("https://commons.wikimedia.org/wiki/" + c.title.replace(" ", "_"));
+            c.pageUrl = page.path("fullurl").asText(
+                    String.format("https://commons.wikimedia.org/wiki/%s", c.title.replace(" ", "_"))
+            );
             c.imageUrl = ii.path("url").asText(null);
             c.thumbnailUrl = ii.path("thumburl").asText(c.imageUrl);
             c.mime = ii.path("mime").asText("");
 
-            String semanticText = String.join(" | ",
+            val semanticText = String.join(" | ",
                     cleanHtml(safeTitle(c.title)),
                     cleanHtml(meta(ext, "ObjectName")),
                     cleanHtml(meta(ext, "ImageDescription")),
@@ -206,13 +278,13 @@ public class WikimediaImageFinderService {
     }
 
     private double lexicalScore(Candidate c, List<String> keywords) {
-        String title = normalize(safeTitle(c.title));
-        String text = normalize(c.semanticText);
+        val title = normalize(safeTitle(c.title));
+        val text = normalize(c.semanticText);
 
         double score = 0.0;
         int matched = 0;
 
-        for (String kw : keywords) {
+        for (val kw : keywords) {
             boolean inTitle = containsTokenish(title, kw);
             boolean inText = containsTokenish(text, kw);
 
@@ -246,27 +318,30 @@ public class WikimediaImageFinderService {
     }
 
     private String buildRationale(Candidate c, List<String> keywords) {
-        List<String> matched = keywords.stream()
+        val matched = keywords.stream()
                 .filter(k -> containsTokenish(normalize(c.semanticText), k)
                         || containsTokenish(c.normalizedTitle, k))
                 .toList();
 
-        return "matched=" + matched
-                + ", mime=" + c.mime
-                + ", lexical=" + round(c.lexicalScore)
-                + ", semantic=" + round(c.semanticScore)
-                + ", total=" + round(c.totalScore);
+        return String.format(
+                "matched=%s, mime=%s, lexical=%s, semantic=%s, total=%s",
+                matched,
+                c.mime,
+                round(c.lexicalScore),
+                round(c.semanticScore),
+                round(c.totalScore)
+        );
     }
 
     private JsonNode getJson(String url) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        val request = HttpRequest.newBuilder(URI.create(url))
                 .GET()
                 .header("Accept", "application/json")
                 .header("User-Agent", "WikimediaImageFinder/1.0")
                 .timeout(Duration.ofSeconds(30))
                 .build();
 
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() / 100 != 2) {
             throw new IOException("HTTP " + response.statusCode() + ": " + response.body());
         }
@@ -283,13 +358,13 @@ public class WikimediaImageFinderService {
 
     private static String cleanHtml(String s) {
         if (s == null) return "";
-        String noTags = HTML_TAGS.matcher(s).replaceAll(" ");
+        val noTags = HTML_TAGS.matcher(s).replaceAll(" ");
         return MULTISPACE.matcher(noTags).replaceAll(" ").trim();
     }
 
     private static String normalize(String s) {
         if (s == null) return "";
-        String n = Normalizer.normalize(s, Normalizer.Form.NFKD)
+        val n = Normalizer.normalize(s, Normalizer.Form.NFKD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase(Locale.ROOT)
                 .replace('_', ' ')
@@ -299,8 +374,8 @@ public class WikimediaImageFinderService {
     }
 
     private static boolean containsTokenish(String text, String kw) {
-        String nText = normalize(text);
-        String nKw = normalize(kw);
+        val nText = normalize(text);
+        val nKw = normalize(kw);
         return nText.contains(nKw);
     }
 
@@ -324,7 +399,7 @@ public class WikimediaImageFinderService {
     }
 
     private static String quoteIfNeeded(String s) {
-        return s.contains(" ") ? "\"" + s + "\"" : s;
+        return s.contains(" ") ? String.format("\"%s\"", s) : s;
     }
 
     private static String encode(String s) {
@@ -349,7 +424,10 @@ public class WikimediaImageFinderService {
         String rationale;
     }
 
-    public record ImageResult(
+    private record SearchQuerySpec(String label, String query) {
+    }
+
+    private record ImageResult(
             String title,
             String pageUrl,
             String imageUrl,
@@ -359,5 +437,6 @@ public class WikimediaImageFinderService {
             double semanticScore,
             double totalScore,
             String rationale
-    ) {}
+    ) {
+    }
 }

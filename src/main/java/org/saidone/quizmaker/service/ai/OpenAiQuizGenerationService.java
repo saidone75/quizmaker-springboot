@@ -30,7 +30,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.saidone.quizmaker.service.WikimediaImageFinderService;
-import org.saidone.quizmaker.service.WikimediaSearcher;
+import org.saidone.quizmaker.service.WikimediaSimpleImageFinderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -49,7 +49,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
-    private final WikimediaSearcher wikimediaSearcher;
+    private final WikimediaSimpleImageFinderService wikimediaSimpleImageFinderService;
     private final WikimediaImageFinderService wikimediaImageFinderService;
 
     @Value("${app.openai.api-key:}")
@@ -151,7 +151,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 val keywords = parseImageKeywords(question.getImageKeywords());
                 if (keywords.length > 0) {
                     question.setImageKeywords(String.join(", ", keywords));
-                    resolvedUrl = wikimediaImageFinderService.findMostRelevantImage(keywords).imageUrl();
+                    resolvedUrl = wikimediaImageFinderService.findMostRelevantImage(keywords);
                     //resolvedUrl = wikimediaSearcher.searchImage(keywords);
                 }
             }

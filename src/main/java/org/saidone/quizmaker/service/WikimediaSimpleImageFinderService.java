@@ -34,7 +34,7 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WikimediaSearcher {
+public class WikimediaSimpleImageFinderService {
 
     private static final int MAX_KEYWORDS = 4;
     private static final Set<String> ALLOWED_WEB_IMAGE_MIME_TYPES = Set.of(

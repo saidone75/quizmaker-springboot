@@ -37,7 +37,7 @@ class WikimediaSearcherTest {
 
     @Test
     void shouldReturnRealImageUrlFromWikimedia() {
-        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
+        val searcher = new WikimediaSimpleImageFinderService(buildWikimediaClient(), new ObjectMapper());
 
         val imageUrl = searcher.searchImage(new String[]{"planet", "mars"});
 
@@ -48,7 +48,7 @@ class WikimediaSearcherTest {
 
     @Test
     void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
-        val searcher = new WikimediaSearcher(buildWikimediaClient(), new ObjectMapper());
+        val searcher = new WikimediaSimpleImageFinderService(buildWikimediaClient(), new ObjectMapper());
 
         assertThat(searcher.searchImage(null)).isNull();
         assertThat(searcher.searchImage(new String[]{})).isNull();

@@ -36,20 +36,16 @@ class WikimediaImageFinderServiceIT {
     void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
         val service = new WikimediaImageFinderService(mockEmbeddingModel());
 
-        val result = service.findMostRelevantImage(new String[]{"Orion", "nasa", "spacecraft"});
+        val result = service.findMostRelevantImage(new String[]{"orion", "nasa", "spacecraft"});
 
         assertThat(result).isNotNull();
-        assertThat(result.title()).startsWith("File:");
-        assertThat(result.pageUrl()).startsWith("https://commons.wikimedia.org/wiki/");
-        assertThat(result.imageUrl()).startsWith("https://upload.wikimedia.org/");
-        assertThat(result.thumbnailUrl()).startsWith("https://upload.wikimedia.org/");
-        assertThat(result.totalScore()).isGreaterThan(0.0);
+        assertThat(result).startsWith("https://upload.wikimedia.org/");
     }
 
     @SuppressWarnings("unchecked")
     private ZooModel<String, float[]> mockEmbeddingModel() throws Exception {
-        ZooModel<String, float[]> embeddingModel = mock(ZooModel.class);
-        Predictor<String, float[]> predictor = mock(Predictor.class);
+        val embeddingModel = mock(ZooModel.class);
+        val predictor = mock(Predictor.class);
 
         when(embeddingModel.newPredictor()).thenReturn(predictor);
         when(predictor.predict(anyString())).thenAnswer(invocation -> embeddingFor(invocation.getArgument(0)));
@@ -58,7 +54,7 @@ class WikimediaImageFinderServiceIT {
     }
 
     private float[] embeddingFor(String text) {
-        String safe = text == null ? "" : text;
+        val safe = text == null ? "" : text;
         float length = safe.length();
         float vowels = (float) safe.chars()
                 .filter(ch -> "aeiouAEIOU".indexOf(ch) >= 0)

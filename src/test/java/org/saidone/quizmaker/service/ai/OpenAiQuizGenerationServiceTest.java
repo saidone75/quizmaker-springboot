@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.service.WikimediaImageFinderService;
-import org.saidone.quizmaker.service.WikimediaSearcher;
+import org.saidone.quizmaker.service.WikimediaSimpleImageFinderService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,21 +62,9 @@ class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldResolveImageUrlFromEnglishKeywords() throws Exception {
-        val wikimediaSearcher = mock(WikimediaSearcher.class);
+        val wikimediaSearcher = mock(WikimediaSimpleImageFinderService.class);
         val wikimediaImageFinderService = mock(WikimediaImageFinderService.class);
-        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn(
-                new WikimediaImageFinderService.ImageResult(
-                        "File:Example.jpg",
-                        "https://commons.wikimedia.org/wiki/File:Example.jpg",
-                        "https://upload.wikimedia.org/example.jpg",
-                        "https://upload.wikimedia.org/example-thumb.jpg",
-                        "image/jpeg",
-                        0.0,
-                        0.0,
-                        0.0,
-                        ""
-                )
-        );
+        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
         val service = new OpenAiQuizGenerationService(null, null, wikimediaSearcher, wikimediaImageFinderService);
 
         val question = new QuestionDto();
@@ -97,21 +85,9 @@ class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldTrimLeadingAndTrailingSpacesFromImageKeywords() throws Exception {
-        val wikimediaSearcher = mock(WikimediaSearcher.class);
+        val wikimediaSearcher = mock(WikimediaSimpleImageFinderService.class);
         val wikimediaImageFinderService = mock(WikimediaImageFinderService.class);
-        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn(
-                new WikimediaImageFinderService.ImageResult(
-                        "File:Example.jpg",
-                        "https://commons.wikimedia.org/wiki/File:Example.jpg",
-                        "https://upload.wikimedia.org/example.jpg",
-                        "https://upload.wikimedia.org/example-thumb.jpg",
-                        "image/jpeg",
-                        0.0,
-                        0.0,
-                        0.0,
-                        ""
-                )
-        );
+        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
         val service = new OpenAiQuizGenerationService(null, null, wikimediaSearcher, wikimediaImageFinderService);
 
         val question = new QuestionDto();
