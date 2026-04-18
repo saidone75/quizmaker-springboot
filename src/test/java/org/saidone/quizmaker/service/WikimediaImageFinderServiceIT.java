@@ -20,9 +20,12 @@ package org.saidone.quizmaker.service;
 
 import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.ZooModel;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
+import java.net.http.HttpClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -34,9 +37,13 @@ class WikimediaImageFinderServiceIT {
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
     void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
-        val service = new WikimediaImageFinderService(mockEmbeddingModel());
+        val service = new WikimediaImageFinderService(
+                HttpClient.newHttpClient(),
+                mockEmbeddingModel(),
+                new ObjectMapper()
+        );
 
-        val result = service.findMostRelevantImage(new String[]{"orion", "nasa", "spacecraft"});
+        val result = service.findMostRelevantImage(new String[]{"apollo", "rocket", "spacecraft"});
 
         assertThat(result).isNotNull();
         assertThat(result).startsWith("https://upload.wikimedia.org/");
