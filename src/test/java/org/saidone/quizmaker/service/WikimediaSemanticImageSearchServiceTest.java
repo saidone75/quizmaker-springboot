@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class WikimediaImageFinderServiceTest {
+class WikimediaSemanticImageSearchServiceTest {
 
     @Test
     void shouldMarkDjvuMimeAsUnsupported() {
-        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+        assertThat(WikimediaSemanticImageSearchService.isUnsupportedMedia(
                 "File:Example.jpg",
                 "image/vnd.djvu",
                 "https://upload.wikimedia.org/example.jpg")
@@ -35,7 +35,7 @@ class WikimediaImageFinderServiceTest {
 
     @Test
     void shouldMarkDjvuExtensionInTitleAsUnsupported() {
-        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+        assertThat(WikimediaSemanticImageSearchService.isUnsupportedMedia(
                 "File:Scan.djvu",
                 "image/jpeg",
                 "https://upload.wikimedia.org/scan.jpg")
@@ -44,7 +44,7 @@ class WikimediaImageFinderServiceTest {
 
     @Test
     void shouldMarkDjvuExtensionInUrlAsUnsupported() {
-        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+        assertThat(WikimediaSemanticImageSearchService.isUnsupportedMedia(
                 "File:Scan.jpg",
                 "image/jpeg",
                 "https://upload.wikimedia.org/scan.djvu")
@@ -53,7 +53,7 @@ class WikimediaImageFinderServiceTest {
 
     @Test
     void shouldKeepJpegAsSupported() {
-        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+        assertThat(WikimediaSemanticImageSearchService.isUnsupportedMedia(
                 "File:Photo.jpg",
                 "image/jpeg",
                 "https://upload.wikimedia.org/photo.jpg")

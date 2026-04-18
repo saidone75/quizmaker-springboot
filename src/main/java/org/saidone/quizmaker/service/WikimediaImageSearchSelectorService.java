@@ -35,8 +35,8 @@ public class WikimediaImageSearchSelectorService implements WikimediaImageSearch
     private static final String MODE_SIMPLE = "simple";
     private static final String MODE_ADVANCED = "advanced";
 
-    private final WikimediaSimpleImageFinderService simpleImageFinderService;
-    private final WikimediaImageFinderService advancedImageFinderService;
+    private final WikimediaSimpleImageSearchService simpleImageFinderService;
+    private final WikimediaSemanticImageSearchService advancedImageFinderService;
     private final Environment environment;
 
     @Override

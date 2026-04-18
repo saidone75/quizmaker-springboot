@@ -32,12 +32,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class WikimediaImageFinderServiceIT {
+class WikimediaSemanticImageSearchServiceIT {
 
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
     void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
-        val service = new WikimediaImageFinderService(
+        val service = new WikimediaSemanticImageSearchService(
                 HttpClient.newHttpClient(),
                 mockEmbeddingModel(),
                 new ObjectMapper()

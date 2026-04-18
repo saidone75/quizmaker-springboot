@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WikimediaImageFinderService implements WikimediaImageSearchService {
+public class WikimediaSemanticImageSearchService implements WikimediaImageSearchService {
 
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
@@ -79,7 +79,7 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
-                .map(WikimediaImageFinderService::normalize)
+                .map(WikimediaSemanticImageSearchService::normalize)
                 .distinct()
                 .toList();
 
