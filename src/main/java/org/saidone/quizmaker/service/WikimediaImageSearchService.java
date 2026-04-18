@@ -22,4 +22,8 @@ public interface WikimediaImageSearchService {
 
     String searchImage(String[] keywords);
 
+    default String searchImage(String[] keywords, String preferredMode) {
+        return searchImage(keywords);
+    }
+
 }

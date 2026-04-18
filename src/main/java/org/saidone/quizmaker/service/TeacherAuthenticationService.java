@@ -41,6 +41,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TeacherAuthenticationService implements UserDetailsService {
 
+    public static final String IMAGE_SEARCH_MODE_SIMPLE = "simple";
+    public static final String IMAGE_SEARCH_MODE_ADVANCED = "advanced";
+
     private final TeacherRepository teacherRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -85,6 +88,7 @@ public class TeacherAuthenticationService implements UserDetailsService {
                 .aiEnabled(false)
                 .enabled(true)
                 .imageUploadEnabled(false)
+                .imageSearchMode(IMAGE_SEARCH_MODE_ADVANCED)
                 .build());
     }
 
@@ -145,6 +149,24 @@ public class TeacherAuthenticationService implements UserDetailsService {
         }
         teacher.setImageUploadEnabled(imageUploadEnabled);
         teacherRepository.save(teacher);
+    }
+
+    @Transactional
+    public void updateImageSearchModePreference(Teacher teacher, String imageSearchMode) {
+        if (teacher == null) {
+            throw new IllegalArgumentException("Insegnante non valido");
+        }
+        teacher.setImageSearchMode(normalizeImageSearchMode(imageSearchMode));
+        teacherRepository.save(teacher);
+    }
+
+    public String normalizeImageSearchMode(String imageSearchMode) {
+        val normalizedMode = imageSearchMode == null ? "" : imageSearchMode.trim().toLowerCase();
+        return switch (normalizedMode) {
+            case "", IMAGE_SEARCH_MODE_ADVANCED -> IMAGE_SEARCH_MODE_ADVANCED;
+            case IMAGE_SEARCH_MODE_SIMPLE -> IMAGE_SEARCH_MODE_SIMPLE;
+            default -> throw new IllegalArgumentException("Modalità ricerca immagini non valida");
+        };
     }
 
     private List<GrantedAuthority> buildAuthorities(Teacher teacher) {

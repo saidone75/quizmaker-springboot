@@ -119,7 +119,11 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             val root = objectMapper.readTree(responseBody);
             val rawJson = root.path("choices").path(0).path("message").path("content").asText();
             val generatedQuiz = objectMapper.readValue(rawJson, QuizDto.Request.class);
-            checkGeneratedImageUrls(generatedQuiz, Boolean.TRUE.equals(request.getIncludeAiImages()));
+            checkGeneratedImageUrls(
+                    generatedQuiz,
+                    Boolean.TRUE.equals(request.getIncludeAiImages()),
+                    request.getImageSearchMode()
+            );
             randomizeAnswerPositions(generatedQuiz);
             return generatedQuiz;
         } catch (Exception e) {
@@ -128,7 +132,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         }
     }
 
-    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages) {
+    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages, String imageSearchMode) {
         if (quiz == null || quiz.getQuestions() == null) {
             return;
         }
@@ -147,7 +151,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 val keywords = parseImageKeywords(question.getImageKeywords());
                 if (keywords.length > 0) {
                     question.setImageKeywords(String.join(", ", keywords));
-                    resolvedUrl = wikimediaImageSearchService.searchImage(keywords);
+                    resolvedUrl = wikimediaImageSearchService.searchImage(keywords, imageSearchMode);
                 }
             }
 

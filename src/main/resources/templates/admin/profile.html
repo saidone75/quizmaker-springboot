@@ -73,6 +73,18 @@
                     Abilita campi immagine nell'editor dei quiz
                 </label>
             </form>
+
+            <form th:action="@{/teacher/profile/image-search-mode}" method="post" id="imageSearchModePreferenceForm">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <div class="form-group">
+                    <label class="form-label" for="imageSearchMode">Modalità ricerca immagini Wikimedia</label>
+                    <select id="imageSearchMode" name="imageSearchMode" class="input-field">
+                        <option value="advanced" th:selected="${teacherImageSearchMode == 'advanced'}">Avanzata (predefinita)</option>
+                        <option value="simple" th:selected="${teacherImageSearchMode == 'simple'}">Semplice</option>
+                    </select>
+                </div>
+            </form>
         </div>
 
         <div class="editor-mode-card">

@@ -38,4 +38,6 @@ public class QuizGenerationRequestDto {
     private String tone;
 
     private Boolean includeAiImages = false;
+
+    private String imageSearchMode;
 }

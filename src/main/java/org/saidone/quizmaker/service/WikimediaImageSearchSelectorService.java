@@ -41,14 +41,34 @@ public class WikimediaImageSearchSelectorService implements WikimediaImageSearch
 
     @Override
     public String searchImage(String[] keywords) {
-        val mode = environment.getProperty(SEARCH_MODE_PROPERTY, MODE_ADVANCED).trim().toLowerCase();
+        return searchImage(keywords, null);
+    }
+
+    @Override
+    public String searchImage(String[] keywords, String preferredMode) {
+        val mode = resolveMode(preferredMode);
         if (MODE_SIMPLE.equals(mode)) {
             return simpleImageFinderService.searchImage(keywords);
         }
-        if (!MODE_ADVANCED.equals(mode)) {
-            log.warn("Modalità '{}' non riconosciuta per {}. Uso '{}'.", mode, SEARCH_MODE_PROPERTY, MODE_ADVANCED);
-        }
         return advancedImageFinderService.searchImage(keywords);
+    }
+
+    private String resolveMode(String preferredMode) {
+        if (preferredMode != null && !preferredMode.isBlank()) {
+            val normalizedPreferredMode = preferredMode.trim().toLowerCase();
+            if (MODE_SIMPLE.equals(normalizedPreferredMode) || MODE_ADVANCED.equals(normalizedPreferredMode)) {
+                return normalizedPreferredMode;
+            }
+            log.warn("Modalità preferita '{}' non riconosciuta. Uso '{}'.", preferredMode, MODE_ADVANCED);
+            return MODE_ADVANCED;
+        }
+
+        val configuredMode = environment.getProperty(SEARCH_MODE_PROPERTY, MODE_ADVANCED).trim().toLowerCase();
+        if (!MODE_SIMPLE.equals(configuredMode) && !MODE_ADVANCED.equals(configuredMode)) {
+            log.warn("Modalità '{}' non riconosciuta per {}. Uso '{}'.", configuredMode, SEARCH_MODE_PROPERTY, MODE_ADVANCED);
+            return MODE_ADVANCED;
+        }
+        return configuredMode;
     }
 
 }

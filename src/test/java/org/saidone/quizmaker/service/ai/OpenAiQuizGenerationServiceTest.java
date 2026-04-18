@@ -31,6 +31,7 @@ import java.util.Random;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -62,7 +63,7 @@ class OpenAiQuizGenerationServiceTest {
     @Test
     void shouldResolveImageUrlFromEnglishKeywords() throws Exception {
         val wikimediaImageSearchService = mock(WikimediaImageSearchService.class);
-        when(wikimediaImageSearchService.searchImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        when(wikimediaImageSearchService.searchImage(any(), any())).thenReturn("https://upload.wikimedia.org/example.jpg");
         val service = new OpenAiQuizGenerationService(null, null, wikimediaImageSearchService);
 
         val question = new QuestionDto();
@@ -74,17 +75,17 @@ class OpenAiQuizGenerationServiceTest {
                 .questions(new ArrayList<>(List.of(question)))
                 .build();
 
-        service.checkGeneratedImageUrls(quiz, true);
+        service.checkGeneratedImageUrls(quiz, true, null);
 
         assertThat(question.getImageUrl()).isEqualTo("https://upload.wikimedia.org/example.jpg");
         assertThat(question.getImageKeywords()).isEqualTo("red planet, mars astronomy");
-        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"red planet", "mars astronomy"}));
+        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"red planet", "mars astronomy"}), isNull());
     }
 
     @Test
     void shouldTrimLeadingAndTrailingSpacesFromImageKeywords() throws Exception {
         val wikimediaImageSearchService = mock(WikimediaImageSearchService.class);
-        when(wikimediaImageSearchService.searchImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        when(wikimediaImageSearchService.searchImage(any(), any())).thenReturn("https://upload.wikimedia.org/example.jpg");
         val service = new OpenAiQuizGenerationService(null, null, wikimediaImageSearchService);
 
         val question = new QuestionDto();
@@ -96,10 +97,10 @@ class OpenAiQuizGenerationServiceTest {
                 .questions(new ArrayList<>(List.of(question)))
                 .build();
 
-        service.checkGeneratedImageUrls(quiz, true);
+        service.checkGeneratedImageUrls(quiz, true, null);
 
         assertThat(question.getImageKeywords()).isEqualTo("Kennedy Space Center, LC-39B");
-        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"Kennedy Space Center", "LC-39B"}));
+        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"Kennedy Space Center", "LC-39B"}), isNull());
     }
 
 }
