@@ -75,7 +75,7 @@
             </form>
 
             <form th:action="@{/teacher/profile/image-search-mode}" method="post" id="imageSearchModePreferenceForm"
-                  th:if="${teacherImageUploadEnabled}">
+                  th:if="${teacherImageUploadEnabled and teacherAiEnabled}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                 <div class="form-group">
