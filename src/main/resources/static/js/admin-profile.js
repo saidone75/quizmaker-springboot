@@ -28,4 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (imageUploadForm && imageUploadCheckbox) {
         imageUploadCheckbox.addEventListener('change', () => imageUploadForm.submit());
     }
+
+    const imageSearchModeForm = document.getElementById('imageSearchModePreferenceForm');
+    const imageSearchModeSelect = document.getElementById('imageSearchMode');
+    if (imageSearchModeForm && imageSearchModeSelect) {
+        imageSearchModeSelect.addEventListener('change', () => imageSearchModeForm.submit());
+    }
 });

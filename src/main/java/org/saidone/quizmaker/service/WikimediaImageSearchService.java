@@ -16,28 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker.dto;
+package org.saidone.quizmaker.service;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+public interface WikimediaImageSearchService {
 
-@Data
-public class QuizGenerationRequestDto {
+    String searchImage(String[] keywords);
 
-    @NotBlank(message = "L'argomento è obbligatorio")
-    private String topic;
+    default String searchImage(String[] keywords, String preferredMode) {
+        return searchImage(keywords);
+    }
 
-    @Min(value = 1, message = "Il numero di domande deve essere almeno 1")
-    private Integer numberOfQuestions;
-
-    @NotBlank(message = "La difficoltà è obbligatoria")
-    private String difficulty;
-
-    @NotBlank(message = "Il tono è obbligatorio")
-    private String tone;
-
-    private Boolean includeAiImages = false;
-
-    private String imageSearchMode;
 }

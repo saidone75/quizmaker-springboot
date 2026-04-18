@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.TeacherRepository;
+import org.saidone.quizmaker.service.TeacherAuthenticationService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -62,6 +63,7 @@ public class DefaultAdminBootstrap implements InitializingBean {
                     .admin(true)
                     .aiEnabled(true)
                     .imageUploadEnabled(true)
+                    .imageSearchMode(TeacherAuthenticationService.IMAGE_SEARCH_MODE_ADVANCED)
                     .enabled(true)
                     .build());
             log.info("Creato amministratore predefinito '{}' con password '{}'", adminUsername, adminPassword);

@@ -73,6 +73,10 @@ public class Teacher implements Serializable {
     @Column(name = "image_upload_enabled", nullable = false)
     private boolean imageUploadEnabled = false;
 
+    @Default
+    @Column(name = "image_search_mode", nullable = false, length = 16)
+    private String imageSearchMode = "advanced";
+
     @CreationTimestamp
     @Convert(converter = LocalDateTimeColumnConverter.class)
     @Column(name = "created_at", nullable = false, updatable = false)

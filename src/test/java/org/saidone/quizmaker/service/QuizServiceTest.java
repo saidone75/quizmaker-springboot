@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.saidone.quizmaker;
+package org.saidone.quizmaker.service;
 
 import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.mapper.QuestionMapper;
@@ -25,7 +25,6 @@ import org.saidone.quizmaker.entity.Question;
 import org.saidone.quizmaker.entity.Teacher;
 import org.saidone.quizmaker.repository.QuizRepository;
 import org.saidone.quizmaker.repository.QuizSubmissionRepository;
-import org.saidone.quizmaker.service.QuizService;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.entity.Quiz;
 import lombok.val;
