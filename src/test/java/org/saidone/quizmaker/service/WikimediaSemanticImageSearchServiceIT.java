@@ -36,7 +36,7 @@ class WikimediaSemanticImageSearchServiceIT {
 
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
-    void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
+    void shouldReturnRealImageUrlFromWikimedia() throws Exception {
         val service = new WikimediaSemanticImageSearchService(
                 HttpClient.newHttpClient(),
                 mockEmbeddingModel(),
@@ -47,6 +47,19 @@ class WikimediaSemanticImageSearchServiceIT {
 
         assertThat(result).isNotNull();
         assertThat(result).startsWith("https://upload.wikimedia.org/");
+    }
+
+    @Test
+    void shouldReturnNullWhenKeywordsAreBlankOrMissing() throws Exception {
+        val service = new WikimediaSemanticImageSearchService(
+                HttpClient.newHttpClient(),
+                mockEmbeddingModel(),
+                new ObjectMapper()
+        );
+
+        assertThat(service.searchImage(null)).isNull();
+        assertThat(service.searchImage(new String[]{})).isNull();
+        assertThat(service.searchImage(new String[]{" ", "\t"})).isNull();
     }
 
     @SuppressWarnings("unchecked")
