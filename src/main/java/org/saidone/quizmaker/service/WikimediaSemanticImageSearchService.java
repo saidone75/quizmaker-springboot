@@ -49,6 +49,8 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
+    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.25;
+    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.15;
 
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
@@ -339,12 +341,18 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         double score = 0.0;
         int matched = 0;
 
-        for (val kw : keywords) {
+        for (int i = 0; i < keywords.size(); i++) {
+            val kw = keywords.get(i);
+            val isPrimaryKeyword = i == 0;
             boolean inTitle = containsTokenish(title, kw);
             boolean inText = containsTokenish(text, kw);
 
-            if (inTitle) score += 10;
-            if (inText) score += 4;
+            if (inTitle) {
+                score += isPrimaryKeyword ? 10 * PRIMARY_KEYWORD_TITLE_WEIGHT : 10;
+            }
+            if (inText) {
+                score += isPrimaryKeyword ? 4 * PRIMARY_KEYWORD_TEXT_WEIGHT : 4;
+            }
             if (inTitle || inText) matched++;
         }
 
