@@ -157,9 +157,20 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
         try (val predictor = embeddingModel.newPredictor()) {
             float[] queryEmbedding = predictor.predict(queryText);
             for (val c : candidates) {
+                val descriptionText = c.descriptionText == null || c.descriptionText.isBlank()
+                        ? c.semanticText
+                        : c.descriptionText;
+                float[] descriptionEmbedding = predictor.predict(descriptionText);
                 float[] candEmbedding = predictor.predict(c.semanticText);
+                c.descriptionSemanticScore = cosineSimilarity(queryEmbedding, descriptionEmbedding);
                 c.semanticScore = cosineSimilarity(queryEmbedding, candEmbedding);
-                c.totalScore = 0.60 * c.lexicalScore + 0.40 * normalizeSemantic(c.semanticScore);
+                val descriptionAvailable = hasMeaningfulDescription(c.descriptionText);
+                val descriptionWeight = descriptionAvailable ? 0.35 : 0.0;
+                val semanticWeight = descriptionAvailable ? 0.30 : 0.45;
+                val lexicalWeight = 1.0 - descriptionWeight - semanticWeight;
+                c.totalScore = lexicalWeight * c.lexicalScore
+                        + descriptionWeight * normalizeSemantic(c.descriptionSemanticScore)
+                        + semanticWeight * normalizeSemantic(c.semanticScore);
                 c.rationale = buildRationale(c, cleanedKeywords);
             }
         }
@@ -169,10 +180,11 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
         val topCandidates = candidates.stream()
                 .limit(3)
                 .map(c -> String.format(
-                        "%s [total=%s, lexical=%s, semantic=%s, mime=%s]",
+                        "%s [total=%s, lexical=%s, semanticDesc=%s, semantic=%s, mime=%s]",
                         c.title,
                         round(c.totalScore),
                         round(c.lexicalScore),
+                        round(c.descriptionSemanticScore),
                         round(c.semanticScore),
                         c.mime
                 ))
@@ -190,6 +202,7 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
                 best.thumbnailUrl,
                 best.mime,
                 best.lexicalScore,
+                best.descriptionSemanticScore,
                 best.semanticScore,
                 best.totalScore,
                 best.rationale
@@ -304,6 +317,10 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
                     cleanHtml(meta(ext, "LicenseShortName"))
             );
 
+            c.descriptionText = String.join(" | ",
+                    cleanHtml(meta(ext, "ObjectName")),
+                    cleanHtml(meta(ext, "ImageDescription"))
+            );
             c.normalizedTitle = normalize(safeTitle(c.title));
             c.semanticText = semanticText;
 
@@ -362,10 +379,11 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
                 .toList();
 
         return String.format(
-                "matched=%s, mime=%s, lexical=%s, semantic=%s, total=%s",
+                "matched=%s, mime=%s, lexical=%s, semanticDescription=%s, semantic=%s, total=%s",
                 matched,
                 c.mime,
                 round(c.lexicalScore),
+                round(c.descriptionSemanticScore),
                 round(c.semanticScore),
                 round(c.totalScore)
         );
@@ -436,6 +454,14 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
         return (cosine + 1.0) * 50.0; // [-1,1] -> [0,100]
     }
 
+    private static boolean hasMeaningfulDescription(String descriptionText) {
+        val normalized = normalize(descriptionText);
+        if (normalized.isBlank()) {
+            return false;
+        }
+        return normalized.split(" ").length >= 3;
+    }
+
     private static String quoteIfNeeded(String s) {
         return s.contains(" ") ? String.format("\"%s\"", s) : s;
     }
@@ -466,8 +492,10 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
         String thumbnailUrl;
         String mime;
         String normalizedTitle;
+        String descriptionText;
         String semanticText;
         double lexicalScore;
+        double descriptionSemanticScore;
         double semanticScore;
         double totalScore;
         String rationale;
@@ -483,6 +511,7 @@ public class WikimediaImageFinderService implements WikimediaImageSearchService 
             String thumbnailUrl,
             String mime,
             double lexicalScore,
+            double descriptionSemanticScore,
             double semanticScore,
             double totalScore,
             String rationale
