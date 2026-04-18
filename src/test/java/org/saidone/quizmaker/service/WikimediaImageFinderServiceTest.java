@@ -18,35 +18,45 @@
 
 package org.saidone.quizmaker.service;
 
-import lombok.val;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
 class WikimediaImageFinderServiceTest {
 
-    /*
     @Test
-    void shouldBuildBatchedQueriesWithOrAsLastFallback() {
-        val service = new WikimediaImageFinderService(mock());
-
-        val batches = service.buildSearchQueryBatches(
-                List.of("orion spacecraft", "nasa", "crew capsule", "lunar mission")
-        );
-
-        assertThat(batches).hasSize(3);
-        assertThat(batches.get(0)).extracting(WikimediaImageFinderService.SearchQuerySpec::label)
-                .containsExactly("and", "title", "title-boost");
-        assertThat(batches.get(1)).extracting(WikimediaImageFinderService.SearchQuerySpec::label)
-                .containsExactly("phrase", "plain");
-        assertThat(batches.get(2)).extracting(WikimediaImageFinderService.SearchQuerySpec::label)
-                .containsExactly("or");
-
-        assertThat(batches.get(2).getFirst().query()).contains(" OR ");
+    void shouldMarkDjvuMimeAsUnsupported() {
+        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+                "File:Example.jpg",
+                "image/vnd.djvu",
+                "https://upload.wikimedia.org/example.jpg")
+        ).isTrue();
     }
 
-     */
+    @Test
+    void shouldMarkDjvuExtensionInTitleAsUnsupported() {
+        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+                "File:Scan.djvu",
+                "image/jpeg",
+                "https://upload.wikimedia.org/scan.jpg")
+        ).isTrue();
+    }
+
+    @Test
+    void shouldMarkDjvuExtensionInUrlAsUnsupported() {
+        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+                "File:Scan.jpg",
+                "image/jpeg",
+                "https://upload.wikimedia.org/scan.djvu")
+        ).isTrue();
+    }
+
+    @Test
+    void shouldKeepJpegAsSupported() {
+        assertThat(WikimediaImageFinderService.isUnsupportedMedia(
+                "File:Photo.jpg",
+                "image/jpeg",
+                "https://upload.wikimedia.org/photo.jpg")
+        ).isFalse();
+    }
 }

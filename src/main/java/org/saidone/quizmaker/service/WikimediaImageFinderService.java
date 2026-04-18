@@ -48,6 +48,7 @@ public class WikimediaImageFinderService {
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
+    private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
 
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
@@ -278,6 +279,11 @@ public class WikimediaImageFinderService {
             c.thumbnailUrl = ii.path("thumburl").asText(c.imageUrl);
             c.mime = ii.path("mime").asText("");
 
+            if (isUnsupportedMedia(c.title, c.mime, c.imageUrl)) {
+                log.debug("Scarto file non supportato: title={}, mime={}, imageUrl={}", c.title, c.mime, c.imageUrl);
+                continue;
+            }
+
             val semanticText = String.join(" | ",
                     cleanHtml(safeTitle(c.title)),
                     cleanHtml(meta(ext, "ObjectName")),
@@ -430,6 +436,17 @@ public class WikimediaImageFinderService {
 
     private static double round(double d) {
         return Math.round(d * 1000.0) / 1000.0;
+    }
+
+    static boolean isUnsupportedMedia(String title, String mime, String imageUrl) {
+        val loweredMime = Objects.toString(mime, "").toLowerCase(Locale.ROOT);
+        if (loweredMime.contains("djvu") || loweredMime.contains("vnd.djvu")) {
+            return true;
+        }
+
+        val titleOrUrl = (Objects.toString(title, "") + " " + Objects.toString(imageUrl, ""))
+                .toLowerCase(Locale.ROOT);
+        return UNSUPPORTED_FILE_EXTENSIONS.stream().anyMatch(titleOrUrl::contains);
     }
 
     private static class Candidate {
