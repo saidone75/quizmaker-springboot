@@ -156,10 +156,10 @@ public class WikimediaImageFinderService {
         String url = COMMONS_API
                 + "?action=query"
                 + "&format=json"
-                + "&prop=imageinfo|info"
+                + "&prop=imageinfo%7Cinfo"
                 + "&inprop=url"
                 + "&titles=" + encode(String.join("|", titles))
-                + "&iiprop=url|mime|extmetadata"
+                + "&iiprop=url%7Cmime%7Cextmetadata"
                 + "&iiurlwidth=500";
 
         JsonNode root = getJson(url);
