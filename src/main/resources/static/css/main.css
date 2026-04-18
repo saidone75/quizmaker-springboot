@@ -751,6 +751,7 @@ input[type="file"].input-field::-webkit-file-upload-button:hover {
     font-weight: 800;
     color: var(--text);
     cursor: pointer;
+    margin-bottom: 6px;
 }
 .ai-image-toggle-label {
     display: flex;
