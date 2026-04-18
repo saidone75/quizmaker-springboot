@@ -25,6 +25,9 @@ app:
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-5.4-mini}
+  wikimedia:
+    image-search:
+      mode: ${WIKIMEDIA_IMAGE_SEARCH_MODE:advanced}
   ai:
     generation:
       max-questions: ${AI_GENERATION_MAX_QUESTIONS:20}

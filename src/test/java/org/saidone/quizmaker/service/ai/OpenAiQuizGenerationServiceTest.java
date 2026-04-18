@@ -22,8 +22,7 @@ import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.dto.QuizDto;
-import org.saidone.quizmaker.service.WikimediaImageFinderService;
-import org.saidone.quizmaker.service.WikimediaSimpleImageFinderService;
+import org.saidone.quizmaker.service.WikimediaImageSearchService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,7 @@ class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldShuffleOptionsAndKeepCorrectAnswerConsistent() {
-        val service = new OpenAiQuizGenerationService(null, null, null, null);
+        val service = new OpenAiQuizGenerationService(null, null, null);
 
         val question = new QuestionDto();
         question.setText("Qual è il pianeta rosso?");
@@ -62,10 +61,9 @@ class OpenAiQuizGenerationServiceTest {
 
     @Test
     void shouldResolveImageUrlFromEnglishKeywords() throws Exception {
-        val wikimediaSearcher = mock(WikimediaSimpleImageFinderService.class);
-        val wikimediaImageFinderService = mock(WikimediaImageFinderService.class);
-        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
-        val service = new OpenAiQuizGenerationService(null, null, wikimediaSearcher, wikimediaImageFinderService);
+        val wikimediaImageSearchService = mock(WikimediaImageSearchService.class);
+        when(wikimediaImageSearchService.searchImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        val service = new OpenAiQuizGenerationService(null, null, wikimediaImageSearchService);
 
         val question = new QuestionDto();
         question.setImageKeywords("red planet, mars astronomy");
@@ -80,15 +78,14 @@ class OpenAiQuizGenerationServiceTest {
 
         assertThat(question.getImageUrl()).isEqualTo("https://upload.wikimedia.org/example.jpg");
         assertThat(question.getImageKeywords()).isEqualTo("red planet, mars astronomy");
-        verify(wikimediaImageFinderService).findMostRelevantImage(eq(new String[]{"red planet", "mars astronomy"}));
+        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"red planet", "mars astronomy"}));
     }
 
     @Test
     void shouldTrimLeadingAndTrailingSpacesFromImageKeywords() throws Exception {
-        val wikimediaSearcher = mock(WikimediaSimpleImageFinderService.class);
-        val wikimediaImageFinderService = mock(WikimediaImageFinderService.class);
-        when(wikimediaImageFinderService.findMostRelevantImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
-        val service = new OpenAiQuizGenerationService(null, null, wikimediaSearcher, wikimediaImageFinderService);
+        val wikimediaImageSearchService = mock(WikimediaImageSearchService.class);
+        when(wikimediaImageSearchService.searchImage(any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        val service = new OpenAiQuizGenerationService(null, null, wikimediaImageSearchService);
 
         val question = new QuestionDto();
         question.setImageKeywords("  Kennedy Space Center  ,  LC-39B  ");
@@ -102,7 +99,7 @@ class OpenAiQuizGenerationServiceTest {
         service.checkGeneratedImageUrls(quiz, true);
 
         assertThat(question.getImageKeywords()).isEqualTo("Kennedy Space Center, LC-39B");
-        verify(wikimediaImageFinderService).findMostRelevantImage(eq(new String[]{"Kennedy Space Center", "LC-39B"}));
+        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"Kennedy Space Center", "LC-39B"}));
     }
 
 }

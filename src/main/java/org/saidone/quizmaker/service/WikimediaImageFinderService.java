@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class WikimediaImageFinderService {
+public class WikimediaImageFinderService implements WikimediaImageSearchService {
 
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
@@ -53,6 +53,16 @@ public class WikimediaImageFinderService {
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
     private final ObjectMapper objectMapper;
+
+    @Override
+    public String searchImage(String[] keywords) {
+        try {
+            return findMostRelevantImage(keywords);
+        } catch (Exception e) {
+            log.warn("Errore durante la ricerca immagine semantica su Wikimedia: {}", e.getMessage());
+            return null;
+        }
+    }
 
     public String findMostRelevantImage(String[] keywords)
             throws IOException, InterruptedException, TranslateException {

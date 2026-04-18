@@ -18,7 +18,6 @@
 
 package org.saidone.quizmaker.service.ai;
 
-import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,8 +28,7 @@ import lombok.val;
 import org.apache.logging.log4j.util.Strings;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
-import org.saidone.quizmaker.service.WikimediaImageFinderService;
-import org.saidone.quizmaker.service.WikimediaSimpleImageFinderService;
+import org.saidone.quizmaker.service.WikimediaImageSearchService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -49,8 +46,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
-    private final WikimediaSimpleImageFinderService wikimediaSimpleImageFinderService;
-    private final WikimediaImageFinderService wikimediaImageFinderService;
+    private final WikimediaImageSearchService wikimediaImageSearchService;
 
     @Value("${app.openai.api-key:}")
     private String apiKey;
@@ -132,7 +128,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         }
     }
 
-    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages) throws TranslateException, IOException, InterruptedException {
+    void checkGeneratedImageUrls(QuizDto.Request quiz, boolean includeAiImages) {
         if (quiz == null || quiz.getQuestions() == null) {
             return;
         }
@@ -151,8 +147,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 val keywords = parseImageKeywords(question.getImageKeywords());
                 if (keywords.length > 0) {
                     question.setImageKeywords(String.join(", ", keywords));
-                    resolvedUrl = wikimediaImageFinderService.findMostRelevantImage(keywords);
-                    //resolvedUrl = wikimediaSearcher.searchImage(keywords);
+                    resolvedUrl = wikimediaImageSearchService.searchImage(keywords);
                 }
             }
 
