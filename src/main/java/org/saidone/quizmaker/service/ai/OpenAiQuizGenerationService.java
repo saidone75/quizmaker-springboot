@@ -109,7 +109,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         val payload = buildPayload(request, attachmentText);
         val responseBody = openAiRestClient.post()
                 .uri("/chat/completions")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .header(HttpHeaders.AUTHORIZATION, String.format("Bearer %s", apiKey))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
