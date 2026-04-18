@@ -83,6 +83,11 @@ public class TeacherDashboardWebController {
         );
     }
 
+    @ModelAttribute("teacherAiEnabled")
+    public boolean teacherAiEnabled() {
+        return teacherAuthenticationService.getCurrentTeacher().isAiEnabled();
+    }
+
     @GetMapping("/teacher")
     public String adminDashboard(Model model) {
         val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
@@ -295,8 +300,12 @@ public class TeacherDashboardWebController {
     @PostMapping("/teacher/profile/image-search-mode")
     public String updateTeacherImageSearchModePreference(@RequestParam("imageSearchMode") String imageSearchMode,
                                                          RedirectAttributes redirectAttributes) {
+        val teacher = teacherAuthenticationService.getCurrentTeacher();
+        if (!teacher.isAiEnabled() || !teacher.isImageUploadEnabled()) {
+            return "redirect:/teacher/profile";
+        }
         try {
-            teacherAuthenticationService.updateImageSearchModePreference(teacherAuthenticationService.getCurrentTeacher(), imageSearchMode);
+            teacherAuthenticationService.updateImageSearchModePreference(teacher, imageSearchMode);
             return "redirect:/teacher/profile";
         } catch (IllegalArgumentException ex) {
             redirectAttributes.addFlashAttribute("profileError", ex.getMessage());

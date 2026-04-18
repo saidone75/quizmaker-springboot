@@ -32,21 +32,34 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class WikimediaImageFinderServiceIT {
+class WikimediaSemanticImageSearchServiceIT {
 
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
-    void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
-        val service = new WikimediaImageFinderService(
+    void shouldReturnRealImageUrlFromWikimedia() throws Exception {
+        val service = new WikimediaSemanticImageSearchService(
                 HttpClient.newHttpClient(),
                 mockEmbeddingModel(),
                 new ObjectMapper()
         );
 
-        val result = service.findMostRelevantImage(new String[]{"apollo", "rocket", "spacecraft"});
+        val result = service.findMostRelevantImage(new String[]{"apollo", "nasa", "spacecraft"});
 
         assertThat(result).isNotNull();
         assertThat(result).startsWith("https://upload.wikimedia.org/");
+    }
+
+    @Test
+    void shouldReturnNullWhenKeywordsAreBlankOrMissing() throws Exception {
+        val service = new WikimediaSemanticImageSearchService(
+                HttpClient.newHttpClient(),
+                mockEmbeddingModel(),
+                new ObjectMapper()
+        );
+
+        assertThat(service.searchImage(null)).isNull();
+        assertThat(service.searchImage(new String[]{})).isNull();
+        assertThat(service.searchImage(new String[]{" ", "\t"})).isNull();
     }
 
     @SuppressWarnings("unchecked")
