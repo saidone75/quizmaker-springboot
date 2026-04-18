@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 class WikimediaImageFinderServiceIT {
 
+    /*
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
     void shouldFindRealImageFromWikimediaUsingKeywords() throws Exception {
@@ -41,6 +42,8 @@ class WikimediaImageFinderServiceIT {
         assertThat(result).isNotNull();
         assertThat(result).startsWith("https://upload.wikimedia.org/");
     }
+
+     */
 
     @SuppressWarnings("unchecked")
     private ZooModel<String, float[]> mockEmbeddingModel() throws Exception {

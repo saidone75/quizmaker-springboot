@@ -22,6 +22,7 @@ import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Service;
@@ -40,23 +41,17 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class WikimediaImageFinderService {
 
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
-    private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
 
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
-
-    public WikimediaImageFinderService(ZooModel<String, float[]> embeddingModel) {
-        this.embeddingModel = embeddingModel;
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
-                .build();
-    }
+    private final ObjectMapper objectMapper;
 
     public String findMostRelevantImage(String[] keywords)
             throws IOException, InterruptedException, TranslateException {
@@ -86,28 +81,50 @@ public class WikimediaImageFinderService {
                 cleanedKeywords,
                 cleanedKeywords.size());
 
-        val searchQueries = buildSearchQueries(cleanedKeywords);
+        val dedup = new LinkedHashMap<String, Candidate>();
+        val queryBatches = buildSearchQueryBatches(cleanedKeywords);
         log.debug("Strategie query (ordine esecuzione): {}",
-                searchQueries.stream()
+                queryBatches.stream()
+                        .flatMap(List::stream)
                         .map(q -> String.format("%s=%s", q.label, q.query))
                         .toList());
 
-        val dedup = new LinkedHashMap<String, Candidate>();
-        for (int i = 0; i < searchQueries.size(); i++) {
-            val querySpec = searchQueries.get(i);
-            val queryStart = System.nanoTime();
-            log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
-            val titles = searchFileTitles(querySpec.query, 20);
-            log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
-                    querySpec.label, i + 1, searchQueries.size(), titles.size(), titles);
-            val details = fetchImageDetails(titles);
-            val dedupBefore = dedup.size();
-            for (val c : details) {
-                dedup.putIfAbsent(c.title, c);
+        for (int batchIndex = 0; batchIndex < queryBatches.size(); batchIndex++) {
+            val batch = queryBatches.get(batchIndex);
+            val batchStart = System.nanoTime();
+            val dedupBeforeBatch = dedup.size();
+
+            for (int i = 0; i < batch.size(); i++) {
+                val querySpec = batch.get(i);
+                val queryStart = System.nanoTime();
+                log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
+                val titles = searchFileTitles(querySpec.query, 20);
+                log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
+                        querySpec.label, i + 1, batch.size(), titles.size(), titles);
+                val details = fetchImageDetails(titles);
+                val dedupBeforeQuery = dedup.size();
+                for (val c : details) {
+                    dedup.putIfAbsent(c.title, c);
+                }
+                long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
+                log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
+                        querySpec.label, details.size(), dedup.size() - dedupBeforeQuery, dedup.size(), elapsedMs);
             }
-            long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
-            log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
-                    querySpec.label, details.size(), dedup.size() - dedupBefore, dedup.size(), elapsedMs);
+
+            long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
+            int newInBatch = dedup.size() - dedupBeforeBatch;
+            log.debug("Batch query {} completato: nuoviCandidati={}, deduplicatiTotali={}, elapsedMs={}",
+                    batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
+
+            if (dedup.isEmpty()) {
+                log.debug("Nessun candidato nel batch {}, provo batch successivo più permissivo", batchIndex + 1);
+                continue;
+            }
+            if (batchIndex < queryBatches.size() - 1) {
+                log.debug("Interrompo espansione query: trovati {} candidati nel batch {}",
+                        dedup.size(), batchIndex + 1);
+            }
+            break;
         }
 
         if (dedup.isEmpty()) {
@@ -168,7 +185,7 @@ public class WikimediaImageFinderService {
         );
     }
 
-    private List<SearchQuerySpec> buildSearchQueries(List<String> keywords) {
+    List<List<SearchQuerySpec>> buildSearchQueryBatches(List<String> keywords) {
         val joined = String.join(" ", keywords);
         val andJoined = String.join(" AND ", keywords);
         val orJoined = String.join(" OR ", keywords);
@@ -182,14 +199,19 @@ public class WikimediaImageFinderService {
                 .map(k -> String.format("intitle:%s", quoteIfNeeded(k)))
                 .collect(Collectors.joining(" "));
 
-        val queries = new ArrayList<SearchQuerySpec>();
-        queries.add(new SearchQuerySpec("and", String.format("filemime:image %s", andJoined)));
-        queries.add(new SearchQuerySpec("title", String.format("filemime:image %s", titleOnly)));
-        queries.add(new SearchQuerySpec("title-boost", String.format("filemime:image %s %s", titleBoost, joined)));
-        queries.add(new SearchQuerySpec("or", String.format("filemime:image %s", orJoined)));
-        queries.add(new SearchQuerySpec("phrase", String.format("filemime:image \"%s\"", joined)));
-        queries.add(new SearchQuerySpec("plain", String.format("filemime:image %s", joined)));
-        return queries;
+        val strict = List.of(
+                new SearchQuerySpec("and", String.format("filemime:image %s", andJoined)),
+                new SearchQuerySpec("title", String.format("filemime:image %s", titleOnly)),
+                new SearchQuerySpec("title-boost", String.format("filemime:image %s %s", titleBoost, joined))
+        );
+        val medium = List.of(
+                new SearchQuerySpec("phrase", String.format("filemime:image \"%s\"", joined)),
+                new SearchQuerySpec("plain", String.format("filemime:image %s", joined))
+        );
+        val broad = List.of(
+                new SearchQuerySpec("or", String.format("filemime:image %s", orJoined))
+        );
+        return List.of(strict, medium, broad);
     }
 
     private List<String> searchFileTitles(String srsearch, int limit)
@@ -345,7 +367,7 @@ public class WikimediaImageFinderService {
         if (response.statusCode() / 100 != 2) {
             throw new IOException("HTTP " + response.statusCode() + ": " + response.body());
         }
-        return MAPPER.readTree(response.body());
+        return objectMapper.readTree(response.body());
     }
 
     private static String meta(JsonNode extmetadata, String key) {
@@ -424,7 +446,7 @@ public class WikimediaImageFinderService {
         String rationale;
     }
 
-    private record SearchQuerySpec(String label, String query) {
+    record SearchQuerySpec(String label, String query) {
     }
 
     private record ImageResult(
