@@ -76,6 +76,22 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             throws IOException, InterruptedException, TranslateException {
         long startedAt = System.nanoTime();
 
+        val cleanedKeywords = normalizeKeywords(keywords);
+        logSearchStart(keywords, cleanedKeywords);
+
+        val dedup = collectCandidates(cleanedKeywords);
+        if (dedup.isEmpty()) {
+            log.info("Nessuna immagine candidata trovata per keyword: {}", cleanedKeywords);
+            return null;
+        }
+
+        val candidates = new ArrayList<>(dedup.values());
+        calculateLexicalScores(candidates, cleanedKeywords);
+        calculateSemanticScores(candidates, cleanedKeywords);
+        return buildResult(candidates, startedAt);
+    }
+
+    private List<String> normalizeKeywords(String[] keywords) {
         val cleanedKeywords = Arrays.stream(
                         Optional.ofNullable(keywords).orElse(new String[0]))
                 .filter(Objects::nonNull)
@@ -84,16 +100,21 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 .map(WikimediaSemanticImageSearchService::normalize)
                 .distinct()
                 .toList();
-
         if (cleanedKeywords.isEmpty()) {
             throw new IllegalArgumentException("Nessuna keyword valida");
         }
+        return cleanedKeywords;
+    }
 
+    private void logSearchStart(String[] keywords, List<String> cleanedKeywords) {
         log.info("Avvio ricerca immagine Wikimedia | originalKeywords={} | cleanedKeywords={} | count={}",
                 Arrays.toString(Optional.ofNullable(keywords).orElse(new String[0])),
                 cleanedKeywords,
                 cleanedKeywords.size());
+    }
 
+    private LinkedHashMap<String, Candidate> collectCandidates(List<String> cleanedKeywords)
+            throws IOException, InterruptedException {
         val dedup = new LinkedHashMap<String, Candidate>();
         val queryBatches = buildSearchQueryBatches(cleanedKeywords);
         log.debug("Strategie query (ordine esecuzione): {}",
@@ -104,78 +125,86 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
         for (int batchIndex = 0; batchIndex < queryBatches.size(); batchIndex++) {
             val batch = queryBatches.get(batchIndex);
-            val batchStart = System.nanoTime();
-            val dedupBeforeBatch = dedup.size();
-
-            for (int i = 0; i < batch.size(); i++) {
-                val querySpec = batch.get(i);
-                val queryStart = System.nanoTime();
-                log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
-                val titles = searchFileTitles(querySpec.query, 20);
-                log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
-                        querySpec.label, i + 1, batch.size(), titles.size(), titles);
-                val details = fetchImageDetails(titles);
-                val dedupBeforeQuery = dedup.size();
-                for (val c : details) {
-                    dedup.putIfAbsent(c.title, c);
-                }
-                long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
-                log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
-                        querySpec.label, details.size(), dedup.size() - dedupBeforeQuery, dedup.size(), elapsedMs);
+            executeBatch(batch, batchIndex, queryBatches.size(), dedup);
+            if (!shouldContinueWithNextBatch(dedup, batchIndex, queryBatches.size())) {
+                break;
             }
+        }
+        return dedup;
+    }
 
-            long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
-            int newInBatch = dedup.size() - dedupBeforeBatch;
-            log.debug("Batch query {} completato: nuoviCandidati={}, deduplicatiTotali={}, elapsedMs={}",
-                    batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
+    private void executeBatch(List<SearchQuerySpec> batch, int batchIndex, int batchCount, Map<String, Candidate> dedup)
+            throws IOException, InterruptedException {
+        val batchStart = System.nanoTime();
+        val dedupBeforeBatch = dedup.size();
 
-            if (dedup.isEmpty()) {
-                log.debug("Nessun candidato nel batch {}, provo batch successivo più permissivo", batchIndex + 1);
-                continue;
-            }
-            if (batchIndex < queryBatches.size() - 1) {
-                log.debug("Interrompo espansione query: trovati {} candidati nel batch {}",
-                        dedup.size(), batchIndex + 1);
-            }
-            break;
+        for (int i = 0; i < batch.size(); i++) {
+            executeQuery(batch, i, dedup);
         }
 
+        long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
+        int newInBatch = dedup.size() - dedupBeforeBatch;
+        log.debug("Batch query {} completato: nuoviCandidati={}, deduplicatiTotali={}, elapsedMs={}",
+                batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
+    }
+
+    private void executeQuery(List<SearchQuerySpec> batch, int queryIndex, Map<String, Candidate> dedup)
+            throws IOException, InterruptedException {
+        val querySpec = batch.get(queryIndex);
+        val queryStart = System.nanoTime();
+        log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
+        val titles = searchFileTitles(querySpec.query, 20);
+        log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
+                querySpec.label, queryIndex + 1, batch.size(), titles.size(), titles);
+        val details = fetchImageDetails(titles);
+        val dedupBeforeQuery = dedup.size();
+        for (val c : details) {
+            dedup.putIfAbsent(c.title, c);
+        }
+        long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
+        log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
+                querySpec.label, details.size(), dedup.size() - dedupBeforeQuery, dedup.size(), elapsedMs);
+    }
+
+    private boolean shouldContinueWithNextBatch(Map<String, Candidate> dedup, int batchIndex, int batchCount) {
         if (dedup.isEmpty()) {
-            log.info("Nessuna immagine candidata trovata per keyword: {}", cleanedKeywords);
-            return null;
+            log.debug("Nessun candidato nel batch {}, provo batch successivo più permissivo", batchIndex + 1);
+            return true;
         }
+        if (batchIndex < batchCount - 1) {
+            log.debug("Interrompo espansione query: trovati {} candidati nel batch {}",
+                    dedup.size(), batchIndex + 1);
+        }
+        return false;
+    }
 
-        val candidates = new ArrayList<>(dedup.values());
-
+    private void calculateLexicalScores(List<Candidate> candidates, List<String> cleanedKeywords) {
         for (val c : candidates) {
             c.lexicalScore = lexicalScore(c, cleanedKeywords);
         }
         log.debug("Calcolato lexicalScore per {} candidati", candidates.size());
+    }
 
+    private void calculateSemanticScores(List<Candidate> candidates, List<String> cleanedKeywords)
+            throws TranslateException {
         val queryText = String.join(" ", cleanedKeywords);
         log.debug("Testo query per embedding: '{}'", queryText);
 
-        // Predictor creato per richiesta: più semplice e sicuro
         try (val predictor = embeddingModel.newPredictor()) {
             float[] queryEmbedding = predictor.predict(queryText);
             for (val c : candidates) {
-                val descriptionText = c.descriptionText == null || c.descriptionText.isBlank()
-                        ? c.semanticText
-                        : c.descriptionText;
+                val descriptionText = fallbackDescriptionText(c);
                 float[] descriptionEmbedding = predictor.predict(descriptionText);
                 float[] candEmbedding = predictor.predict(c.semanticText);
                 c.descriptionSemanticScore = cosineSimilarity(queryEmbedding, descriptionEmbedding);
                 c.semanticScore = cosineSimilarity(queryEmbedding, candEmbedding);
-                val descriptionAvailable = hasMeaningfulDescription(c.descriptionText);
-                val descriptionWeight = descriptionAvailable ? 0.35 : 0.0;
-                val semanticWeight = descriptionAvailable ? 0.30 : 0.45;
-                val lexicalWeight = 1.0 - descriptionWeight - semanticWeight;
-                c.totalScore = lexicalWeight * c.lexicalScore
-                        + descriptionWeight * normalizeSemantic(c.descriptionSemanticScore)
-                        + semanticWeight * normalizeSemantic(c.semanticScore);
+                c.totalScore = computeTotalScore(c);
                 c.rationale = buildRationale(c, cleanedKeywords);
             }
         }
+    }
+
+    private ImageResult buildResult(List<Candidate> candidates, long startedAt) {
 
         candidates.sort(Comparator.comparingDouble((Candidate c) -> c.totalScore).reversed());
         val best = candidates.getFirst();
@@ -209,6 +238,22 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 best.totalScore,
                 best.rationale
         );
+    }
+
+    private static String fallbackDescriptionText(Candidate c) {
+        return c.descriptionText == null || c.descriptionText.isBlank()
+                ? c.semanticText
+                : c.descriptionText;
+    }
+
+    private static double computeTotalScore(Candidate c) {
+        val descriptionAvailable = hasMeaningfulDescription(c.descriptionText);
+        val descriptionWeight = descriptionAvailable ? 0.35 : 0.0;
+        val semanticWeight = descriptionAvailable ? 0.30 : 0.45;
+        val lexicalWeight = 1.0 - descriptionWeight - semanticWeight;
+        return lexicalWeight * c.lexicalScore
+                + descriptionWeight * normalizeSemantic(c.descriptionSemanticScore)
+                + semanticWeight * normalizeSemantic(c.semanticScore);
     }
 
     List<List<SearchQuerySpec>> buildSearchQueryBatches(List<String> keywords) {
