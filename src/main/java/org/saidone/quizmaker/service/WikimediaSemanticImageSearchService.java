@@ -387,46 +387,70 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         val title = normalize(safeTitle(c.title));
         val text = normalize(c.semanticText);
 
+        val keywordMatch = scoreKeywords(title, text, keywords);
+        double score = keywordMatch.score()
+                + scoreExactTitlePhrase(title, keywords)
+                + scoreAllKeywordsMatched(keywordMatch.matchedCount(), keywords.size())
+                + scoreMime(c.mime)
+                - scorePenaltyTerms(text);
+
+        return Math.max(score, 0.0);
+    }
+
+    private KeywordMatchScore scoreKeywords(String title, String text, List<String> keywords) {
         double score = 0.0;
         int matched = 0;
 
         for (int i = 0; i < keywords.size(); i++) {
             val kw = keywords.get(i);
-            val isPrimaryKeyword = i == 0;
-            boolean inTitle = containsTokenish(title, kw);
-            boolean inText = containsTokenish(text, kw);
-
-            if (inTitle) {
-                score += isPrimaryKeyword ? 10 * PRIMARY_KEYWORD_TITLE_WEIGHT : 10;
+            val inTitle = containsTokenish(title, kw);
+            val inText = containsTokenish(text, kw);
+            score += scoreKeywordHit(inTitle, inText, i == 0);
+            if (inTitle || inText) {
+                matched++;
             }
-            if (inText) {
-                score += isPrimaryKeyword ? 4 * PRIMARY_KEYWORD_TEXT_WEIGHT : 4;
-            }
-            if (inTitle || inText) matched++;
         }
 
-        if (title.contains(String.join(" ", keywords))) {
-            score += 8;
-        }
-        if (matched == keywords.size()) {
-            score += 12;
-        }
+        return new KeywordMatchScore(score, matched);
+    }
 
-        if (c.mime.startsWith("image/jpeg") || c.mime.startsWith("image/png") || c.mime.startsWith("image/webp")) {
+    private double scoreKeywordHit(boolean inTitle, boolean inText, boolean primaryKeyword) {
+        double score = 0.0;
+        if (inTitle) {
+            score += primaryKeyword ? 10 * PRIMARY_KEYWORD_TITLE_WEIGHT : 10;
+        }
+        if (inText) {
+            score += primaryKeyword ? 4 * PRIMARY_KEYWORD_TEXT_WEIGHT : 4;
+        }
+        return score;
+    }
+
+    private double scoreExactTitlePhrase(String title, List<String> keywords) {
+        return title.contains(String.join(" ", keywords)) ? 8 : 0;
+    }
+
+    private double scoreAllKeywordsMatched(int matched, int keywordCount) {
+        return matched == keywordCount ? 12 : 0;
+    }
+
+    private double scoreMime(String mime) {
+        double score = 0.0;
+        if (mime.startsWith("image/jpeg") || mime.startsWith("image/png") || mime.startsWith("image/webp")) {
             score += 2;
         }
-        if (c.mime.contains("svg")) {
+        if (mime.contains("svg")) {
             score -= 2;
         }
+        return score;
+    }
 
-        score -= penaltyIfContains(text, "logo", 8);
-        score -= penaltyIfContains(text, "icon", 7);
-        score -= penaltyIfContains(text, "diagram", 7);
-        score -= penaltyIfContains(text, "coat of arms", 8);
-        score -= penaltyIfContains(text, "flag", 6);
-        score -= penaltyIfContains(text, "map", 5);
-
-        return Math.max(score, 0.0);
+    private double scorePenaltyTerms(String text) {
+        return penaltyIfContains(text, "logo", 8)
+                + penaltyIfContains(text, "icon", 7)
+                + penaltyIfContains(text, "diagram", 7)
+                + penaltyIfContains(text, "coat of arms", 8)
+                + penaltyIfContains(text, "flag", 6)
+                + penaltyIfContains(text, "map", 5);
     }
 
     private String buildRationale(Candidate c, List<String> keywords) {
@@ -556,6 +580,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         double semanticScore;
         double totalScore;
         String rationale;
+    }
+
+    private record KeywordMatchScore(double score, int matchedCount) {
     }
 
     record SearchQuerySpec(String label, String query) {
