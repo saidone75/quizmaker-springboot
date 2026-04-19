@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,13 +30,11 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class WikimediaImageSearchSelectorService implements WikimediaImageSearchService {
 
-    private static final String SEARCH_MODE_PROPERTY = "app.wikimedia.image-search.mode";
     private static final String MODE_SIMPLE = "simple";
     private static final String MODE_ADVANCED = "advanced";
 
     private final WikimediaSimpleImageSearchService simpleImageFinderService;
     private final WikimediaSemanticImageSearchService advancedImageFinderService;
-    private final Environment environment;
 
     @Override
     public String searchImage(String[] keywords) {
@@ -63,12 +60,7 @@ public class WikimediaImageSearchSelectorService implements WikimediaImageSearch
             return MODE_ADVANCED;
         }
 
-        val configuredMode = environment.getProperty(SEARCH_MODE_PROPERTY, MODE_ADVANCED).trim().toLowerCase();
-        if (!MODE_SIMPLE.equals(configuredMode) && !MODE_ADVANCED.equals(configuredMode)) {
-            log.warn("Modalità '{}' non riconosciuta per {}. Uso '{}'.", configuredMode, SEARCH_MODE_PROPERTY, MODE_ADVANCED);
-            return MODE_ADVANCED;
-        }
-        return configuredMode;
+        return MODE_ADVANCED;
     }
 
 }
