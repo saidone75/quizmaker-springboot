@@ -60,6 +60,10 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     public String searchImage(String[] keywords) {
         try {
             return findMostRelevantImage(keywords);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Ricerca immagine semantica su Wikimedia interrotta: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             log.warn("Errore durante la ricerca immagine semantica su Wikimedia: {}", e.getMessage());
             return null;
