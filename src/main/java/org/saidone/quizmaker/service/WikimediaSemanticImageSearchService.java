@@ -521,7 +521,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     private static double cosineSimilarity(float[] a, float[] b) {
-        double dot = 0, na = 0, nb = 0;
+        double dot = 0;
+        double na = 0;
+        double nb = 0;
         for (int i = 0; i < a.length; i++) {
             dot += a[i] * b[i];
             na += a[i] * a[i];
