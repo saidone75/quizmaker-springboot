@@ -17,6 +17,7 @@ Applicazione Spring Boot per creare, pubblicare e somministrare quiz scolastici 
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
 - Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione completa account (solo amministratore).
 - Generazione quiz con **OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
+- Ricerca immagini Wikimedia con modalità **advanced** (semantica) e **simple** (keyword), configurabile globalmente e per insegnante.
 - Condivisione quiz verso più insegnanti.
 - Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
 - Profilo insegnante con preferenze tema e gestione password.
@@ -171,6 +172,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 | `/teacher/profile`              | Insegnante                    | Cambio password personale              |
 | `/teacher/profile/theme`        | Insegnante                    | Salvataggio preferenza tema (POST)     |
 | `/teacher/profile/image-upload` | Insegnante                    | Abilitazione upload immagini (POST)    |
+| `/teacher/profile/image-search-mode` | Insegnante                 | Salvataggio preferenza ricerca immagini (POST) |
 | `/teacher/quiz/new`             | Insegnante                    | Editor nuovo quiz                      |
 | `/teacher/quiz/{id}/edit`       | Insegnante                    | Editor modifica quiz                   |
 | `/teacher/system`               | Amministratore                | Pannello sistema                       |
@@ -213,6 +215,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 - `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`light`, `dark`, `true-summer`, `zenburn`).
 - `POST /teacher/profile/image-upload` abilita/disabilita i campi immagine nell'editor quiz.
+- `POST /teacher/profile/image-search-mode` aggiorna la modalità ricerca immagini (`advanced` o `simple`).
 
 ## 🛡️ Sicurezza
 
