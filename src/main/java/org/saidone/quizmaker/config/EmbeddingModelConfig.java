@@ -19,17 +19,21 @@
 package org.saidone.quizmaker.config;
 
 import ai.djl.Application;
+import ai.djl.MalformedModelException;
 import ai.djl.huggingface.translator.TextEmbeddingTranslatorFactory;
 import ai.djl.repository.zoo.Criteria;
+import ai.djl.repository.zoo.ModelNotFoundException;
 import ai.djl.repository.zoo.ZooModel;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.io.IOException;
 
 @Configuration
 public class EmbeddingModelConfig {
 
     @Bean(destroyMethod = "close")
-    public ZooModel<String, float[]> textEmbeddingModel() throws Exception {
+    public ZooModel<String, float[]> textEmbeddingModel() throws ModelNotFoundException, MalformedModelException, IOException {
         Criteria<String, float[]> criteria = Criteria.builder()
                 .setTypes(String.class, float[].class)
                 .optApplication(Application.NLP.TEXT_EMBEDDING)
