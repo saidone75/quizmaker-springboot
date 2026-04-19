@@ -60,6 +60,10 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     public String searchImage(String[] keywords) {
         try {
             return findMostRelevantImage(keywords);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Ricerca immagine semantica su Wikimedia interrotta: {}", e.getMessage());
+            return null;
         } catch (Exception e) {
             log.warn("Errore durante la ricerca immagine semantica su Wikimedia: {}", e.getMessage());
             return null;
@@ -125,7 +129,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
         for (int batchIndex = 0; batchIndex < queryBatches.size(); batchIndex++) {
             val batch = queryBatches.get(batchIndex);
-            executeBatch(batch, batchIndex, queryBatches.size(), dedup);
+            executeBatch(batch, batchIndex, dedup);
             if (!shouldContinueWithNextBatch(dedup, batchIndex, queryBatches.size())) {
                 break;
             }
@@ -133,7 +137,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         return dedup;
     }
 
-    private void executeBatch(List<SearchQuerySpec> batch, int batchIndex, int batchCount, Map<String, Candidate> dedup)
+    private void executeBatch(List<SearchQuerySpec> batch, int batchIndex, Map<String, Candidate> dedup)
             throws IOException, InterruptedException {
         val batchStart = System.nanoTime();
         val dedupBeforeBatch = dedup.size();
