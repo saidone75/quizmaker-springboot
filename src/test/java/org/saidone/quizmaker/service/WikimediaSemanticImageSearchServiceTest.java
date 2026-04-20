@@ -59,4 +59,26 @@ class WikimediaSemanticImageSearchServiceTest {
                 "https://upload.wikimedia.org/photo.jpg")
         ).isFalse();
     }
+
+    @Test
+    void shouldMatchOnlyWholeTokens() {
+        assertThat(WikimediaSemanticImageSearchService.containsTokenish(
+                "File:Marseille Harbor", "mars")
+        ).isFalse();
+
+        assertThat(WikimediaSemanticImageSearchService.containsTokenish(
+                "NASA mission to Mars", "mars")
+        ).isTrue();
+    }
+
+    @Test
+    void shouldMatchMultiWordKeywordAsTokenSequence() {
+        assertThat(WikimediaSemanticImageSearchService.containsTokenish(
+                "Apollo 11 lunar landing photo", "lunar landing")
+        ).isTrue();
+
+        assertThat(WikimediaSemanticImageSearchService.containsTokenish(
+                "Landing on the moon during lunar module operation", "lunar landing")
+        ).isFalse();
+    }
 }

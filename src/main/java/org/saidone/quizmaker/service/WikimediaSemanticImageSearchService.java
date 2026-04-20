@@ -48,6 +48,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final String COMMONS_API = "https://commons.wikimedia.org/w/api.php";
     private static final Pattern HTML_TAGS = Pattern.compile("<[^>]+>");
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
+    private static final Pattern TOKEN_SPLIT = Pattern.compile("\\s+");
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
     private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.25;
     private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.15;
@@ -510,10 +511,49 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         return MULTISPACE.matcher(n).replaceAll(" ").trim();
     }
 
-    private static boolean containsTokenish(String text, String kw) {
+    static boolean containsTokenish(String text, String kw) {
         val nText = normalize(text);
         val nKw = normalize(kw);
-        return nText.contains(nKw);
+        if (nText.isBlank() || nKw.isBlank()) {
+            return false;
+        }
+        if (nText.equals(nKw)) {
+            return true;
+        }
+
+        val textTokens = TOKEN_SPLIT.splitAsStream(nText)
+                .filter(token -> !token.isBlank())
+                .toList();
+        val keywordTokens = TOKEN_SPLIT.splitAsStream(nKw)
+                .filter(token -> !token.isBlank())
+                .toList();
+
+        if (keywordTokens.isEmpty()) {
+            return false;
+        }
+        if (keywordTokens.size() == 1) {
+            return textTokens.contains(keywordTokens.getFirst());
+        }
+        return containsExactTokenSequence(textTokens, keywordTokens);
+    }
+
+    private static boolean containsExactTokenSequence(List<String> textTokens, List<String> keywordTokens) {
+        if (keywordTokens.size() > textTokens.size()) {
+            return false;
+        }
+        for (int i = 0; i <= textTokens.size() - keywordTokens.size(); i++) {
+            boolean allMatched = true;
+            for (int j = 0; j < keywordTokens.size(); j++) {
+                if (!textTokens.get(i + j).equals(keywordTokens.get(j))) {
+                    allMatched = false;
+                    break;
+                }
+            }
+            if (allMatched) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static double penaltyIfContains(String text, String token, double penalty) {
