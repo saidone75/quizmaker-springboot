@@ -103,4 +103,25 @@ class OpenAiQuizGenerationServiceTest {
         verify(wikimediaImageSearchService).searchImage(eq(new String[]{"Kennedy Space Center", "LC-39B"}), isNull());
     }
 
+    @Test
+    void shouldKeepKeywordOrderAndHandleSemicolonOrNumberedSeparators() throws Exception {
+        val wikimediaImageSearchService = mock(WikimediaImageSearchService.class);
+        when(wikimediaImageSearchService.searchImage(any(), any())).thenReturn("https://upload.wikimedia.org/example.jpg");
+        val service = new OpenAiQuizGenerationService(null, null, wikimediaImageSearchService);
+
+        val question = new QuestionDto();
+        question.setImageKeywords("1) Saturn; 2) rings; 3) Cassini orbiter");
+
+        val quiz = QuizDto.Request.builder()
+                .title("Spazio")
+                .emoji("🪐")
+                .questions(new ArrayList<>(List.of(question)))
+                .build();
+
+        service.checkGeneratedImageUrls(quiz, true, null);
+
+        assertThat(question.getImageKeywords()).isEqualTo("Saturn, rings, Cassini orbiter");
+        verify(wikimediaImageSearchService).searchImage(eq(new String[]{"Saturn", "rings", "Cassini orbiter"}), isNull());
+    }
+
 }

@@ -52,6 +52,11 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
     private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.25;
     private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.15;
+    private static final int STRICT_BATCH_LIMIT = 20;
+    private static final int MEDIUM_BATCH_LIMIT = 30;
+    private static final int BROAD_BATCH_LIMIT = 40;
+    private static final int MAX_QUERY_LIMIT = 50;
+    private static final int TARGET_CANDIDATE_POOL_SIZE = 60;
 
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
@@ -130,7 +135,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
         for (int batchIndex = 0; batchIndex < queryBatches.size(); batchIndex++) {
             val batch = queryBatches.get(batchIndex);
-            executeBatch(batch, batchIndex, dedup);
+            executeBatch(batch, batchIndex, cleanedKeywords.size(), dedup);
             if (!shouldContinueWithNextBatch(dedup, batchIndex, queryBatches.size())) {
                 break;
             }
@@ -138,13 +143,13 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         return dedup;
     }
 
-    private void executeBatch(List<SearchQuerySpec> batch, int batchIndex, Map<String, Candidate> dedup)
+    private void executeBatch(List<SearchQuerySpec> batch, int batchIndex, int keywordCount, Map<String, Candidate> dedup)
             throws IOException, InterruptedException {
         val batchStart = System.nanoTime();
         val dedupBeforeBatch = dedup.size();
 
         for (int i = 0; i < batch.size(); i++) {
-            executeQuery(batch, i, dedup);
+            executeQuery(batch, batchIndex, i, keywordCount, dedup);
         }
 
         long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
@@ -153,12 +158,14 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
     }
 
-    private void executeQuery(List<SearchQuerySpec> batch, int queryIndex, Map<String, Candidate> dedup)
+    private void executeQuery(List<SearchQuerySpec> batch, int batchIndex, int queryIndex, int keywordCount,
+                              Map<String, Candidate> dedup)
             throws IOException, InterruptedException {
         val querySpec = batch.get(queryIndex);
+        val limit = resolveQueryLimit(batchIndex, queryIndex, keywordCount);
         val queryStart = System.nanoTime();
-        log.debug("Eseguo query [{}]: {}", querySpec.label, querySpec.query);
-        val titles = searchFileTitles(querySpec.query, 20);
+        log.debug("Eseguo query [{}] con srlimit={}: {}", querySpec.label, limit, querySpec.query);
+        val titles = searchFileTitles(querySpec.query, limit);
         log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
                 querySpec.label, queryIndex + 1, batch.size(), titles.size(), titles);
         val details = fetchImageDetails(titles);
@@ -172,15 +179,17 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     private boolean shouldContinueWithNextBatch(Map<String, Candidate> dedup, int batchIndex, int batchCount) {
-        if (dedup.isEmpty()) {
-            log.debug("Nessun candidato nel batch {}, provo batch successivo più permissivo", batchIndex + 1);
-            return true;
+        if (batchIndex >= batchCount - 1) {
+            return false;
         }
-        if (batchIndex < batchCount - 1) {
-            log.debug("Interrompo espansione query: trovati {} candidati nel batch {}",
+        if (dedup.size() >= TARGET_CANDIDATE_POOL_SIZE) {
+            log.debug("Interrompo espansione query: raggiunto target candidati={} nel batch {}",
                     dedup.size(), batchIndex + 1);
+            return false;
         }
-        return false;
+        log.debug("Proseguo con batch successivo: candidati raccolti={} dopo batch {}",
+                dedup.size(), batchIndex + 1);
+        return true;
     }
 
     private void calculateLexicalScores(List<Candidate> candidates, List<String> cleanedKeywords) {
@@ -253,12 +262,25 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
     private static double computeTotalScore(Candidate c) {
         val descriptionAvailable = hasMeaningfulDescription(c.descriptionText);
-        val descriptionWeight = descriptionAvailable ? 0.35 : 0.0;
-        val semanticWeight = descriptionAvailable ? 0.30 : 0.45;
-        val lexicalWeight = 1.0 - descriptionWeight - semanticWeight;
+        val lexicalWeight = hasStrongLexicalSignal(c.lexicalScore) ? 0.45 : 0.35;
+        val descriptionWeight = descriptionAvailable ? (0.20 + (0.20 * descriptionQuality(c.descriptionText))) : 0.0;
+        val semanticWeight = 1.0 - lexicalWeight - descriptionWeight;
         return lexicalWeight * c.lexicalScore
                 + descriptionWeight * normalizeSemantic(c.descriptionSemanticScore)
                 + semanticWeight * normalizeSemantic(c.semanticScore);
+    }
+
+    private static boolean hasStrongLexicalSignal(double lexicalScore) {
+        return lexicalScore >= 24.0;
+    }
+
+    private static double descriptionQuality(String descriptionText) {
+        val normalized = normalize(descriptionText);
+        if (normalized.isBlank()) {
+            return 0.0;
+        }
+        val tokenCount = normalized.split(" ").length;
+        return Math.min(tokenCount, 20) / 20.0;
     }
 
     List<List<SearchQuerySpec>> buildSearchQueryBatches(List<String> keywords) {
@@ -587,6 +609,22 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
     private static String quoteIfNeeded(String s) {
         return s.contains(" ") ? String.format("\"%s\"", s) : s;
+    }
+
+    private int resolveQueryLimit(int batchIndex, int queryIndex, int keywordCount) {
+        int baseLimit = switch (batchIndex) {
+            case 0 -> STRICT_BATCH_LIMIT;
+            case 1 -> MEDIUM_BATCH_LIMIT;
+            default -> BROAD_BATCH_LIMIT;
+        };
+
+        if (keywordCount <= 2) {
+            baseLimit += 10;
+        }
+        if (queryIndex == 0) {
+            baseLimit += 5;
+        }
+        return Math.min(baseLimit, MAX_QUERY_LIMIT);
     }
 
     private static String encode(String s) {
