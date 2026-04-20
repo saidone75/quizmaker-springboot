@@ -164,7 +164,8 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             return new String[0];
         }
 
-        return Arrays.stream(imageKeywords.trim().split("\\s*,\\s*"))
+        return Arrays.stream(imageKeywords.trim().split("\\s*[,;\\n]+\\s*"))
+                .map(s -> s.replaceFirst("^\\d+[\\)\\.\\-:]\\s*", ""))
                 .map(String::trim)
                 .filter(StringUtils::hasText)
                 .distinct()
@@ -201,7 +202,7 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
                 Crea un quiz in italiano e rispondi SOLO con JSON valido compatibile con QuizDto.Request.
                 Campi obbligatori: title (string), emoji (string), questions (array).
                 Ogni question deve avere: text, emoji, imageKeywords, imageUrl, options (4 risposte), answer (indice corretto 0-3), feedback.
-                imageKeywords deve contenere 2-6 keyword in inglese, separate da spazio o virgola, pensate per cercare immagini su Wikimedia Commons.
+                imageKeywords deve contenere 2-6 keyword in inglese, separate da virgola, in ordine di importanza (la più importante per prima), pensate per cercare immagini su Wikimedia Commons.
                 imageUrl deve essere sempre stringa vuota: verrà valorizzato dal backend.
                 
                 Vincoli:
