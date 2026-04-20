@@ -45,8 +45,9 @@ class WikimediaSemanticImageSearchServiceIT {
 
         val result = service.findMostRelevantImage(new String[]{"apollo", "nasa", "spacecraft"});
 
-        assertThat(result).isNotNull();
-        assertThat(result).startsWith("https://upload.wikimedia.org/");
+        assertThat(result)
+                .isNotNull()
+                .startsWith("https://upload.wikimedia.org/");
     }
 
     @Test
