@@ -1,29 +1,53 @@
 # 🐰 Alice's Simple Quiz Maker
 
-Applicazione web per creare, pubblicare e somministrare quiz scolastici divertenti, con interfaccia web e API REST.
+Applicazione web per creare, pubblicare e somministrare quiz scolastici divertenti, con dashboard insegnante, area studente e API REST.
 
 ![Alice's Simple Quiz Maker](images/quizmaker_dashboard.png)
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 ![Java CI](https://github.com/saidone75/quizmaker-springboot/actions/workflows/build.yml/badge.svg)
-
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=saidone75_quizmaker_springboot&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=saidone75_quizmaker_springboot)
 
+## 📚 Indice
+
+- [Perché usarlo](#-perché-usarlo)
+- [Caratteristiche principali](#-caratteristiche-principali)
+- [Stack tecnologico](#-stack-tecnologico)
+- [Prerequisiti](#-prerequisiti)
+- [Avvio rapido](#-avvio-rapido)
+- [Build e test](#-build-e-test)
+- [Credenziali iniziali](#-credenziali-iniziali)
+- [Profili runtime](#-profili-runtime)
+- [Variabili d'ambiente principali](#️-variabili-dambiente-principali)
+- [Funzionalità web e API](#-funzionalità-web-e-api)
+- [Sicurezza](#️-sicurezza)
+- [Database e migration](#️-database-e-migration)
+- [Contribuire](#-contribuire)
+
+## 🎯 Perché usarlo
+
+Alice's Simple Quiz Maker è pensato per chi desidera:
+
+- creare quiz in pochi minuti;
+- gestire studenti, risultati e tentativi in modo centralizzato;
+- usare AI (opzionale) per generare domande a partire da un argomento o da allegati;
+- usare immagini Wikimedia per quiz più visivi e coinvolgenti;
+- condividere quiz tra insegnanti e riutilizzare materiali didattici.
+
 ## ✨ Caratteristiche principali
 
-- Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
-- Codice scritto con attenzione a qualità e manutenibilità: layering Spring chiaro, migrazioni database versionate con Liquibase, copertura test unit/integration e quality gate SonarCloud esposti a badge in README.
+- Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0).
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
-- Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione completa account (solo amministratore).
+- Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione account (solo amministratore).
 - Generazione quiz con **OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
-- Ricerca immagini Wikimedia con modalità **advanced** (semantica) e **simple** (keyword), configurabile globalmente e per insegnante.
+- Ricerca immagini Wikimedia con modalità **advanced** e **simple**, configurabile globalmente e per insegnante.
 - Condivisione quiz verso più insegnanti.
-- Gestione risultati con analytics e sblocco tentativi singolo studente o in blocco.
-- Profilo insegnante con preferenze tema e gestione password.
+- Gestione risultati con analytics e sblocco tentativi singolo studente o massivo.
+- Profilo insegnante con preferenze tema, ricerca immagini e gestione password.
+- Architettura Spring con migrazioni schema DB versionate via Liquibase.
 - Backup schedulato database SQLite in produzione con retention configurabile.
-- Semplice dispiegamento in cloud o on premise.
 
 ## 🧰 Stack tecnologico
 
@@ -37,24 +61,44 @@ Applicazione web per creare, pubblicare e somministrare quiz scolastici diverten
 - DJL (Deep Java Library) + Hugging Face Tokenizers
 - Motore locale PyTorch CPU (nessun servizio esterno richiesto per ricerca semantica)
 
-## 🚀 Avvio rapido in sviluppo (`dev`)
+## ✅ Prerequisiti
+
+Per avvio locale:
+
+- JDK 21
+- Maven 3.9+
+
+Per avvio Docker:
+
+- Docker
+- Docker Compose
+
+## 🚀 Avvio rapido
+
+### 1) Locale (profilo `dev`)
 
 ```bash
 mvn spring-boot:run
 ```
 
-Oppure con profilo esplicito:
+Con profilo esplicito:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-In alternativa puoi usare gli script inclusi nel progetto:
+Script alternativi:
 
 - Avvio locale: `run.sh` (Linux/macOS) oppure `run.bat` (Windows)
-- Avvio con Docker: `quizmaker.sh` (Linux/macOS) oppure `quizmaker.bat` (Windows)
+- Avvio Docker: `quizmaker.sh` (Linux/macOS) oppure `quizmaker.bat` (Windows)
 
-Link utili in locale:
+### 2) Docker (profilo `docker`)
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+### Link utili in locale
 
 - App: http://localhost:8080
 - Login insegnante: http://localhost:8080/teacher/login
@@ -64,16 +108,39 @@ Link utili in locale:
 - User H2: `sa`
 - Password H2: *(vuota)*
 
-## 🏗️ Build
+## 🏗️ Build e test
+
+### Build
 
 ```bash
 mvn clean package
 ```
 
-Oppure con gli script:
+Script alternativi:
 
 - Build locale: `build.sh` (Linux/macOS) oppure `build.bat` (Windows)
-- Build con Docker: `build-docker.sh` (Linux/macOS) oppure `build-docker.bat` (Windows)
+- Build Docker: `build-docker.sh` (Linux/macOS) oppure `build-docker.bat` (Windows)
+
+### Test
+
+```bash
+mvn test
+```
+
+### Smoke test end-to-end
+
+Per validare rapidamente il flusso completo (teacher login, creazione studente, creazione quiz, pubblicazione, login studente e submit):
+
+```bash
+./scripts/smoke-e2e.sh
+```
+
+Variabili utili:
+
+- `BASE_URL` (default `http://localhost:8080`)
+- `ADMIN_USERNAME` (default `admin`)
+- `ADMIN_PASSWORD` (default `changeme`)
+- `SPRING_PROFILE` (default `dev`)
 
 ## 🔐 Credenziali iniziali
 
@@ -83,9 +150,9 @@ L'app crea un utente amministratore di default via configurazione:
 |----------|------------|
 | `admin`  | `changeme` |
 
-⚠️ Cambia subito password in ambienti non di sviluppo.
+⚠️ In produzione cambia subito la password.
 
-Variabili d'ambiente:
+Variabili d'ambiente correlate:
 
 ```bash
 export ADMIN_USERNAME=admin
@@ -99,8 +166,8 @@ export ADMIN_PASSWORD='$2a$12$...'
 ### `dev`
 
 - DB H2 in-memory
-- H2 console attiva
-- Turnstile attivo per default con chiavi di test
+- Console H2 attiva
+- Turnstile attivo di default con chiavi test
 
 ### `prod`
 
@@ -123,10 +190,6 @@ java -jar target/quizmaker-*.jar --spring.profiles.active=prod
 - DB H2 in-memory
 - Profilo dedicato per container (`SPRING_PROFILES_ACTIVE=docker`)
 
-```bash
-docker compose -f docker/docker-compose.yml up --build
-```
-
 ## ⚙️ Variabili d'ambiente principali
 
 | Variabile                            | Default                                           | Descrizione                                   |
@@ -141,7 +204,7 @@ docker compose -f docker/docker-compose.yml up --build
 | `AI_GENERATION_MAX_ATTACHMENT_CHARS` | `60000`                                           | Max caratteri estratti da allegato            |
 | `AI_GENERATION_MAX_ATTEMPTS`         | `2`                                               | Tentativi massimi di generazione/validazione  |
 | `UPLOAD_DIRECTORY`                   | `./upload`                                        | Directory file upload immagini quiz           |
-| `TURNSTILE_ENABLED`                  | `false` (`true` in dev)                           | Abilita verifica CAPTCHA Turnstile            |
+| `TURNSTILE_ENABLED`                  | `false` (`true` in dev)                           | Abilita CAPTCHA Turnstile                     |
 | `TURNSTILE_SITE_KEY`                 | vuota (o test key in dev)                         | Site key Turnstile                            |
 | `TURNSTILE_SECRET_KEY`               | vuota (o test key in dev)                         | Secret key Turnstile                          |
 | `TURNSTILE_VERIFY_URL`               | endpoint Cloudflare                               | URL verifica Turnstile                        |
@@ -153,39 +216,32 @@ docker compose -f docker/docker-compose.yml up --build
 | `IMAGE_CLEANUP_CRON`                 | `0 0 3 * * *`                                     | Pianificazione pulizia immagini               |
 | `SESSION_COOKIE_SECURE`              | `true` (prod)                                     | Cookie di sessione solo HTTPS                 |
 
-## 💾 Backup schedulato database (SQLite)
+## 🌐 Funzionalità web e API
 
-```bash
-export DB_BACKUP_ENABLED=true
-export DB_BACKUP_CRON="0 0 2 * * *"
-export DB_BACKUP_DIRECTORY="./backups"
-export DB_BACKUP_RETENTION_COUNT=30
-```
+### Pagine web principali
 
-## 🌐 Funzionalità web
+| URL                                  | Accesso                      | Descrizione                                    |
+|--------------------------------------|------------------------------|------------------------------------------------|
+| `/`                                  | Pubblico / sessione studente | Login studente + pagina quiz                   |
+| `/teacher/login`                     | Pubblico                     | Login insegnante                               |
+| `/teacher/register`                  | Pubblico                     | Registrazione insegnante                       |
+| `/teacher`                           | Insegnante                   | Dashboard quiz                                 |
+| `/teacher/students`                  | Insegnante                   | Gestione studenti                              |
+| `/teacher/results`                   | Insegnante                   | Risultati + analytics + sblocco quiz           |
+| `/teacher/logs`                      | Amministratore               | Visualizzazione log applicativi                |
+| `/teacher/profile`                   | Insegnante                   | Cambio password personale                      |
+| `/teacher/profile/theme`             | Insegnante                   | Salvataggio preferenza tema (POST)             |
+| `/teacher/profile/image-upload`      | Insegnante                   | Abilitazione upload immagini (POST)            |
+| `/teacher/profile/image-search-mode` | Insegnante                   | Salvataggio modalità ricerca immagini (POST)   |
+| `/teacher/quiz/new`                  | Insegnante                   | Editor nuovo quiz                              |
+| `/teacher/quiz/{id}/edit`            | Insegnante                   | Editor modifica quiz                           |
+| `/teacher/system`                    | Amministratore               | Pannello sistema                               |
+| `/teacher/system/teachers`           | Amministratore               | Gestione insegnanti (ruoli, AI, stato)         |
+| `/teacher/about`                     | Amministratore               | Info build/runtime                             |
 
-| URL                                  | Accesso                        | Descrizione                                    |
-|--------------------------------------|--------------------------------|------------------------------------------------|
-| `/`                                  | Pubblico / sessione studente   | Login studente + pagina quiz                   |
-| `/teacher/login`                     | Pubblico                       | Login insegnante                               |
-| `/teacher/register`                  | Pubblico                       | Registrazione insegnante                       |
-| `/teacher`                           | Insegnante                     | Dashboard quiz                                 |
-| `/teacher/students`                  | Insegnante                     | Gestione studenti                              |
-| `/teacher/results`                   | Insegnante                     | Risultati + analytics + sblocco quiz           |
-| `/teacher/logs`                      | Amministratore                 | Visualizzazione log applicativi                |
-| `/teacher/profile`                   | Insegnante                     | Cambio password personale                      |
-| `/teacher/profile/theme`             | Insegnante                     | Salvataggio preferenza tema (POST)             |
-| `/teacher/profile/image-upload`      | Insegnante                     | Abilitazione upload immagini (POST)            |
-| `/teacher/profile/image-search-mode` | Insegnante                     | Salvataggio preferenza ricerca immagini (POST) |
-| `/teacher/quiz/new`                  | Insegnante                     | Editor nuovo quiz                              |
-| `/teacher/quiz/{id}/edit`            | Insegnante                     | Editor modifica quiz                           |
-| `/teacher/system`                    | Amministratore                 | Pannello sistema                               |
-| `/teacher/system/teachers`           | Amministratore                 | Gestione insegnanti (ruoli, AI, stato)         |
-| `/teacher/about`                     | Amministratore                 | Info build/runtime                             |
+### API principali
 
-## 🔌 API principali
-
-### Quiz (`/api/quizzes`)
+**Quiz (`/api/quizzes`)**
 
 - `GET /api/quizzes` elenco quiz pubblicati per studente autenticato.
 - `GET /api/quizzes/{id}` dettaglio quiz pubblicato.
@@ -203,7 +259,7 @@ export DB_BACKUP_RETENTION_COUNT=30
 - `GET /api/quizzes/images/{imageId}` download immagine domanda.
 - `DELETE /api/quizzes/images/{imageId}` eliminazione immagine domanda.
 
-### Studenti (`/api/students`)
+**Studenti (`/api/students`)**
 
 - `GET /api/students` elenco studenti dell'insegnante corrente.
 - `POST /api/students` creazione studente.
@@ -211,15 +267,9 @@ export DB_BACKUP_RETENTION_COUNT=30
 - `POST /api/students/{id}/regenerate-password` rigenera parola chiave singolo studente.
 - `POST /api/students/regenerate-passwords` rigenera parole chiave in massa.
 
-### Log (`/api/teacher/logs`)
+**Log (`/api/teacher/logs`)**
 
 - `GET /api/teacher/logs/tail?lines=200` ultime righe log applicazione (max 1000, solo amministratore).
-
-### Profilo insegnante (`/teacher/profile`)
-
-- `POST /teacher/profile/theme` aggiorna la preferenza tema insegnante (`light`, `dark`, `true-summer`, `zenburn`).
-- `POST /teacher/profile/image-upload` abilita/disabilita i campi immagine nell'editor quiz.
-- `POST /teacher/profile/image-search-mode` aggiorna la modalità ricerca immagini (`advanced` o `simple`).
 
 ## 🛡️ Sicurezza
 
@@ -232,47 +282,18 @@ export DB_BACKUP_RETENTION_COUNT=30
 ## 🗃️ Database e migration
 
 Le migration Liquibase sono in `src/main/resources/db/changelog/`.
-Aggiungi ogni modifica schema in un nuovo file XML e includilo in `db.changelog-master.xml`.
 
-## 🤝 Per chi vuole contribuire
+Quando modifichi lo schema:
+
+1. crea un nuovo file XML incrementale;
+2. includilo in `db.changelog-master.xml`.
+
+## 🤝 Contribuire
 
 Consulta [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## 🧪 Test
-
-```bash
-mvn test
-```
-
-## 🧪 Smoke test end-to-end
-
-Per validare rapidamente il flusso completo (teacher login, creazione studente, creazione quiz, pubblicazione, login studente e submit), usa lo script:
-
-```bash
-./scripts/smoke-e2e.sh
-```
-
-Variabili utili:
-
-- `BASE_URL` (default `http://localhost:8080`)
-- `ADMIN_USERNAME` (default `admin`)
-- `ADMIN_PASSWORD` (default `changeme`)
-- `SPRING_PROFILE` (default `dev`)
-- `START_APP=0` se vuoi riutilizzare un'istanza già avviata
-- `DISABLE_TURNSTILE=0` per non forzare `TURNSTILE_ENABLED=false` all'avvio
-
-Esempi:
-
-```bash
-# App già in esecuzione
-START_APP=0 BASE_URL=http://localhost:8080 ./scripts/smoke-e2e.sh
-
-# Credenziali admin custom
-ADMIN_USERNAME=myadmin ADMIN_PASSWORD='supersecret' ./scripts/smoke-e2e.sh
-```
 
 ## 📜 Licenza
 
 Copyright (c) 2026 Miss Alice & Saidone
 
-Distributed under the GNU General Public License v3.0
+Distribuito sotto GNU General Public License v3.0. Vedi [LICENSE](LICENSE).
