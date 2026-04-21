@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.2
 
 ARG MAVEN_VERSION=3-sapmachine-25
-ARG JAVA_VENDOR=azul/zulu-openjdk-alpine
-ARG JAVA_VERSION=25-jre-headless-latest
+ARG JAVA_VENDOR=eclipse-temurin
+ARG JAVA_VERSION=25-jre
 
 # --- Stage 1: Builder ---
 FROM maven:${MAVEN_VERSION} as builder
@@ -26,7 +26,7 @@ FROM ${JAVA_VENDOR}:${JAVA_VERSION}
 ARG UID=1010
 ARG GID=1010
 
-RUN addgroup --gid ${GID} -S spring && adduser --uid ${UID} -S spring -G spring
+RUN groupadd --gid ${GID} spring && useradd --uid ${UID} --gid spring --shell /usr/sbin/nologin --create-home spring
 USER spring:spring
 
 ARG JAR_FILE=/application/target/quizmaker*.jar
