@@ -98,8 +98,12 @@
                     </div>
                 </div>
                 <div class="manage-card-actions">
-                    <label class="btn-icon-action btn-publish-toggle" title="Pubblicato">
+                    <label class="btn-icon-action btn-publish-toggle"
+                           th:for="${'publish-toggle-' + quiz.id}"
+                           th:aria-label="${'Pubblicato: ' + quiz.title}"
+                           title="Pubblicato">
                         <input type="checkbox"
+                               th:id="${'publish-toggle-' + quiz.id}"
                                th:checked="${quiz.published}"
                                th:data-id="${quiz.id}"
                                class="js-toggle-publication">

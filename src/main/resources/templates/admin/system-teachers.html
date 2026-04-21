@@ -56,8 +56,12 @@
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                             <input type="hidden" name="enabled" th:value="${teacher.enabled}"/>
                             <label class="teacher-enabled-toggle-label"
+                                   th:for="${'teacher-enabled-' + teacher.id}"
+                                   th:aria-label="${teacher.id == currentTeacherId ? 'Stato login insegnante (account corrente)' : ('Stato login insegnante per ' + teacher.username)}"
                                    th:title="${teacher.id == currentTeacherId ? 'Non puoi disabilitare il tuo account' : (teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante')}">
-                                <input type="checkbox" th:checked="${teacher.enabled}"
+                                <input type="checkbox"
+                                       th:id="${'teacher-enabled-' + teacher.id}"
+                                       th:checked="${teacher.enabled}"
                                        th:disabled="${teacher.id == currentTeacherId}">
                             </label>
                         </form>
