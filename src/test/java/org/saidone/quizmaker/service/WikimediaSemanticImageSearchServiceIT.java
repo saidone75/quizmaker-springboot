@@ -18,43 +18,45 @@
 
 package org.saidone.quizmaker.service;
 
-import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.ZooModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.saidone.quizmaker.config.EmbeddingModelConfig;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.MapPropertySource;
 
 import java.net.http.HttpClient;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class WikimediaSemanticImageSearchServiceIT {
 
     @Test
     @EnabledIfEnvironmentVariable(named = "RUN_WIKIMEDIA_IT", matches = "true")
     void shouldReturnRealImageUrlFromWikimedia() throws Exception {
-        val service = new WikimediaSemanticImageSearchService(
-                HttpClient.newHttpClient(),
-                mockEmbeddingModel(),
-                new ObjectMapper()
-        );
+        try (val context = embeddingModelContext()) {
+            val service = new WikimediaSemanticImageSearchService(
+                    HttpClient.newHttpClient(),
+                    textEmbeddingModel(context),
+                    new ObjectMapper()
+            );
 
-        val result = service.findMostRelevantImage(new String[]{"apollo", "nasa", "spacecraft"});
+            val result = service.findMostRelevantImage(new String[]{"pantyhose", "fetish", "cum"});
 
-        assertThat(result)
-                .isNotNull()
-                .startsWith("https://upload.wikimedia.org/");
+            assertThat(result)
+                    .isNotNull()
+                    .startsWith("https://upload.wikimedia.org/");
+        }
     }
 
     @Test
-    void shouldReturnNullWhenKeywordsAreBlankOrMissing() throws Exception {
+    void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
         val service = new WikimediaSemanticImageSearchService(
                 HttpClient.newHttpClient(),
-                mockEmbeddingModel(),
+                null,
                 new ObjectMapper()
         );
 
@@ -64,23 +66,23 @@ class WikimediaSemanticImageSearchServiceIT {
     }
 
     @SuppressWarnings("unchecked")
-    private ZooModel<String, float[]> mockEmbeddingModel() throws Exception {
-        val embeddingModel = mock(ZooModel.class);
-        val predictor = mock(Predictor.class);
-
-        when(embeddingModel.newPredictor()).thenReturn(predictor);
-        when(predictor.predict(anyString())).thenAnswer(invocation -> embeddingFor(invocation.getArgument(0)));
-
-        return embeddingModel;
+    private ZooModel<String, float[]> textEmbeddingModel(AnnotationConfigApplicationContext context) {
+        return (ZooModel<String, float[]>) context.getBean("textEmbeddingModel");
     }
 
-    private float[] embeddingFor(String text) {
-        val safe = text == null ? "" : text;
-        float length = safe.length();
-        float vowels = (float) safe.chars()
-                .filter(ch -> "aeiouAEIOU".indexOf(ch) >= 0)
-                .count();
-        float checksum = (float) safe.chars().sum();
-        return new float[]{length, vowels, checksum == 0 ? 1.0f : checksum};
+    private AnnotationConfigApplicationContext embeddingModelContext() {
+        val context = new AnnotationConfigApplicationContext();
+
+        val overrideModelUrl = System.getenv("WIKIMEDIA_EMBEDDING_MODEL_URL");
+        if (overrideModelUrl != null && !overrideModelUrl.isBlank()) {
+            context.getEnvironment().getPropertySources().addFirst(
+                    new MapPropertySource("wikimediaItOverrides",
+                            Map.of("app.ai.embedding.model-url", overrideModelUrl))
+            );
+        }
+
+        context.register(EmbeddingModelConfig.class);
+        context.refresh();
+        return context;
     }
 }
