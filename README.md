@@ -14,6 +14,7 @@ Applicazione web per creare, pubblicare e somministrare quiz scolastici diverten
 ## ✨ Caratteristiche principali
 
 - Software libero e open source con licenza [GPLv3](https://www.gnu.org/licenses/gpl-3.0)
+- Codice scritto con attenzione a qualità e manutenibilità: layering Spring chiaro, migrazioni database versionate con Liquibase, copertura test unit/integration e quality gate SonarCloud esposti a badge in README.
 - Accesso **insegnante** con registrazione self-service e dashboard dedicata (`/teacher/...`).
 - Gestione **multi-insegnante** con ruoli amministratore/non-amministratore, abilitazione account, reset password e cancellazione completa account (solo amministratore).
 - Generazione quiz con **OpenAI** (opzionale) e supporto allegati (`.pdf`, `.docx`, testo).
@@ -33,6 +34,8 @@ Applicazione web per creare, pubblicare e somministrare quiz scolastici diverten
 - JPA/Hibernate + Liquibase
 - H2 (dev/docker) e SQLite (prod)
 - Jetty (embedded server)
+- DJL (Deep Java Library) + Hugging Face Tokenizers
+- Motore locale PyTorch CPU (nessun servizio esterno richiesto per ricerca semantica)
 
 ## 🚀 Avvio rapido in sviluppo (`dev`)
 
@@ -126,28 +129,29 @@ docker compose -f docker/docker-compose.yml up --build
 
 ## ⚙️ Variabili d'ambiente principali
 
-| Variabile                           | Default                           | Descrizione                                   |
-|-------------------------------------|-----------------------------------|-----------------------------------------------|
-| `ADMIN_USERNAME`                    | `admin`                           | Username amministratore iniziale              |
-| `ADMIN_PASSWORD`                    | `changeme`                        | Password amministratore iniziale              |
-| `PROD_SQLITE_DB_URL`                | `jdbc:sqlite:./data/quizmaker.db` | Path DB SQLite in produzione                  |
-| `OPENAI_API_KEY`                    | vuota                             | API key OpenAI                                |
-| `OPENAI_MODEL`                      | `gpt-5.4-mini`                    | Modello per generazione quiz                  |
-| `AI_GENERATION_MAX_QUESTIONS`       | `20`                              | Numero massimo domande generate               |
-| `AI_GENERATION_MAX_ATTACHMENT_CHARS`| `60000`                           | Max caratteri estratti da allegato            |
-| `AI_GENERATION_MAX_ATTEMPTS`        | `2`                               | Tentativi massimi di generazione/validazione  |
-| `UPLOAD_DIRECTORY`                  | `./upload`                        | Directory file upload immagini quiz           |
-| `TURNSTILE_ENABLED`                 | `false` (`true` in dev)           | Abilita verifica CAPTCHA Turnstile            |
-| `TURNSTILE_SITE_KEY`                | vuota (o test key in dev)         | Site key Turnstile                            |
-| `TURNSTILE_SECRET_KEY`              | vuota (o test key in dev)         | Secret key Turnstile                          |
-| `TURNSTILE_VERIFY_URL`              | endpoint Cloudflare               | URL verifica Turnstile                        |
-| `DB_BACKUP_ENABLED`                 | `false` (`true` in prod)          | Abilita job backup SQLite                     |
-| `DB_BACKUP_CRON`                    | `0 0 2 * * *`                     | Pianificazione backup                         |
-| `DB_BACKUP_DIRECTORY`               | `./backups`                       | Directory output backup                       |
-| `DB_BACKUP_RETENTION_COUNT`         | `30`                              | Numero backup mantenuti                       |
-| `IMAGE_CLEANUP_ENABLED`             | `true`                            | Abilita job pulizia immagini non referenziate |
-| `IMAGE_CLEANUP_CRON`                | `0 0 3 * * *`                     | Pianificazione pulizia immagini               |
-| `SESSION_COOKIE_SECURE`             | `true` (prod)                     | Cookie di sessione solo HTTPS                 |
+| Variabile                            | Default                                           | Descrizione                                   |
+|--------------------------------------|---------------------------------------------------|-----------------------------------------------|
+| `ADMIN_USERNAME`                     | `admin`                                           | Username amministratore iniziale              |
+| `ADMIN_PASSWORD`                     | `changeme`                                        | Password amministratore iniziale              |
+| `PROD_SQLITE_DB_URL`                 | `jdbc:sqlite:./data/quizmaker.db`                 | Path DB SQLite in produzione                  |
+| `OPENAI_API_KEY`                     | vuota                                             | API key OpenAI                                |
+| `OPENAI_MODEL`                       | `gpt-5.4-mini`                                    | Modello per generazione quiz                  |
+| `AI_EMBEDDING_MODEL_URL`             | `djl://.../paraphrase-multilingual-MiniLM-L12-v2` | Modello locale per embedding                  |
+| `AI_GENERATION_MAX_QUESTIONS`        | `20`                                              | Numero massimo domande generate               |
+| `AI_GENERATION_MAX_ATTACHMENT_CHARS` | `60000`                                           | Max caratteri estratti da allegato            |
+| `AI_GENERATION_MAX_ATTEMPTS`         | `2`                                               | Tentativi massimi di generazione/validazione  |
+| `UPLOAD_DIRECTORY`                   | `./upload`                                        | Directory file upload immagini quiz           |
+| `TURNSTILE_ENABLED`                  | `false` (`true` in dev)                           | Abilita verifica CAPTCHA Turnstile            |
+| `TURNSTILE_SITE_KEY`                 | vuota (o test key in dev)                         | Site key Turnstile                            |
+| `TURNSTILE_SECRET_KEY`               | vuota (o test key in dev)                         | Secret key Turnstile                          |
+| `TURNSTILE_VERIFY_URL`               | endpoint Cloudflare                               | URL verifica Turnstile                        |
+| `DB_BACKUP_ENABLED`                  | `false` (`true` in prod)                          | Abilita job backup SQLite                     |
+| `DB_BACKUP_CRON`                     | `0 0 2 * * *`                                     | Pianificazione backup                         |
+| `DB_BACKUP_DIRECTORY`                | `./backups`                                       | Directory output backup                       |
+| `DB_BACKUP_RETENTION_COUNT`          | `30`                                              | Numero backup mantenuti                       |
+| `IMAGE_CLEANUP_ENABLED`              | `true`                                            | Abilita job pulizia immagini non referenziate |
+| `IMAGE_CLEANUP_CRON`                 | `0 0 3 * * *`                                     | Pianificazione pulizia immagini               |
+| `SESSION_COOKIE_SECURE`              | `true` (prod)                                     | Cookie di sessione solo HTTPS                 |
 
 ## 💾 Backup schedulato database (SQLite)
 
@@ -160,24 +164,24 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 ## 🌐 Funzionalità web
 
-| URL                             | Accesso                       | Descrizione                            |
-|---------------------------------|-------------------------------|----------------------------------------|
-| `/`                             | Pubblico / sessione studente  | Login studente + pagina quiz           |
-| `/teacher/login`                | Pubblico                      | Login insegnante                       |
-| `/teacher/register`             | Pubblico                      | Registrazione insegnante               |
-| `/teacher`                      | Insegnante                    | Dashboard quiz                         |
-| `/teacher/students`             | Insegnante                    | Gestione studenti                      |
-| `/teacher/results`              | Insegnante                    | Risultati + analytics + sblocco quiz   |
-| `/teacher/logs`                 | Amministratore                | Visualizzazione log applicativi        |
-| `/teacher/profile`              | Insegnante                    | Cambio password personale              |
-| `/teacher/profile/theme`        | Insegnante                    | Salvataggio preferenza tema (POST)     |
-| `/teacher/profile/image-upload` | Insegnante                    | Abilitazione upload immagini (POST)    |
-| `/teacher/profile/image-search-mode` | Insegnante                 | Salvataggio preferenza ricerca immagini (POST) |
-| `/teacher/quiz/new`             | Insegnante                    | Editor nuovo quiz                      |
-| `/teacher/quiz/{id}/edit`       | Insegnante                    | Editor modifica quiz                   |
-| `/teacher/system`               | Amministratore                | Pannello sistema                       |
-| `/teacher/system/teachers`      | Amministratore                | Gestione insegnanti (ruoli, AI, stato) |
-| `/teacher/about`                | Amministratore                | Info build/runtime                     |
+| URL                                  | Accesso                        | Descrizione                                    |
+|--------------------------------------|--------------------------------|------------------------------------------------|
+| `/`                                  | Pubblico / sessione studente   | Login studente + pagina quiz                   |
+| `/teacher/login`                     | Pubblico                       | Login insegnante                               |
+| `/teacher/register`                  | Pubblico                       | Registrazione insegnante                       |
+| `/teacher`                           | Insegnante                     | Dashboard quiz                                 |
+| `/teacher/students`                  | Insegnante                     | Gestione studenti                              |
+| `/teacher/results`                   | Insegnante                     | Risultati + analytics + sblocco quiz           |
+| `/teacher/logs`                      | Amministratore                 | Visualizzazione log applicativi                |
+| `/teacher/profile`                   | Insegnante                     | Cambio password personale                      |
+| `/teacher/profile/theme`             | Insegnante                     | Salvataggio preferenza tema (POST)             |
+| `/teacher/profile/image-upload`      | Insegnante                     | Abilitazione upload immagini (POST)            |
+| `/teacher/profile/image-search-mode` | Insegnante                     | Salvataggio preferenza ricerca immagini (POST) |
+| `/teacher/quiz/new`                  | Insegnante                     | Editor nuovo quiz                              |
+| `/teacher/quiz/{id}/edit`            | Insegnante                     | Editor modifica quiz                           |
+| `/teacher/system`                    | Amministratore                 | Pannello sistema                               |
+| `/teacher/system/teachers`           | Amministratore                 | Gestione insegnanti (ruoli, AI, stato)         |
+| `/teacher/about`                     | Amministratore                 | Info build/runtime                             |
 
 ## 🔌 API principali
 
@@ -229,6 +233,10 @@ export DB_BACKUP_RETENTION_COUNT=30
 
 Le migration Liquibase sono in `src/main/resources/db/changelog/`.
 Aggiungi ogni modifica schema in un nuovo file XML e includilo in `db.changelog-master.xml`.
+
+## 🤝 Per chi vuole contribuire
+
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 🧪 Test
 
