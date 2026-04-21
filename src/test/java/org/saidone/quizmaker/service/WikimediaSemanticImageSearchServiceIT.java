@@ -44,7 +44,7 @@ class WikimediaSemanticImageSearchServiceIT {
                     new ObjectMapper()
             );
 
-            val result = service.findMostRelevantImage(new String[]{"pantyhose", "fetish", "cum"});
+            val result = service.findMostRelevantImage(new String[]{"apollo", "nasa", "spacecraft"});
 
             assertThat(result)
                     .isNotNull()
