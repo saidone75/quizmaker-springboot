@@ -26,14 +26,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Duration;
@@ -62,7 +61,8 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final int TARGET_CANDIDATE_POOL_SIZE = 60;
     private static final long MAX_EMBEDDING_CACHE_BYTES = 10L * 1024L * 1024L;
 
-    private final HttpClient httpClient;
+    @Qualifier("wikimediaRestClient")
+    private final RestClient wikimediaRestClient;
     private final ZooModel<String, float[]> embeddingModel;
     private final ObjectMapper objectMapper;
 
@@ -565,19 +565,16 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         );
     }
 
-    private JsonNode getJson(String url) throws IOException, InterruptedException {
-        val request = HttpRequest.newBuilder(URI.create(url))
-                .GET()
-                .header("Accept", "application/json")
-                .header("User-Agent", "WikimediaImageFinder/1.0")
-                .timeout(Duration.ofSeconds(30))
-                .build();
-
-        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() / 100 != 2) {
-            throw new IOException("HTTP " + response.statusCode() + ": " + response.body());
+    private JsonNode getJson(String url) throws IOException {
+        try {
+            val responseBody = wikimediaRestClient.get()
+                    .uri(URI.create(url))
+                    .retrieve()
+                    .body(String.class);
+            return objectMapper.readTree(responseBody);
+        } catch (Exception e) {
+            throw new IOException(String.format("Errore durante la chiamata a Wikimedia: %s", url), e);
         }
-        return objectMapper.readTree(response.body());
     }
 
     private static String meta(JsonNode extmetadata, String key) {
