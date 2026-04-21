@@ -26,8 +26,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.saidone.quizmaker.config.EmbeddingModelConfig;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
+import org.springframework.web.client.RestClient;
 
-import java.net.http.HttpClient;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +39,7 @@ class WikimediaSemanticImageSearchServiceIT {
     void shouldReturnRealImageUrlFromWikimedia() throws Exception {
         try (val context = embeddingModelContext()) {
             val service = new WikimediaSemanticImageSearchService(
-                    HttpClient.newHttpClient(),
+                    wikimediaRestClient(),
                     textEmbeddingModel(context),
                     new ObjectMapper()
             );
@@ -55,7 +55,7 @@ class WikimediaSemanticImageSearchServiceIT {
     @Test
     void shouldReturnNullWhenKeywordsAreBlankOrMissing() {
         val service = new WikimediaSemanticImageSearchService(
-                HttpClient.newHttpClient(),
+                wikimediaRestClient(),
                 null,
                 new ObjectMapper()
         );
@@ -84,5 +84,13 @@ class WikimediaSemanticImageSearchServiceIT {
         context.register(EmbeddingModelConfig.class);
         context.refresh();
         return context;
+    }
+
+    private RestClient wikimediaRestClient() {
+        return RestClient.builder()
+                .baseUrl("https://commons.wikimedia.org/w/api.php")
+                .defaultHeader("User-Agent", "QuizMaker/1.0")
+                .defaultHeader("Accept", "application/json")
+                .build();
     }
 }

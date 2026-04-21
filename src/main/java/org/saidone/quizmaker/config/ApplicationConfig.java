@@ -27,7 +27,6 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
-import java.net.http.HttpClient;
 import java.time.Duration;
 
 @Configuration
@@ -67,13 +66,6 @@ public class ApplicationConfig {
                 .baseUrl("https://commons.wikimedia.org/w/api.php")
                 .defaultHeader("User-Agent", "QuizMaker/1.0")
                 .defaultHeader("Accept", "application/json")
-                .build();
-    }
-
-    @Bean
-    public HttpClient httpClient() {
-        return HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
                 .build();
     }
 
