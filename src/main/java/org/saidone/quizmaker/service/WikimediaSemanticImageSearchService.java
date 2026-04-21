@@ -151,7 +151,16 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             throws IOException, InterruptedException {
         val batchStart = System.nanoTime();
         val dedupBeforeBatch = dedup.size();
+        val queryTasks = createQueryTasks(batch, batchIndex, keywordCount);
 
+        processQueryTasks(queryTasks, dedup);
+
+        logBatchSummary(batchIndex, dedup, dedupBeforeBatch, batchStart);
+    }
+
+    private List<CompletableFuture<QueryExecutionResult>> createQueryTasks(List<SearchQuerySpec> batch,
+                                                                           int batchIndex,
+                                                                           int keywordCount) {
         val queryTasks = new ArrayList<CompletableFuture<QueryExecutionResult>>();
         for (int i = 0; i < batch.size(); i++) {
             val queryIndex = i;
@@ -166,33 +175,48 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 }
             }));
         }
+        return queryTasks;
+    }
 
-        for (int i = 0; i < queryTasks.size(); i++) {
-            val queryFuture = queryTasks.get(i);
+    private void processQueryTasks(List<CompletableFuture<QueryExecutionResult>> queryTasks,
+                                   Map<String, Candidate> dedup) throws IOException, InterruptedException {
+        for (val queryFuture : queryTasks) {
             try {
-                val queryResult = queryFuture.join();
-                val dedupBeforeQuery = dedup.size();
-                for (val c : queryResult.details()) {
-                    dedup.putIfAbsent(c.title, c);
-                }
-                log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
-                        queryResult.querySpec().label(),
-                        queryResult.details().size(),
-                        dedup.size() - dedupBeforeQuery,
-                        dedup.size(),
-                        queryResult.elapsedMs());
+                processQueryResult(queryFuture.join(), dedup);
             } catch (CompletionException e) {
-                if (e.getCause() instanceof InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw ie;
-                }
-                if (e.getCause() instanceof IOException ioe) {
-                    throw ioe;
-                }
-                throw e;
+                rethrowBatchException(e);
             }
         }
+    }
 
+    private void processQueryResult(QueryExecutionResult queryResult, Map<String, Candidate> dedup) {
+        val dedupBeforeQuery = dedup.size();
+        for (val c : queryResult.details()) {
+            dedup.putIfAbsent(c.title, c);
+        }
+        log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
+                queryResult.querySpec().label(),
+                queryResult.details().size(),
+                dedup.size() - dedupBeforeQuery,
+                dedup.size(),
+                queryResult.elapsedMs());
+    }
+
+    private void rethrowBatchException(CompletionException e) throws IOException, InterruptedException {
+        if (e.getCause() instanceof InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            throw ie;
+        }
+        if (e.getCause() instanceof IOException ioe) {
+            throw ioe;
+        }
+        throw e;
+    }
+
+    private void logBatchSummary(int batchIndex,
+                                 Map<String, Candidate> dedup,
+                                 int dedupBeforeBatch,
+                                 long batchStart) {
         long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
         int newInBatch = dedup.size() - dedupBeforeBatch;
         log.debug("Batch query {} completato: nuoviCandidati={}, deduplicatiTotali={}, elapsedMs={}",
