@@ -18,6 +18,7 @@
 
 package org.saidone.quizmaker.service;
 
+import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.TranslateException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -37,6 +38,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -57,6 +60,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final int BROAD_BATCH_LIMIT = 40;
     private static final int MAX_QUERY_LIMIT = 50;
     private static final int TARGET_CANDIDATE_POOL_SIZE = 60;
+    private static final long MAX_EMBEDDING_CACHE_BYTES = 10L * 1024L * 1024L;
 
     private final HttpClient httpClient;
     private final ZooModel<String, float[]> embeddingModel;
@@ -148,8 +152,45 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         val batchStart = System.nanoTime();
         val dedupBeforeBatch = dedup.size();
 
+        val queryTasks = new ArrayList<CompletableFuture<QueryExecutionResult>>();
         for (int i = 0; i < batch.size(); i++) {
-            executeQuery(batch, batchIndex, i, keywordCount, dedup);
+            val queryIndex = i;
+            queryTasks.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    return executeQueryAndCollect(batch, batchIndex, queryIndex, keywordCount);
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new CompletionException(e);
+                }
+            }));
+        }
+
+        for (int i = 0; i < queryTasks.size(); i++) {
+            val queryFuture = queryTasks.get(i);
+            try {
+                val queryResult = queryFuture.join();
+                val dedupBeforeQuery = dedup.size();
+                for (val c : queryResult.details()) {
+                    dedup.putIfAbsent(c.title, c);
+                }
+                log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
+                        queryResult.querySpec().label(),
+                        queryResult.details().size(),
+                        dedup.size() - dedupBeforeQuery,
+                        dedup.size(),
+                        queryResult.elapsedMs());
+            } catch (CompletionException e) {
+                if (e.getCause() instanceof InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw ie;
+                }
+                if (e.getCause() instanceof IOException ioe) {
+                    throw ioe;
+                }
+                throw e;
+            }
         }
 
         long batchElapsedMs = Duration.ofNanos(System.nanoTime() - batchStart).toMillis();
@@ -158,8 +199,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
     }
 
-    private void executeQuery(List<SearchQuerySpec> batch, int batchIndex, int queryIndex, int keywordCount,
-                              Map<String, Candidate> dedup)
+    private QueryExecutionResult executeQueryAndCollect(List<SearchQuerySpec> batch, int batchIndex, int queryIndex, int keywordCount)
             throws IOException, InterruptedException {
         val querySpec = batch.get(queryIndex);
         val limit = resolveQueryLimit(batchIndex, queryIndex, keywordCount);
@@ -169,13 +209,8 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
                 querySpec.label, queryIndex + 1, batch.size(), titles.size(), titles);
         val details = fetchImageDetails(titles);
-        val dedupBeforeQuery = dedup.size();
-        for (val c : details) {
-            dedup.putIfAbsent(c.title, c);
-        }
         long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
-        log.debug("Query [{}] ha prodotto {} candidati, nuovi={}, deduplicatiTotali={}, elapsedMs={}",
-                querySpec.label, details.size(), dedup.size() - dedupBeforeQuery, dedup.size(), elapsedMs);
+        return new QueryExecutionResult(querySpec, details, elapsedMs);
     }
 
     private boolean shouldContinueWithNextBatch(Map<String, Candidate> dedup, int batchIndex, int batchCount) {
@@ -205,11 +240,12 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         log.debug("Testo query per embedding: '{}'", queryText);
 
         try (val predictor = embeddingModel.newPredictor()) {
-            float[] queryEmbedding = predictor.predict(queryText);
+            val embeddingCache = new BoundedEmbeddingCache(MAX_EMBEDDING_CACHE_BYTES);
+            float[] queryEmbedding = getOrComputeEmbedding(predictor, embeddingCache, queryText);
             for (val c : candidates) {
                 val descriptionText = fallbackDescriptionText(c);
-                float[] descriptionEmbedding = predictor.predict(descriptionText);
-                float[] candEmbedding = predictor.predict(c.semanticText);
+                float[] descriptionEmbedding = getOrComputeEmbedding(predictor, embeddingCache, descriptionText);
+                float[] candEmbedding = getOrComputeEmbedding(predictor, embeddingCache, c.semanticText);
                 c.descriptionSemanticScore = cosineSimilarity(queryEmbedding, descriptionEmbedding);
                 c.semanticScore = cosineSimilarity(queryEmbedding, candEmbedding);
                 c.totalScore = computeTotalScore(c);
@@ -218,8 +254,20 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         }
     }
 
-    private ImageResult buildResult(List<Candidate> candidates, long startedAt) {
+    private static float[] getOrComputeEmbedding(Predictor<String, float[]> predictor,
+                                                 BoundedEmbeddingCache embeddingCache,
+                                                 String text) throws TranslateException {
+        val key = Objects.toString(text, "");
+        val cached = embeddingCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+        val computed = predictor.predict(key);
+        embeddingCache.put(key, computed);
+        return computed;
+    }
 
+    private ImageResult buildResult(List<Candidate> candidates, long startedAt) {
         candidates.sort(Comparator.comparingDouble((Candidate c) -> c.totalScore).reversed());
         val best = candidates.getFirst();
         val topCandidates = candidates.stream()
@@ -663,6 +711,60 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     private record KeywordMatchScore(double score, int matchedCount) {
+    }
+
+    private static class BoundedEmbeddingCache {
+        private final long maxBytes;
+        private final LinkedHashMap<String, float[]> cache = new LinkedHashMap<>(16, 0.75f, true);
+        private long currentBytes = 0L;
+
+        private BoundedEmbeddingCache(long maxBytes) {
+            this.maxBytes = maxBytes;
+        }
+
+        private float[] get(String key) {
+            return cache.get(key);
+        }
+
+        private void put(String key, float[] embedding) {
+            if (embedding == null) {
+                return;
+            }
+
+            val newEntrySize = estimateEntrySize(key, embedding);
+            if (newEntrySize > maxBytes) {
+                cache.clear();
+                currentBytes = 0L;
+                return;
+            }
+
+            val previous = cache.remove(key);
+            if (previous != null) {
+                currentBytes -= estimateEntrySize(key, previous);
+            }
+
+            cache.put(key, embedding);
+            currentBytes += newEntrySize;
+            evictIfNeeded();
+        }
+
+        private void evictIfNeeded() {
+            val iterator = cache.entrySet().iterator();
+            while (currentBytes > maxBytes && iterator.hasNext()) {
+                val eldest = iterator.next();
+                currentBytes -= estimateEntrySize(eldest.getKey(), eldest.getValue());
+                iterator.remove();
+            }
+        }
+
+        private static long estimateEntrySize(String key, float[] embedding) {
+            long keyBytes = Objects.toString(key, "").getBytes(StandardCharsets.UTF_8).length;
+            long embeddingBytes = (long) embedding.length * Float.BYTES;
+            return keyBytes + embeddingBytes + 64L;
+        }
+    }
+
+    private record QueryExecutionResult(SearchQuerySpec querySpec, List<Candidate> details, long elapsedMs) {
     }
 
     record SearchQuerySpec(String label, String query) {
