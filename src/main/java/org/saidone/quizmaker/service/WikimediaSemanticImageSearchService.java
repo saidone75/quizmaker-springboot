@@ -52,13 +52,13 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
     private static final Pattern TOKEN_SPLIT = Pattern.compile("\\s+");
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
-    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.25;
-    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.15;
-    private static final int STRICT_BATCH_LIMIT = 20;
-    private static final int MEDIUM_BATCH_LIMIT = 30;
-    private static final int BROAD_BATCH_LIMIT = 40;
-    private static final int MAX_QUERY_LIMIT = 50;
-    private static final int TARGET_CANDIDATE_POOL_SIZE = 60;
+    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.4;
+    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.25;
+    private static final int STRICT_BATCH_LIMIT = 15;
+    private static final int MEDIUM_BATCH_LIMIT = 20;
+    private static final int BROAD_BATCH_LIMIT = 25;
+    private static final int MAX_QUERY_LIMIT = 35;
+    private static final int TARGET_CANDIDATE_POOL_SIZE = 35;
     private static final long MAX_EMBEDDING_CACHE_BYTES = 10L * 1024L * 1024L;
     private static final String SEARCH_EXCLUDED_FILE_TYPES = "-filetype:djvu -filetype:djv";
 
