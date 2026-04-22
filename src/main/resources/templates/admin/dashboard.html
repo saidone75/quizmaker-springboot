@@ -102,6 +102,8 @@
                            th:for="${'publish-toggle-' + quiz.id}"
                            th:aria-label="${'Pubblicato: ' + quiz.title}"
                            title="Pubblicato">
+                        <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"
+                              th:text="${'Stato pubblicazione per quiz ' + quiz.title}">Stato pubblicazione quiz</span>
                         <input type="checkbox"
                                th:id="${'publish-toggle-' + quiz.id}"
                                th:checked="${quiz.published}"
