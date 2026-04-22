@@ -59,6 +59,8 @@
                                    th:for="${'teacher-enabled-' + teacher.id}"
                                    th:aria-label="${teacher.id == currentTeacherId ? 'Stato login insegnante (account corrente)' : ('Stato login insegnante per ' + teacher.username)}"
                                    th:title="${teacher.id == currentTeacherId ? 'Non puoi disabilitare il tuo account' : (teacher.enabled ? 'Disabilita login insegnante' : 'Abilita login insegnante')}">
+                                <span style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"
+                                      th:text="${teacher.id == currentTeacherId ? 'Stato login account corrente' : ('Stato login insegnante ' + teacher.username)}">Stato login insegnante</span>
                                 <input type="checkbox"
                                        th:id="${'teacher-enabled-' + teacher.id}"
                                        th:checked="${teacher.enabled}"
