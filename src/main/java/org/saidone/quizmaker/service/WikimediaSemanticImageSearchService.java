@@ -52,14 +52,15 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
     private static final Pattern TOKEN_SPLIT = Pattern.compile("\\s+");
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
-    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.25;
-    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.15;
-    private static final int STRICT_BATCH_LIMIT = 20;
-    private static final int MEDIUM_BATCH_LIMIT = 30;
-    private static final int BROAD_BATCH_LIMIT = 40;
-    private static final int MAX_QUERY_LIMIT = 50;
-    private static final int TARGET_CANDIDATE_POOL_SIZE = 60;
+    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.4;
+    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.25;
+    private static final int STRICT_BATCH_LIMIT = 15;
+    private static final int MEDIUM_BATCH_LIMIT = 20;
+    private static final int BROAD_BATCH_LIMIT = 25;
+    private static final int MAX_QUERY_LIMIT = 35;
+    private static final int TARGET_CANDIDATE_POOL_SIZE = 35;
     private static final long MAX_EMBEDDING_CACHE_BYTES = 10L * 1024L * 1024L;
+    private static final String SEARCH_EXCLUDED_FILE_TYPES = "-filetype:djvu -filetype:djv";
 
     @Qualifier("wikimediaRestClient")
     private final RestClient wikimediaRestClient;
@@ -229,10 +230,10 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         val limit = resolveQueryLimit(batchIndex, queryIndex, keywordCount);
         val queryStart = System.nanoTime();
         log.debug("Eseguo query [{}] con srlimit={}: {}", querySpec.label, limit, querySpec.query);
-        val titles = searchFileTitles(querySpec.query, limit);
-        log.debug("Query [{}] ({}/{}) ha prodotto {} titoli: {}",
-                querySpec.label, queryIndex + 1, batch.size(), titles.size(), titles);
-        val details = fetchImageDetails(titles);
+        val details = searchImageCandidates(querySpec.query, limit);
+        log.debug("Query [{}] ({}/{}) ha prodotto {} candidati: {}",
+                querySpec.label, queryIndex + 1, batch.size(), details.size(),
+                details.stream().map(c -> c.title).toList());
         long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
         return new QueryExecutionResult(querySpec, details, elapsedMs);
     }
@@ -370,59 +371,32 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 .collect(Collectors.joining(" "));
 
         val strict = List.of(
-                new SearchQuerySpec("and", String.format("filemime:image %s", andJoined)),
-                new SearchQuerySpec("title", String.format("filemime:image %s", titleOnly)),
-                new SearchQuerySpec("title-boost", String.format("filemime:image %s %s", titleBoost, joined))
+                new SearchQuerySpec("and", String.format("filemime:image %s %s", andJoined, SEARCH_EXCLUDED_FILE_TYPES)),
+                new SearchQuerySpec("title", String.format("filemime:image %s %s", titleOnly, SEARCH_EXCLUDED_FILE_TYPES)),
+                new SearchQuerySpec("title-boost", String.format("filemime:image %s %s %s",
+                        titleBoost, joined, SEARCH_EXCLUDED_FILE_TYPES))
         );
         val medium = List.of(
-                new SearchQuerySpec("phrase", String.format("filemime:image \"%s\"", joined)),
-                new SearchQuerySpec("plain", String.format("filemime:image %s", joined))
+                new SearchQuerySpec("phrase", String.format("filemime:image \"%s\" %s", joined, SEARCH_EXCLUDED_FILE_TYPES)),
+                new SearchQuerySpec("plain", String.format("filemime:image %s %s", joined, SEARCH_EXCLUDED_FILE_TYPES))
         );
         val broad = List.of(
-                new SearchQuerySpec("or", String.format("filemime:image %s", orJoined))
+                new SearchQuerySpec("or", String.format("filemime:image %s %s", orJoined, SEARCH_EXCLUDED_FILE_TYPES))
         );
         return List.of(strict, medium, broad);
     }
 
-    private List<String> searchFileTitles(String srsearch, int limit)
+    private List<Candidate> searchImageCandidates(String srsearch, int limit)
             throws IOException, InterruptedException {
 
         val url = String.format(
-                "%s?action=query&format=json&list=search&srnamespace=6&srlimit=%s&srsearch=%s",
+                "%s?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=%s&gsrsearch=%s" +
+                        "&prop=imageinfo%%7Cinfo&inprop=url&iiprop=url%%7Cmime%%7Cextmetadata&iiurlwidth=500",
                 COMMONS_API,
                 limit,
                 encode(srsearch)
         );
-        log.trace("Chiamata searchFileTitles URL: {}", url);
-
-        val root = getJson(url);
-        val results = root.path("query").path("search");
-
-        val out = new ArrayList<String>();
-        if (results.isArray()) {
-            for (val node : results) {
-                val title = node.path("title").asText();
-                if (title.startsWith("File:")) {
-                    out.add(title);
-                }
-            }
-        }
-        return out;
-    }
-
-    private List<Candidate> fetchImageDetails(List<String> titles)
-            throws IOException, InterruptedException {
-
-        if (titles.isEmpty()) {
-            return List.of();
-        }
-
-        val url = String.format(
-                "%s?action=query&format=json&prop=imageinfo%%7Cinfo&inprop=url&titles=%s&iiprop=url%%7Cmime%%7Cextmetadata&iiurlwidth=500",
-                COMMONS_API,
-                encode(String.join("|", titles))
-        );
-        log.trace("Chiamata fetchImageDetails URL: {}", url);
+        log.trace("Chiamata searchImageCandidates URL: {}", url);
 
         val root = getJson(url);
         val pages = root.path("query").path("pages");
@@ -431,6 +405,10 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         val it = pages.elements();
         while (it.hasNext()) {
             val page = it.next();
+            val title = page.path("title").asText("");
+            if (!title.startsWith("File:")) {
+                continue;
+            }
             val imageinfo = page.path("imageinfo");
             if (!imageinfo.isArray() || imageinfo.isEmpty()) {
                 continue;
@@ -440,7 +418,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             val ext = ii.path("extmetadata");
 
             val c = new Candidate();
-            c.title = page.path("title").asText();
+            c.title = title;
             c.pageUrl = page.path("fullurl").asText(
                     String.format("https://commons.wikimedia.org/wiki/%s", c.title.replace(" ", "_"))
             );
