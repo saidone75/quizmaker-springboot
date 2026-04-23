@@ -54,8 +54,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final Pattern MULTISPACE = Pattern.compile("\\s+");
     private static final Pattern TOKEN_SPLIT = Pattern.compile("\\s+");
     private static final Set<String> UNSUPPORTED_FILE_EXTENSIONS = Set.of(".djvu", ".djv");
-    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.4;
-    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.25;
+    private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.8;
+    private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.5;
+    private static final double PRIMARY_KEYWORD_FULL_MATCH_BONUS = 4.0;
     private static final int STRICT_BATCH_LIMIT = 15;
     private static final int MEDIUM_BATCH_LIMIT = 20;
     private static final int BROAD_BATCH_LIMIT = 25;
@@ -340,13 +341,24 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     private static double computeTotalScore(Candidate c) {
+        val weightProfile = buildWeightProfile(c);
+        return weightProfile.lexicalWeight() * c.lexicalScore
+                + weightProfile.descriptionWeight() * normalizeSemantic(c.descriptionSemanticScore)
+                + weightProfile.semanticWeight() * normalizeSemantic(c.semanticScore);
+    }
+
+    private static WeightProfile buildWeightProfile(Candidate c) {
         val descriptionAvailable = hasMeaningfulDescription(c.descriptionText);
         val lexicalWeight = hasStrongLexicalSignal(c.lexicalScore) ? 0.45 : 0.35;
-        val descriptionWeight = descriptionAvailable ? (0.20 + (0.20 * descriptionQuality(c.descriptionText))) : 0.0;
-        val semanticWeight = 1.0 - lexicalWeight - descriptionWeight;
-        return lexicalWeight * c.lexicalScore
-                + descriptionWeight * normalizeSemantic(c.descriptionSemanticScore)
-                + semanticWeight * normalizeSemantic(c.semanticScore);
+        if (!descriptionAvailable) {
+            return new WeightProfile(lexicalWeight, 0.0, 1.0 - lexicalWeight);
+        }
+
+        val descriptionQuality = descriptionQuality(c.descriptionText);
+        val boostedDescriptionWeight = 0.35 + (0.25 * descriptionQuality);
+        val semanticWeight = Math.max(0.10, 1.0 - lexicalWeight - boostedDescriptionWeight);
+        val descriptionWeight = 1.0 - lexicalWeight - semanticWeight;
+        return new WeightProfile(lexicalWeight, descriptionWeight, semanticWeight);
     }
 
     private static boolean hasStrongLexicalSignal(double lexicalScore) {
@@ -500,6 +512,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         }
         if (inText) {
             score += primaryKeyword ? 4 * PRIMARY_KEYWORD_TEXT_WEIGHT : 4;
+        }
+        if (primaryKeyword && inTitle && inText) {
+            score += PRIMARY_KEYWORD_FULL_MATCH_BONUS;
         }
         return score;
     }
@@ -729,6 +744,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     record SearchQuerySpec(String label, String query) {
+    }
+
+    private record WeightProfile(double lexicalWeight, double descriptionWeight, double semanticWeight) {
     }
 
     private record ImageResult(
