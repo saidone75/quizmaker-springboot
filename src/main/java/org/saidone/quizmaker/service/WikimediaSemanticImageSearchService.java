@@ -21,6 +21,8 @@ package org.saidone.quizmaker.service;
 import ai.djl.inference.Predictor;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.translate.TranslateException;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -66,6 +68,10 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private final RestClient wikimediaRestClient;
     private final ZooModel<String, float[]> embeddingModel;
     private final ObjectMapper objectMapper;
+    private final Cache<String, float[]> embeddingCache = Caffeine.newBuilder()
+            .maximumWeight(MAX_EMBEDDING_CACHE_BYTES)
+            .weigher((String key, float[] embedding) -> estimateEmbeddingEntryWeight(key, embedding))
+            .build();
 
     @Override
     public String searchImage(String[] keywords) {
@@ -265,12 +271,11 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         log.debug("Testo query per embedding: '{}'", queryText);
 
         try (val predictor = embeddingModel.newPredictor()) {
-            val embeddingCache = new BoundedEmbeddingCache(MAX_EMBEDDING_CACHE_BYTES);
-            float[] queryEmbedding = getOrComputeEmbedding(predictor, embeddingCache, queryText);
+            float[] queryEmbedding = getOrComputeEmbedding(predictor, queryText);
             for (val c : candidates) {
                 val descriptionText = fallbackDescriptionText(c);
-                float[] descriptionEmbedding = getOrComputeEmbedding(predictor, embeddingCache, descriptionText);
-                float[] candEmbedding = getOrComputeEmbedding(predictor, embeddingCache, c.semanticText);
+                float[] descriptionEmbedding = getOrComputeEmbedding(predictor, descriptionText);
+                float[] candEmbedding = getOrComputeEmbedding(predictor, c.semanticText);
                 c.descriptionSemanticScore = cosineSimilarity(queryEmbedding, descriptionEmbedding);
                 c.semanticScore = cosineSimilarity(queryEmbedding, candEmbedding);
                 c.totalScore = computeTotalScore(c);
@@ -279,16 +284,17 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         }
     }
 
-    private static float[] getOrComputeEmbedding(Predictor<String, float[]> predictor,
-                                                 BoundedEmbeddingCache embeddingCache,
-                                                 String text) throws TranslateException {
+    private float[] getOrComputeEmbedding(Predictor<String, float[]> predictor,
+                                          String text) throws TranslateException {
         val key = Objects.toString(text, "");
-        val cached = embeddingCache.get(key);
+        val cached = embeddingCache.getIfPresent(key);
         if (cached != null) {
             return cached;
         }
         val computed = predictor.predict(key);
-        embeddingCache.put(key, computed);
+        if (computed != null) {
+            embeddingCache.put(key, computed);
+        }
         return computed;
     }
 
@@ -391,7 +397,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
 
         val url = String.format(
                 "%s?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=%s&gsrsearch=%s" +
-                        "&prop=imageinfo%%7Cinfo&inprop=url&iiprop=url%%7Cmime%%7Cextmetadata&iiurlwidth=500",
+                        "&prop=imageinfo%%7Cinfo&inprop=url&iiprop=url%%7Cmime%%7Cextmetadata",
                 COMMONS_API,
                 limit,
                 encode(srsearch)
@@ -423,7 +429,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                     String.format("https://commons.wikimedia.org/wiki/%s", c.title.replace(" ", "_"))
             );
             c.imageUrl = ii.path("url").asText(null);
-            c.thumbnailUrl = ii.path("thumburl").asText(c.imageUrl);
+            c.thumbnailUrl = c.imageUrl;
             c.mime = ii.path("mime").asText("");
 
             if (isUnsupportedMedia(c.title, c.mime, c.imageUrl)) {
@@ -682,6 +688,13 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         return Math.round(d * 1000.0) / 1000.0;
     }
 
+    private static int estimateEmbeddingEntryWeight(String key, float[] embedding) {
+        long keyBytes = Objects.toString(key, "").getBytes(StandardCharsets.UTF_8).length;
+        long embeddingBytes = embedding == null ? 0L : (long) embedding.length * Float.BYTES;
+        long estimate = keyBytes + embeddingBytes + 64L;
+        return (int) Math.min(Integer.MAX_VALUE, estimate);
+    }
+
     static boolean isUnsupportedMedia(String title, String mime, String imageUrl) {
         val loweredMime = Objects.toString(mime, "").toLowerCase(Locale.ROOT);
         if (loweredMime.contains("djvu") || loweredMime.contains("vnd.djvu")) {
@@ -710,57 +723,6 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     }
 
     private record KeywordMatchScore(double score, int matchedCount) {
-    }
-
-    private static class BoundedEmbeddingCache {
-        private final long maxBytes;
-        private final LinkedHashMap<String, float[]> cache = new LinkedHashMap<>(16, 0.75f, true);
-        private long currentBytes = 0L;
-
-        private BoundedEmbeddingCache(long maxBytes) {
-            this.maxBytes = maxBytes;
-        }
-
-        private float[] get(String key) {
-            return cache.get(key);
-        }
-
-        private void put(String key, float[] embedding) {
-            if (embedding == null) {
-                return;
-            }
-
-            val newEntrySize = estimateEntrySize(key, embedding);
-            if (newEntrySize > maxBytes) {
-                cache.clear();
-                currentBytes = 0L;
-                return;
-            }
-
-            val previous = cache.remove(key);
-            if (previous != null) {
-                currentBytes -= estimateEntrySize(key, previous);
-            }
-
-            cache.put(key, embedding);
-            currentBytes += newEntrySize;
-            evictIfNeeded();
-        }
-
-        private void evictIfNeeded() {
-            val iterator = cache.entrySet().iterator();
-            while (currentBytes > maxBytes && iterator.hasNext()) {
-                val eldest = iterator.next();
-                currentBytes -= estimateEntrySize(eldest.getKey(), eldest.getValue());
-                iterator.remove();
-            }
-        }
-
-        private static long estimateEntrySize(String key, float[] embedding) {
-            long keyBytes = Objects.toString(key, "").getBytes(StandardCharsets.UTF_8).length;
-            long embeddingBytes = (long) embedding.length * Float.BYTES;
-            return keyBytes + embeddingBytes + 64L;
-        }
     }
 
     private record QueryExecutionResult(SearchQuerySpec querySpec, List<Candidate> details, long elapsedMs) {

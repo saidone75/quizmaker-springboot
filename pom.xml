@@ -131,6 +131,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- Caffeine for bounded caches -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
         <!-- OpenAI integration helpers -->
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
