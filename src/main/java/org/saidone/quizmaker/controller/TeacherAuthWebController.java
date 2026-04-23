@@ -84,7 +84,7 @@ public class TeacherAuthWebController {
 
         try {
             teacherAuthenticationService.register(username, password);
-            return "redirect:/teacher/login?registered=true";
+            return "redirect:/teacher/login?pendingApproval=true";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("registerError", ex.getMessage());
             model.addAttribute("username", username);

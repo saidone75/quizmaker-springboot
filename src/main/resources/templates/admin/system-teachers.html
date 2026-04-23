@@ -42,6 +42,9 @@
         <div class="alert alert-success" th:if="${teacherResetSuccess}" th:text="${teacherResetSuccess}">
             Password resettata correttamente a changeme.
         </div>
+        <div class="alert alert-success" th:if="${teacherApprovalSuccess}" th:text="${teacherApprovalSuccess}">
+            1 richieste approvate con successo.
+        </div>
 
         <div class="section-label">Insegnanti registrati (<span th:text="${teachers.size()}">0</span>)</div>
 
@@ -118,6 +121,42 @@
             <span>📭</span>
             Nessun insegnante registrato.
         </div>
+
+        <details class="archived-quizzes-accordion" th:if="${!pendingTeachers.isEmpty()}">
+            <summary>
+                <span>⏳ Richieste in attesa di approvazione (<span th:text="${pendingTeachers.size()}">0</span>)</span>
+                <span class="archived-accordion-icon">▾</span>
+            </summary>
+
+            <div style="margin-bottom:10px;">
+                <form th:action="@{/teacher/system/teachers/approve-all}" method="post" style="margin:0;">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn-teacher-action" title="Approva tutte le richieste in attesa">✅ Approva tutte</button>
+                </form>
+            </div>
+
+            <div class="manage-list">
+                <div class="manage-card" th:each="teacher : ${pendingTeachers}">
+                    <span class="manage-card-icon">🕒</span>
+                    <div class="manage-card-info">
+                        <div class="manage-card-title">
+                            <span th:text="${teacher.username}">username</span>
+                        </div>
+                        <div class="manage-card-meta">
+                            Registrazione inviata il
+                            <span th:text="${#temporals.format(teacher.createdAt, 'dd/MM/yyyy')}">01/01/2026</span> ·
+                            Stato: <strong>In attesa</strong>
+                        </div>
+                    </div>
+                    <div class="manage-card-actions teacher-manage-actions">
+                        <form th:action="@{/teacher/system/teachers/{id}/approve(id=${teacher.id})}" method="post" style="margin:0">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn-teacher-action" title="Approva richiesta e attiva account">✅ Approva</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </details>
     </div>
 </div>
 <div id="delete-teacher-modal" class="modal-overlay" style="display:none">

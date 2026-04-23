@@ -38,11 +38,14 @@
         <div class="alert alert-error" th:if="${param.blocked}">
             🛡️ Troppi tentativi falliti: accesso bloccato temporaneamente.
         </div>
+        <div class="alert alert-error" th:if="${param.pendingAccount}">
+            ⏳ Il tuo account è in attesa di approvazione da parte di un amministratore.
+        </div>
         <div class="alert alert-success" th:if="${param.logout}">
             ✅ Logout effettuato con successo.
         </div>
-        <div class="alert alert-success" th:if="${param.registered}">
-            ✅ Registrazione completata. Ora puoi accedere.
+        <div class="alert alert-success" th:if="${param.pendingApproval}">
+            ✅ Registrazione inviata. Un amministratore deve approvare il tuo account prima del primo accesso.
         </div>
 
         <form th:action="@{/teacher/login}" method="post">

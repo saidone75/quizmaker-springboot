@@ -66,6 +66,10 @@ public class Teacher implements Serializable {
     @Column(name = "enabled", nullable = false)
     private boolean enabled = true;
 
+    @Default
+    @Column(name = "approval_pending", nullable = false)
+    private boolean approvalPending = false;
+
     @Column(name = "theme_preference", length = 16)
     private String themePreference;
 
