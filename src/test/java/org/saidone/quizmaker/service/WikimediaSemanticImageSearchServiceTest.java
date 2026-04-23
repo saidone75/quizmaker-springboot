@@ -18,7 +18,10 @@
 
 package org.saidone.quizmaker.service;
 
+import lombok.val;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,5 +83,88 @@ class WikimediaSemanticImageSearchServiceTest {
         assertThat(WikimediaSemanticImageSearchService.containsTokenish(
                 "Landing on the moon during lunar module operation", "lunar landing")
         ).isFalse();
+    }
+
+    @Test
+    void shouldPreferDescriptionWeightWhenDescriptionIsMeaningful() throws Exception {
+        val candidate = newCandidate(28.0, "Ancient temple at sunrise in Kyoto", 0.82, 0.73);
+        val profile = invokeWeightProfile(candidate);
+
+        val descriptionWeight = (double) profile.getClass().getDeclaredMethod("descriptionWeight").invoke(profile);
+        val semanticWeight = (double) profile.getClass().getDeclaredMethod("semanticWeight").invoke(profile);
+        val lexicalWeight = (double) profile.getClass().getDeclaredMethod("lexicalWeight").invoke(profile);
+
+        assertThat(descriptionWeight).isGreaterThan(semanticWeight);
+        assertThat(lexicalWeight + descriptionWeight + semanticWeight).isEqualTo(1.0);
+    }
+
+    @Test
+    void shouldDisableDescriptionWeightWhenDescriptionIsMissing() throws Exception {
+        val candidate = newCandidate(22.0, " ", 0.75, 0.68);
+        val profile = invokeWeightProfile(candidate);
+
+        val descriptionWeight = (double) profile.getClass().getDeclaredMethod("descriptionWeight").invoke(profile);
+        val semanticWeight = (double) profile.getClass().getDeclaredMethod("semanticWeight").invoke(profile);
+        val lexicalWeight = (double) profile.getClass().getDeclaredMethod("lexicalWeight").invoke(profile);
+
+        assertThat(descriptionWeight).isZero();
+        assertThat(semanticWeight).isEqualTo(1.0 - lexicalWeight);
+    }
+
+    @Test
+    void shouldGiveMoreWeightToPrimaryKeywordThanSecondary() throws Exception {
+        val service = newServiceForReflectionCalls();
+        Method method = WikimediaSemanticImageSearchService.class
+                .getDeclaredMethod("scoreKeywordHit", boolean.class, boolean.class, boolean.class);
+        method.setAccessible(true);
+
+        double primaryScore = (double) method.invoke(service, true, true, true);
+        double secondaryScore = (double) method.invoke(service, true, true, false);
+
+        assertThat(primaryScore).isGreaterThan(secondaryScore);
+    }
+
+    @Test
+    void shouldApplyPrimaryKeywordFullMatchBonus() throws Exception {
+        val service = newServiceForReflectionCalls();
+        Method method = WikimediaSemanticImageSearchService.class
+                .getDeclaredMethod("scoreKeywordHit", boolean.class, boolean.class, boolean.class);
+        method.setAccessible(true);
+
+        double withFullMatch = (double) method.invoke(service, true, true, true);
+        double titleOnly = (double) method.invoke(service, true, false, true);
+        double textOnly = (double) method.invoke(service, false, true, true);
+
+        assertThat(withFullMatch).isGreaterThan(titleOnly + textOnly);
+    }
+
+    private static Object invokeWeightProfile(Object candidate) throws Exception {
+        Method method = WikimediaSemanticImageSearchService.class.getDeclaredMethod("buildWeightProfile", candidate.getClass());
+        method.setAccessible(true);
+        return method.invoke(null, candidate);
+    }
+
+    private static WikimediaSemanticImageSearchService newServiceForReflectionCalls() {
+        return new WikimediaSemanticImageSearchService(null, null, null);
+    }
+
+    private static Object newCandidate(double lexicalScore,
+                                       String descriptionText,
+                                       double descriptionSemanticScore,
+                                       double semanticScore) throws Exception {
+        Class<?> candidateClass = Class.forName("org.saidone.quizmaker.service.WikimediaSemanticImageSearchService$Candidate");
+        Object candidate = candidateClass.getDeclaredConstructor().newInstance();
+
+        setField(candidateClass, candidate, "lexicalScore", lexicalScore);
+        setField(candidateClass, candidate, "descriptionText", descriptionText);
+        setField(candidateClass, candidate, "descriptionSemanticScore", descriptionSemanticScore);
+        setField(candidateClass, candidate, "semanticScore", semanticScore);
+        return candidate;
+    }
+
+    private static void setField(Class<?> clazz, Object target, String fieldName, Object value) throws Exception {
+        val field = clazz.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        field.set(target, value);
     }
 }
