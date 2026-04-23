@@ -399,7 +399,7 @@ public class TeacherDashboardWebController {
     @PostMapping("/teacher/system/teachers/approve-all")
     public String approveAllTeacherRegistrations(RedirectAttributes redirectAttributes) {
         ensureAdmin();
-        val approvedCount = teacherAdministrationService.approveAllPendingRegistrations(teacherAuthenticationService.getCurrentTeacher());
+        int approvedCount = teacherAdministrationService.approveAllPendingRegistrations(teacherAuthenticationService.getCurrentTeacher());
         redirectAttributes.addFlashAttribute(
                 "teacherApprovalSuccess",
                 String.format("%d richieste approvate con successo.", approvedCount)
