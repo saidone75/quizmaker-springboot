@@ -21,8 +21,6 @@ package org.saidone.quizmaker.service;
 import lombok.val;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Method;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WikimediaSemanticImageSearchServiceTest {
@@ -114,7 +112,7 @@ class WikimediaSemanticImageSearchServiceTest {
     @Test
     void shouldGiveMoreWeightToPrimaryKeywordThanSecondary() throws Exception {
         val service = newServiceForReflectionCalls();
-        Method method = WikimediaSemanticImageSearchService.class
+        val method = WikimediaSemanticImageSearchService.class
                 .getDeclaredMethod("scoreKeywordHit", boolean.class, boolean.class, boolean.class);
         method.setAccessible(true);
 
@@ -127,7 +125,7 @@ class WikimediaSemanticImageSearchServiceTest {
     @Test
     void shouldApplyPrimaryKeywordFullMatchBonus() throws Exception {
         val service = newServiceForReflectionCalls();
-        Method method = WikimediaSemanticImageSearchService.class
+        val method = WikimediaSemanticImageSearchService.class
                 .getDeclaredMethod("scoreKeywordHit", boolean.class, boolean.class, boolean.class);
         method.setAccessible(true);
 
@@ -139,7 +137,7 @@ class WikimediaSemanticImageSearchServiceTest {
     }
 
     private static Object invokeWeightProfile(Object candidate) throws Exception {
-        Method method = WikimediaSemanticImageSearchService.class.getDeclaredMethod("buildWeightProfile", candidate.getClass());
+        val method = WikimediaSemanticImageSearchService.class.getDeclaredMethod("buildWeightProfile", candidate.getClass());
         method.setAccessible(true);
         return method.invoke(null, candidate);
     }
@@ -152,8 +150,8 @@ class WikimediaSemanticImageSearchServiceTest {
                                        String descriptionText,
                                        double descriptionSemanticScore,
                                        double semanticScore) throws Exception {
-        Class<?> candidateClass = Class.forName("org.saidone.quizmaker.service.WikimediaSemanticImageSearchService$Candidate");
-        Object candidate = candidateClass.getDeclaredConstructor().newInstance();
+        val candidateClass = Class.forName("org.saidone.quizmaker.service.WikimediaSemanticImageSearchService$Candidate");
+        val candidate = candidateClass.getDeclaredConstructor().newInstance();
 
         setField(candidateClass, candidate, "lexicalScore", lexicalScore);
         setField(candidateClass, candidate, "descriptionText", descriptionText);
