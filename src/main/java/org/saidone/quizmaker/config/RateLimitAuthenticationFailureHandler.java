@@ -22,8 +22,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.saidone.quizmaker.repository.TeacherRepository;
 import org.jspecify.annotations.NonNull;
 import org.saidone.quizmaker.service.BruteForceProtectionService;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
@@ -35,6 +37,7 @@ import java.io.IOException;
 public class RateLimitAuthenticationFailureHandler implements AuthenticationFailureHandler {
 
     private final BruteForceProtectionService bruteForceProtectionService;
+    private final TeacherRepository teacherRepository;
 
     @Override
     public void onAuthenticationFailure(@NonNull HttpServletRequest request,
@@ -46,6 +49,14 @@ public class RateLimitAuthenticationFailureHandler implements AuthenticationFail
         if (bruteForceProtectionService.isLoginBlocked(key)) {
             response.sendRedirect("/teacher/login?blocked=true");
             return;
+        }
+
+        if (exception instanceof DisabledException) {
+            val username = request.getParameter("username");
+            if (username != null && teacherRepository.findByUsernameIgnoreCase(username).map(teacher -> teacher.isApprovalPending()).orElse(false)) {
+                response.sendRedirect("/teacher/login?pendingAccount=true");
+                return;
+            }
         }
 
         response.sendRedirect("/teacher/login?error=true");

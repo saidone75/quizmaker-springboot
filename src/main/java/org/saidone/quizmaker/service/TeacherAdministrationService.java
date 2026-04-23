@@ -49,6 +49,12 @@ public class TeacherAdministrationService {
         return teacherRepository.findAllByOrderByCreatedAtAsc();
     }
 
+    @Transactional(readOnly = true)
+    @PreAuthorize("@teacherAuthorizationPolicy.isAdmin(#actingTeacher)")
+    public List<Teacher> findPendingApprovalTeachers(Teacher actingTeacher) {
+        return teacherRepository.findAllByApprovalPendingTrueOrderByCreatedAtAsc();
+    }
+
     @Transactional
     @PreAuthorize("@teacherAuthorizationPolicy.isAdmin(#actingTeacher)")
     public void updateTeacherAdminFlag(UUID targetTeacherId, boolean admin, Teacher actingTeacher) {
@@ -92,6 +98,32 @@ public class TeacherAdministrationService {
                 .orElseThrow(() -> new IllegalArgumentException("Insegnante non trovato"));
         targetTeacher.setEnabled(enabled);
         teacherRepository.save(targetTeacher);
+    }
+
+    @Transactional
+    @PreAuthorize("@teacherAuthorizationPolicy.isAdmin(#actingTeacher)")
+    public void approveTeacherRegistration(UUID targetTeacherId, Teacher actingTeacher) {
+        if (targetTeacherId == null) {
+            throw new IllegalArgumentException("Insegnante non valido");
+        }
+
+        val targetTeacher = teacherRepository.findById(targetTeacherId)
+                .orElseThrow(() -> new IllegalArgumentException("Insegnante non trovato"));
+        targetTeacher.setApprovalPending(false);
+        targetTeacher.setEnabled(true);
+        teacherRepository.save(targetTeacher);
+    }
+
+    @Transactional
+    @PreAuthorize("@teacherAuthorizationPolicy.isAdmin(#actingTeacher)")
+    public int approveAllPendingRegistrations(Teacher actingTeacher) {
+        val pendingTeachers = teacherRepository.findAllByApprovalPendingTrueOrderByCreatedAtAsc();
+        pendingTeachers.forEach(teacher -> {
+            teacher.setApprovalPending(false);
+            teacher.setEnabled(true);
+        });
+        teacherRepository.saveAll(pendingTeachers);
+        return pendingTeachers.size();
     }
 
     @Transactional

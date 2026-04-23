@@ -37,5 +37,6 @@
     <include file="004-question-images.xml" relativeToChangelogFile="true"/>
     <include file="005-teacher-image-upload-preference.xml" relativeToChangelogFile="true"/>
     <include file="006-teacher-image-search-mode-preference.xml" relativeToChangelogFile="true"/>
+    <include file="007-teacher-registration-approval.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

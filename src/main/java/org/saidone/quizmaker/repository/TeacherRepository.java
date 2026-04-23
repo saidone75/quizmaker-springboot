@@ -33,5 +33,9 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
 
     List<Teacher> findAllByOrderByCreatedAtAsc();
 
+    List<Teacher> findAllByApprovalPendingTrueOrderByCreatedAtAsc();
+
+    long countByApprovalPendingTrue();
+
     long countByIdNot(UUID id);
 }

@@ -86,7 +86,8 @@ public class TeacherAuthenticationService implements UserDetailsService {
                 .password(passwordEncoder.encode(rawPassword))
                 .admin(false)
                 .aiEnabled(false)
-                .enabled(true)
+                .enabled(false)
+                .approvalPending(true)
                 .imageUploadEnabled(false)
                 .imageSearchMode(IMAGE_SEARCH_MODE_ADVANCED)
                 .build());

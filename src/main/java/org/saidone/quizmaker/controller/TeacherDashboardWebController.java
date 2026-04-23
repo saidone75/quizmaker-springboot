@@ -339,8 +339,12 @@ public class TeacherDashboardWebController {
     public String teacherManagementPage(Model model) {
         ensureAdmin();
         val currentTeacher = teacherAuthenticationService.getCurrentTeacher();
-        val teachers = teacherAdministrationService.findAllTeachers(currentTeacher);
+        val teachers = teacherAdministrationService.findAllTeachers(currentTeacher).stream()
+                .filter(teacher -> !teacher.isApprovalPending())
+                .toList();
+        val pendingTeachers = teacherAdministrationService.findPendingApprovalTeachers(currentTeacher);
         model.addAttribute("teachers", teachers);
+        model.addAttribute("pendingTeachers", pendingTeachers);
         model.addAttribute("currentTeacherId", currentTeacher.getId());
         return "admin/system-teachers";
     }
@@ -382,6 +386,24 @@ public class TeacherDashboardWebController {
     public String deleteTeacher(@PathVariable UUID id) {
         ensureAdmin();
         teacherLifecycleService.deleteTeacherCompletely(id, teacherAuthenticationService.getCurrentTeacher());
+        return "redirect:/teacher/system/teachers";
+    }
+
+    @PostMapping("/teacher/system/teachers/{id}/approve")
+    public String approveTeacherRegistration(@PathVariable UUID id) {
+        ensureAdmin();
+        teacherAdministrationService.approveTeacherRegistration(id, teacherAuthenticationService.getCurrentTeacher());
+        return "redirect:/teacher/system/teachers";
+    }
+
+    @PostMapping("/teacher/system/teachers/approve-all")
+    public String approveAllTeacherRegistrations(RedirectAttributes redirectAttributes) {
+        ensureAdmin();
+        val approvedCount = teacherAdministrationService.approveAllPendingRegistrations(teacherAuthenticationService.getCurrentTeacher());
+        redirectAttributes.addFlashAttribute(
+                "teacherApprovalSuccess",
+                String.format("%d richieste approvate con successo.", approvedCount)
+        );
         return "redirect:/teacher/system/teachers";
     }
 
