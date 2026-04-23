@@ -62,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/teacher/login", "/teacher/register", "/", "/student/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/student/logout").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/quizzes/images/**").authenticated()
+                        .requestMatchers("/api/quizzes/images/**").hasRole(ROLE_TEACHER)
                         .requestMatchers("/api/quizzes/**").authenticated()
                         .requestMatchers("/api/students/**").hasRole(ROLE_TEACHER)
                         .requestMatchers("/api/teacher/logs/**").hasRole(ROLE_ADMIN)

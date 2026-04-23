@@ -21,6 +21,7 @@ package org.saidone.quizmaker.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import org.apache.tika.Tika;
 import org.saidone.quizmaker.dto.QuestionImageUploadDto;
 import org.saidone.quizmaker.entity.UploadedImage;
 import org.saidone.quizmaker.repository.UploadedImageRepository;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +45,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class QuestionImageStorageService {
+
+    private static final Tika TIKA_DETECTOR = new Tika();
 
     private final UploadedImageRepository uploadedImageRepository;
 
@@ -138,18 +142,45 @@ public class QuestionImageStorageService {
     }
 
     private boolean isImage(MultipartFile file) {
+        if (!hasAllowedTypeHint(file)) {
+            return false;
+        }
+        return hasAllowedImageSignature(file);
+    }
+
+    private boolean hasAllowedTypeHint(MultipartFile file) {
         val contentType = file.getContentType();
-        if (contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
+        if (contentType != null && isAllowedContentType(contentType)) {
             return true;
         }
+
         val extension = extractExtension(file.getOriginalFilename());
         return extension.equals(".png")
                 || extension.equals(".jpg")
                 || extension.equals(".jpeg")
                 || extension.equals(".gif")
                 || extension.equals(".webp")
-                || extension.equals(".bmp")
-                || extension.equals(".svg");
+                || extension.equals(".bmp");
+    }
+
+    private boolean isAllowedContentType(String contentType) {
+        val normalizedContentType = contentType.toLowerCase(Locale.ROOT).trim();
+        return normalizedContentType.equals("image/png")
+                || normalizedContentType.equals("image/jpeg")
+                || normalizedContentType.equals("image/gif")
+                || normalizedContentType.equals("image/webp")
+                || normalizedContentType.equals("image/bmp")
+                || normalizedContentType.equals("image/x-ms-bmp");
+    }
+
+    private boolean hasAllowedImageSignature(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream()) {
+            val signature = inputStream.readNBytes(16384);
+            val detectedContentType = TIKA_DETECTOR.detect(signature, file.getOriginalFilename());
+            return isAllowedContentType(detectedContentType);
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     private String extractExtension(String fileName) {
