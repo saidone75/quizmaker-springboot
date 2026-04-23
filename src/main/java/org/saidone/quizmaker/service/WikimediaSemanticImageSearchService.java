@@ -71,7 +71,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private final ObjectMapper objectMapper;
     private final Cache<String, float[]> embeddingCache = Caffeine.newBuilder()
             .maximumWeight(MAX_EMBEDDING_CACHE_BYTES)
-            .weigher((String key, float[] embedding) -> estimateEmbeddingEntryWeight(key, embedding))
+            .weigher(WikimediaSemanticImageSearchService::estimateEmbeddingEntryWeight)
             .build();
 
     @Override
@@ -408,8 +408,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             throws IOException, InterruptedException {
 
         val url = String.format(
-                "%s?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=%s&gsrsearch=%s" +
-                        "&prop=imageinfo%%7Cinfo&inprop=url&iiprop=url%%7Cmime%%7Cextmetadata",
+                "%s?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=%s&gsrsearch=%s&prop=imageinfo%%7Cinfo&inprop=url&iiprop=url%%7Cmime%%7Cextmetadata",
                 COMMONS_API,
                 limit,
                 encode(srsearch)
