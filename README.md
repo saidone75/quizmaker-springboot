@@ -220,24 +220,26 @@ java -jar target/quizmaker-*.jar --spring.profiles.active=prod
 
 ### Pagine web principali
 
-| URL                                  | Accesso                      | Descrizione                                    |
-|--------------------------------------|------------------------------|------------------------------------------------|
-| `/`                                  | Pubblico / sessione studente | Login studente + pagina quiz                   |
-| `/teacher/login`                     | Pubblico                     | Login insegnante                               |
-| `/teacher/register`                  | Pubblico                     | Registrazione insegnante                       |
-| `/teacher`                           | Insegnante                   | Dashboard quiz                                 |
-| `/teacher/students`                  | Insegnante                   | Gestione studenti                              |
-| `/teacher/results`                   | Insegnante                   | Risultati + analytics + sblocco quiz           |
-| `/teacher/logs`                      | Amministratore               | Visualizzazione log applicativi                |
-| `/teacher/profile`                   | Insegnante                   | Cambio password personale                      |
-| `/teacher/profile/theme`             | Insegnante                   | Salvataggio preferenza tema (POST)             |
-| `/teacher/profile/image-upload`      | Insegnante                   | Abilitazione upload immagini (POST)            |
-| `/teacher/profile/image-search-mode` | Insegnante                   | Salvataggio modalità ricerca immagini (POST)   |
-| `/teacher/quiz/new`                  | Insegnante                   | Editor nuovo quiz                              |
-| `/teacher/quiz/{id}/edit`            | Insegnante                   | Editor modifica quiz                           |
-| `/teacher/system`                    | Amministratore               | Pannello sistema                               |
-| `/teacher/system/teachers`           | Amministratore               | Gestione insegnanti (ruoli, AI, stato)         |
-| `/teacher/about`                     | Amministratore               | Info build/runtime                             |
+| URL                                     | Accesso                       | Descrizione                                    |
+|-----------------------------------------|-------------------------------|------------------------------------------------|
+| `/`                                     | Pubblico / sessione studente  | Login studente + pagina quiz                   |
+| `/teacher/login`                        | Pubblico                      | Login insegnante                               |
+| `/teacher/register`                     | Pubblico                      | Registrazione insegnante                       |
+| `/teacher`                              | Insegnante                    | Dashboard quiz                                 |
+| `/teacher/students`                     | Insegnante                    | Gestione studenti                              |
+| `/teacher/results`                      | Insegnante                    | Risultati + analytics + sblocco quiz           |
+| `/teacher/logs`                         | Amministratore                | Visualizzazione log applicativi                |
+| `/teacher/profile`                      | Insegnante                    | Cambio password personale                      |
+| `/teacher/profile/theme`                | Insegnante                    | Salvataggio preferenza tema (POST)             |
+| `/teacher/profile/image-upload`         | Insegnante                    | Abilitazione upload immagini (POST)            |
+| `/teacher/profile/image-search-mode`    | Insegnante                    | Salvataggio modalità ricerca immagini (POST)   |
+| `/teacher/quiz/new`                     | Insegnante                    | Editor nuovo quiz                              |
+| `/teacher/quiz/{id}/edit`               | Insegnante                    | Editor modifica quiz                           |
+| `/teacher/system`                       | Amministratore                | Pannello sistema                               |
+| `/teacher/system/teachers`              | Amministratore                | Gestione insegnanti (ruoli, AI, stato)         |
+| `/teacher/system/teachers/{id}/approve` | Amministratore                | Approva registrazione insegnante (POST)        |
+| `/teacher/system/teachers/approve-all`  | Amministratore                | Approva tutte le registrazioni pendenti (POST) |
+| `/teacher/about`                        | Amministratore                | Info build/runtime                             |
 
 ### API principali
 
