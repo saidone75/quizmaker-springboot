@@ -39,8 +39,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -159,45 +157,14 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             throws IOException, InterruptedException {
         val batchStart = System.nanoTime();
         val dedupBeforeBatch = dedup.size();
-        val queryTasks = createQueryTasks(batch, batchIndex, keywordCount);
-
-        processQueryTasks(queryTasks, dedup);
+        for (int queryIndex = 0; queryIndex < batch.size(); queryIndex++) {
+            processQueryResult(executeQuery(batch, batchIndex, queryIndex, keywordCount), dedup);
+        }
 
         logBatchSummary(batchIndex, dedup, dedupBeforeBatch, batchStart);
     }
 
-    private List<CompletableFuture<QueryExecutionResult>> createQueryTasks(List<SearchQuerySpec> batch,
-                                                                           int batchIndex,
-                                                                           int keywordCount) {
-        val queryTasks = new ArrayList<CompletableFuture<QueryExecutionResult>>();
-        for (int i = 0; i < batch.size(); i++) {
-            val queryIndex = i;
-            queryTasks.add(CompletableFuture.supplyAsync(() -> {
-                try {
-                    return executeQueryAndCollect(batch, batchIndex, queryIndex, keywordCount);
-                } catch (IOException e) {
-                    throw new CompletionException(e);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new CompletionException(e);
-                }
-            }));
-        }
-        return queryTasks;
-    }
-
-    private void processQueryTasks(List<CompletableFuture<QueryExecutionResult>> queryTasks,
-                                   Map<String, Candidate> dedup) throws IOException, InterruptedException {
-        for (val queryFuture : queryTasks) {
-            try {
-                processQueryResult(queryFuture.join(), dedup);
-            } catch (CompletionException e) {
-                rethrowBatchException(e);
-            }
-        }
-    }
-
-    private void processQueryResult(QueryExecutionResult queryResult, Map<String, Candidate> dedup) {
+    private void processQueryResult(QueryResult queryResult, Map<String, Candidate> dedup) {
         val dedupBeforeQuery = dedup.size();
         for (val c : queryResult.details()) {
             dedup.putIfAbsent(c.title, c);
@@ -210,17 +177,6 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 queryResult.elapsedMs());
     }
 
-    private void rethrowBatchException(CompletionException e) throws IOException, InterruptedException {
-        if (e.getCause() instanceof InterruptedException ie) {
-            Thread.currentThread().interrupt();
-            throw ie;
-        }
-        if (e.getCause() instanceof IOException ioe) {
-            throw ioe;
-        }
-        throw e;
-    }
-
     private void logBatchSummary(int batchIndex,
                                  Map<String, Candidate> dedup,
                                  int dedupBeforeBatch,
@@ -231,7 +187,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 batchIndex + 1, newInBatch, dedup.size(), batchElapsedMs);
     }
 
-    private QueryExecutionResult executeQueryAndCollect(List<SearchQuerySpec> batch, int batchIndex, int queryIndex, int keywordCount)
+    private QueryResult executeQuery(List<SearchQuerySpec> batch, int batchIndex, int queryIndex, int keywordCount)
             throws IOException, InterruptedException {
         val querySpec = batch.get(queryIndex);
         val limit = resolveQueryLimit(batchIndex, queryIndex, keywordCount);
@@ -242,7 +198,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
                 querySpec.label, queryIndex + 1, batch.size(), details.size(),
                 details.stream().map(c -> c.title).toList());
         long elapsedMs = Duration.ofNanos(System.nanoTime() - queryStart).toMillis();
-        return new QueryExecutionResult(querySpec, details, elapsedMs);
+        return new QueryResult(querySpec, details, elapsedMs);
     }
 
     private boolean shouldContinueWithNextBatch(Map<String, Candidate> dedup, int batchIndex, int batchCount) {
@@ -739,7 +695,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private record KeywordMatchScore(double score, int matchedCount) {
     }
 
-    private record QueryExecutionResult(SearchQuerySpec querySpec, List<Candidate> details, long elapsedMs) {
+    private record QueryResult(SearchQuerySpec querySpec, List<Candidate> details, long elapsedMs) {
     }
 
     record SearchQuerySpec(String label, String query) {
