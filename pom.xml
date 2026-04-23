@@ -149,6 +149,13 @@
             <version>5.5.1</version>
         </dependency>
 
+        <!-- Apache Tika for image detection -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>3.2.3</version>
+        </dependency>
+
         <!-- Source: https://mvnrepository.com/artifact/net.datafaker/datafaker -->
         <dependency>
             <groupId>net.datafaker</groupId>
