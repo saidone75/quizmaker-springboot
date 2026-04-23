@@ -721,7 +721,7 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         return UNSUPPORTED_FILE_EXTENSIONS.stream().anyMatch(titleOrUrl::contains);
     }
 
-    private static class Candidate {
+    public static class Candidate {
         String title;
         String pageUrl;
         String imageUrl;
