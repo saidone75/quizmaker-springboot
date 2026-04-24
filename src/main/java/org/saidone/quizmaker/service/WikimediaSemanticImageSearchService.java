@@ -55,6 +55,8 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private static final double PRIMARY_KEYWORD_TITLE_WEIGHT = 1.8;
     private static final double PRIMARY_KEYWORD_TEXT_WEIGHT = 1.5;
     private static final double PRIMARY_KEYWORD_FULL_MATCH_BONUS = 4.0;
+    private static final double PRIMARY_KEYWORD_MISS_PENALTY = 10.0;
+    private static final double KEYWORD_COVERAGE_MAX_BONUS = 6.0;
     private static final int STRICT_BATCH_LIMIT = 15;
     private static final int MEDIUM_BATCH_LIMIT = 20;
     private static final int BROAD_BATCH_LIMIT = 25;
@@ -432,20 +434,9 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
     private double lexicalScore(Candidate c, List<String> keywords) {
         val title = normalize(safeTitle(c.title));
         val text = normalize(c.semanticText);
-
-        val keywordMatch = scoreKeywords(title, text, keywords);
-        double score = keywordMatch.score()
-                + scoreExactTitlePhrase(title, keywords)
-                + scoreAllKeywordsMatched(keywordMatch.matchedCount(), keywords.size())
-                + scoreMime(c.mime)
-                - scorePenaltyTerms(text);
-
-        return Math.max(score, 0.0);
-    }
-
-    private KeywordMatchScore scoreKeywords(String title, String text, List<String> keywords) {
         double score = 0.0;
-        int matched = 0;
+        int matchedCount = 0;
+        boolean primaryKeywordMatched = false;
 
         for (int i = 0; i < keywords.size(); i++) {
             val kw = keywords.get(i);
@@ -453,11 +444,22 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
             val inText = containsTokenish(text, kw);
             score += scoreKeywordHit(inTitle, inText, i == 0);
             if (inTitle || inText) {
-                matched++;
+                matchedCount++;
+                if (i == 0) {
+                    primaryKeywordMatched = true;
+                }
             }
         }
 
-        return new KeywordMatchScore(score, matched);
+        double keywordCoverage = keywords.isEmpty() ? 0.0 : (double) matchedCount / keywords.size();
+        score += scoreExactTitlePhrase(title, keywords)
+                + scoreAllKeywordsMatched(matchedCount, keywords.size())
+                + (keywordCoverage * KEYWORD_COVERAGE_MAX_BONUS)
+                + scoreMime(c.mime)
+                - scorePenaltyTerms(text)
+                - (primaryKeywordMatched ? 0.0 : PRIMARY_KEYWORD_MISS_PENALTY);
+
+        return Math.max(score, 0.0);
     }
 
     private double scoreKeywordHit(boolean inTitle, boolean inText, boolean primaryKeyword) {
@@ -690,9 +692,6 @@ public class WikimediaSemanticImageSearchService implements WikimediaImageSearch
         double semanticScore;
         double totalScore;
         String rationale;
-    }
-
-    private record KeywordMatchScore(double score, int matchedCount) {
     }
 
     private record QueryResult(SearchQuerySpec querySpec, List<Candidate> details, long elapsedMs) {
