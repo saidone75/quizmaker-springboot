@@ -21,6 +21,7 @@ package org.saidone.quizmaker.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.val;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -31,6 +32,8 @@ import java.time.Duration;
 
 @Configuration
 public class ApplicationConfig {
+    @Value("${app.wikimedia.user-agent:AliceSimpleQuizMaker/1.0 (+https://github.com/saidone/simple-quizmaker; mailto:bot-traffic@wikimedia.org)}")
+    private String wikimediaUserAgent;
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -64,7 +67,7 @@ public class ApplicationConfig {
     public RestClient wikimediaRestClient(@Qualifier("wikimediaRestTemplate") RestTemplate wikimediaRestTemplate) {
         return RestClient.builder(wikimediaRestTemplate)
                 .baseUrl("https://commons.wikimedia.org/w/api.php")
-                .defaultHeader("User-Agent", "QuizMaker/1.0")
+                .defaultHeader("User-Agent", wikimediaUserAgent)
                 .defaultHeader("Accept", "application/json")
                 .build();
     }

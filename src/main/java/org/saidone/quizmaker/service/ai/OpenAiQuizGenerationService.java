@@ -22,10 +22,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.logging.log4j.util.Strings;
+import org.saidone.quizmaker.dto.QuestionDto;
 import org.saidone.quizmaker.dto.QuizDto;
 import org.saidone.quizmaker.dto.QuizGenerationRequestDto;
 import org.saidone.quizmaker.service.WikimediaImageSearchService;
@@ -37,12 +39,15 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class OpenAiQuizGenerationService implements QuizGenerationService {
+    private static final int MAX_WIKIMEDIA_SEARCH_THREADS = 3;
+    private static final ExecutorService WIKIMEDIA_SEARCH_EXECUTOR = Executors.newFixedThreadPool(MAX_WIKIMEDIA_SEARCH_THREADS);
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
@@ -136,27 +141,48 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         if (quiz == null || quiz.getQuestions() == null) {
             return;
         }
-        for (val question : quiz.getQuestions()) {
-            if (question == null) {
-                continue;
+        try {
+            val tasks = new ArrayList<Future<?>>();
+            for (val question : quiz.getQuestions()) {
+                tasks.add(WIKIMEDIA_SEARCH_EXECUTOR.submit(() -> processQuestionImage(question, includeAiImages, imageSearchMode)));
             }
-            if (!includeAiImages) {
-                question.setImageKeywords(Strings.EMPTY);
-                question.setImageUrl(Strings.EMPTY);
-                continue;
+            for (val task : tasks) {
+                task.get();
             }
-
-            var resolvedUrl = Strings.EMPTY;
-            if (StringUtils.hasText(question.getImageKeywords())) {
-                val keywords = parseImageKeywords(question.getImageKeywords());
-                if (keywords.length > 0) {
-                    question.setImageKeywords(String.join(", ", keywords));
-                    resolvedUrl = wikimediaImageSearchService.searchImage(keywords, imageSearchMode);
-                }
-            }
-
-            question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Risoluzione immagini Wikimedia interrotta: {}", e.getMessage());
+        } catch (ExecutionException e) {
+            log.warn("Errore durante la risoluzione immagini Wikimedia: {}", e.getMessage());
         }
+    }
+
+    @PreDestroy
+    void shutdownWikimediaSearchExecutor() {
+        WIKIMEDIA_SEARCH_EXECUTOR.shutdown();
+    }
+
+    private void processQuestionImage(QuestionDto question,
+                                      boolean includeAiImages,
+                                      String imageSearchMode) {
+        if (question == null) {
+            return;
+        }
+        if (!includeAiImages) {
+            question.setImageKeywords(Strings.EMPTY);
+            question.setImageUrl(Strings.EMPTY);
+            return;
+        }
+
+        var resolvedUrl = Strings.EMPTY;
+        if (StringUtils.hasText(question.getImageKeywords())) {
+            val keywords = parseImageKeywords(question.getImageKeywords());
+            if (keywords.length > 0) {
+                question.setImageKeywords(String.join(", ", keywords));
+                resolvedUrl = wikimediaImageSearchService.searchImage(keywords, imageSearchMode);
+            }
+        }
+        question.setImageUrl(StringUtils.hasText(resolvedUrl) ? resolvedUrl : Strings.EMPTY);
     }
 
     private String[] parseImageKeywords(String imageKeywords) {
