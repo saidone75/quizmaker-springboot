@@ -47,6 +47,8 @@ app:
     site-key: ${TURNSTILE_SITE_KEY:}
     secret-key: ${TURNSTILE_SECRET_KEY:}
     verify-url: ${TURNSTILE_VERIFY_URL:https://challenges.cloudflare.com/turnstile/v0/siteverify}
+  wikimedia:
+    user-agent: ${WIKIMEDIA_USER_AGENT:AliceSimpleQuizMaker/1.0 (+https://github.com/saidone/simple-quizmaker; mailto:bot-traffic@wikimedia.org)}
 
 logging:
   level:
