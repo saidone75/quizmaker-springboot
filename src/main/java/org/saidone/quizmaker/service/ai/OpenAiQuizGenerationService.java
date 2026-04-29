@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -46,6 +47,7 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 public class OpenAiQuizGenerationService implements QuizGenerationService {
     private static final int MAX_WIKIMEDIA_SEARCH_THREADS = 3;
+    private static final ExecutorService WIKIMEDIA_SEARCH_EXECUTOR = Executors.newFixedThreadPool(MAX_WIKIMEDIA_SEARCH_THREADS);
 
     private final ObjectMapper objectMapper;
     private final RestClient openAiRestClient;
@@ -139,11 +141,10 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
         if (quiz == null || quiz.getQuestions() == null) {
             return;
         }
-        val executor = Executors.newFixedThreadPool(MAX_WIKIMEDIA_SEARCH_THREADS);
         try {
             val tasks = new ArrayList<Future<?>>();
             for (val question : quiz.getQuestions()) {
-                tasks.add(executor.submit(() -> processQuestionImage(question, includeAiImages, imageSearchMode)));
+                tasks.add(WIKIMEDIA_SEARCH_EXECUTOR.submit(() -> processQuestionImage(question, includeAiImages, imageSearchMode)));
             }
             for (val task : tasks) {
                 task.get();
@@ -153,9 +154,12 @@ public class OpenAiQuizGenerationService implements QuizGenerationService {
             log.warn("Risoluzione immagini Wikimedia interrotta: {}", e.getMessage());
         } catch (ExecutionException e) {
             log.warn("Errore durante la risoluzione immagini Wikimedia: {}", e.getMessage());
-        } finally {
-            executor.shutdown();
         }
+    }
+
+    @PreDestroy
+    void shutdownWikimediaSearchExecutor() {
+        WIKIMEDIA_SEARCH_EXECUTOR.shutdown();
     }
 
     private void processQuestionImage(QuestionDto question,
