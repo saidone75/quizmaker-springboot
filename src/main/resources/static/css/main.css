@@ -1163,22 +1163,21 @@ body[data-theme="dark"] .btn-archive-quiz:hover { background: var(--archive-bg-h
 @keyframes wonderland-ultra-smooth {
     /* --- RESET & PICCOLO BALZO 1 --- */
     0%   { transform: translateY(0) rotate(0deg); }
-    10%  { transform: translateY(-12px) rotate(0deg); }
+    10%  { transform: translateY(-6px) rotate(0deg); }
     20%  { transform: translateY(0) rotate(0deg); }
 
     /* --- PICCOLO BALZO 2 --- */
     30%  { transform: translateY(-12px) rotate(0deg); }
     40%  { transform: translateY(0) rotate(0deg); }
 
-    /* --- IL GRANDE BALZO + CAPRIOLA AERODINAMICA --- */
-    /* L'inizio della rotazione è sincronizzato perfettamente con lo stacco */
-    45%  { transform: translateY(0) rotate(0deg) scale(1.05, 0.95); }
+    /* --- IL GRANDE BALZO --- */
+    /* Inizio rotazione */
+    45%  { transform: translateY(0) rotate(0deg) scale(1.10, 0.90); }
     60%  { transform: translateY(-90px) rotate(180deg) scale(1); } /* Apice */
-    75%  { transform: translateY(0) rotate(360deg) scale(1.05, 0.95); } /* Atterraggio */
+    75%  { transform: translateY(0) rotate(360deg) scale(1.10, 0.90); } /* Atterraggio */
 
     /* --- STABILIZZAZIONE FINALE --- */
-    85%  { transform: translateY(-5px) rotate(360deg); }
-    92%  { transform: translateY(0) rotate(360deg); }
+    90%  { transform: translateY(-5px) rotate(360deg); }
     100% { transform: translateY(0) rotate(360deg); }
 }
 
